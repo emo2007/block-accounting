@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest"
-	"golang.org/x/sync/errgroup"
 )
 
 type Service interface {
@@ -13,7 +13,7 @@ type Service interface {
 	Stop()
 }
 
-type service struct {
+type ServiceImpl struct {
 	log  *slog.Logger
 	rest *rest.Server
 }
@@ -22,20 +22,33 @@ func NewService(
 	log *slog.Logger,
 	rest *rest.Server,
 ) Service {
-	return &service{
-		log: log,
+	return &ServiceImpl{
+		log:  log,
+		rest: rest,
 	}
 }
 
-func (s *service) Run(ctx context.Context) error {
-	g, ctx := errgroup.WithContext(ctx)
+func (s *ServiceImpl) Run(ctx context.Context) error {
+	errch := make(chan error)
 
-	g.Go(func() error {
-		return s.rest.Serve(ctx)
-	})
+	defer s.rest.Close()
 
-	return g.Wait()
+	go func() {
+		defer func() {
+			close(errch)
+		}()
+
+		errch <- s.rest.Serve(ctx)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errch:
+		return fmt.Errorf("error at service runtime. %w", err)
+	}
 }
 
-func (s *service) Stop() {
+func (s *ServiceImpl) Stop() {
+
 }

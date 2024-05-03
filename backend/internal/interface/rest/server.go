@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/emochka2007/block-accounting/internal/config"
 	"github.com/emochka2007/block-accounting/internal/interface/controllers"
 	"github.com/emochka2007/block-accounting/internal/logger"
 	"github.com/go-chi/chi/v5"
@@ -29,12 +30,13 @@ type Server struct {
 
 func NewServer(
 	log *slog.Logger,
-	addr string,
+	conf config.RestConfig,
 	controllers *controllers.RootController,
 ) *Server {
 	s := &Server{
 		log:         log,
-		addr:        addr,
+		addr:        conf.Address,
+		tls:         conf.TLS,
 		controllers: controllers,
 	}
 
@@ -45,6 +47,12 @@ func NewServer(
 
 func (s *Server) Serve(ctx context.Context) error {
 	s.ctx = ctx
+
+	s.log.Info(
+		"starting rest interface",
+		slog.String("addr", s.addr),
+		slog.Bool("tls", s.tls),
+	)
 
 	if s.tls {
 		return http.ListenAndServeTLS(s.addr, "/todo", "/todo", s)
@@ -67,9 +75,30 @@ func (s *Server) buildRouter() {
 	s.With(mw.RequestID)
 	s.With(s.handleMw)
 
-	s.Get("/ping", s.handlePing)
+	s.Get("/ping", s.handlePing) // debug
 
-	// todo build rest api router
+	// auth
+	s.Post("/join", nil)  // new user
+	s.Post("/login", nil) // login
+
+	s.Route("/organization/{organization_id}", func(r chi.Router) {
+		s.Route("/transactions", func(r chi.Router) {
+			r.Get("/", nil)           // list
+			r.Post("/", nil)          // add
+			r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
+			r.Delete("/{tx_id}", nil) // remove
+		})
+
+		s.Post("/invite", nil) // create a new invite link
+
+		s.Route("/employees", func(r chi.Router) {
+			r.Get("/", nil)                 // list
+			r.Post("/", nil)                // add
+			r.Put("/{employee_id}", nil)    // update (or maybe body?)
+			r.Delete("/{employee_id}", nil) // remove
+		})
+	})
+
 }
 
 func (s *Server) responseError(w http.ResponseWriter, e error) {
@@ -102,6 +131,8 @@ func (s *Server) handleMw(next http.Handler) http.Handler {
 }
 
 func (s *Server) handlePing(w http.ResponseWriter, req *http.Request) {
+	s.log.Debug("ping request")
+
 	if err := s.controllers.Ping.HandlePing(s.ctx, req, w); err != nil {
 		s.responseError(w, err)
 	}

@@ -1,0 +1,45 @@
+version: '3'
+networks:
+  blockd-net:
+    external: true
+    name: blockd-net
+    driver: bridge
+
+volumes:
+  blockd-data: {}
+
+services:
+  blockd:
+    container_name: blockd
+    image: blockd:latest
+    ports:
+      - 8071:8071
+    expose: 
+      - 8080
+    networks:
+      - blockd-net
+    depends_on:
+      blockd-db:
+        condition: service_started
+
+  blockd-db:
+    container_name: blockd-db
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER=blockd
+      - POSTGRES_PASSWORD=blockd
+      - POSTGRES_DB=blockd
+    volumes:
+      - blockd-data:/var/lib/postgresql/data
+      - ./migrations/blockd.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 8432:5432
+    networks:
+      - blockd-net
+    healthcheck:
+      test: [ "CMD", "-U", "blockd", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
