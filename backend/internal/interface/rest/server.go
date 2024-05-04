@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/emochka2007/block-accounting/internal/config"
-	"github.com/emochka2007/block-accounting/internal/interface/controllers"
-	"github.com/emochka2007/block-accounting/internal/logger"
+	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
+	"github.com/emochka2007/block-accounting/internal/pkg/config"
+	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/render"
 )
 
 type Server struct {
@@ -63,23 +64,25 @@ func (s *Server) Serve(ctx context.Context) error {
 
 func (s *Server) Close() {
 	s.closeMu.Lock()
-	defer s.closeMu.Unlock()
 
 	s.closed = true
+
+	s.closeMu.Unlock()
 }
 
 func (s *Server) buildRouter() {
 	s.Mux = chi.NewRouter()
 
-	s.With(mw.Recoverer)
-	s.With(mw.RequestID)
-	s.With(s.handleMw)
+	s.Use(mw.Recoverer)
+	s.Use(mw.RequestID)
+	s.Use(s.handleMw)
+	s.Use(render.SetContentType(render.ContentTypeJSON))
 
 	s.Get("/ping", s.handlePing) // debug
 
 	// auth
-	s.Post("/join", nil)  // new user
-	s.Post("/login", nil) // login
+	s.Post("/join", s.handleJoin) // new user
+	s.Post("/login", nil)         // login
 
 	s.Route("/organization/{organization_id}", func(r chi.Router) {
 		s.Route("/transactions", func(r chi.Router) {
@@ -118,11 +121,13 @@ func (s *Server) responseError(w http.ResponseWriter, e error) {
 func (s *Server) handleMw(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		s.closeMu.RLock()
-		defer s.closeMu.Unlock()
+		defer s.closeMu.RUnlock()
 
 		if s.closed { // keep mutex closed
 			return
 		}
+
+		w.Header().Add("Content-Type", "application/json")
 
 		next.ServeHTTP(w, r)
 	}
@@ -130,10 +135,16 @@ func (s *Server) handleMw(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+func (s *Server) handleJoin(w http.ResponseWriter, req *http.Request) {
+	if err := s.controllers.Auth.Join(w, req); err != nil {
+		s.responseError(w, err)
+	}
+}
+
 func (s *Server) handlePing(w http.ResponseWriter, req *http.Request) {
 	s.log.Debug("ping request")
 
-	if err := s.controllers.Ping.HandlePing(s.ctx, req, w); err != nil {
+	if err := s.controllers.Ping.Ping(w, req); err != nil {
 		s.responseError(w, err)
 	}
 }

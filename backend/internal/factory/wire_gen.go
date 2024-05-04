@@ -7,10 +7,11 @@
 package factory
 
 import (
-	"github.com/emochka2007/block-accounting/internal/config"
-	"github.com/emochka2007/block-accounting/internal/interface/controllers"
 	"github.com/emochka2007/block-accounting/internal/interface/rest"
-	"github.com/emochka2007/block-accounting/internal/logger"
+	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
+	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
+	"github.com/emochka2007/block-accounting/internal/pkg/config"
+	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/service"
 	"log/slog"
 	"os"
@@ -57,6 +58,9 @@ func provideControllers(
 ) *controllers.RootController {
 	return &controllers.RootController{
 		Ping: controllers.NewPingController(log.WithGroup("ping-controller")),
+		Auth: controllers.NewAuthController(
+			log.WithGroup("auth-controller"), presenters.NewAuthPresenter(),
+		),
 	}
 }
 

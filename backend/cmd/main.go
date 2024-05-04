@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/emochka2007/block-accounting/cmd/commands"
-	"github.com/emochka2007/block-accounting/internal/config"
 	"github.com/emochka2007/block-accounting/internal/factory"
+	"github.com/emochka2007/block-accounting/internal/pkg/config"
 
 	cli "github.com/urfave/cli/v2"
 )

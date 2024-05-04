@@ -43,6 +43,8 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
+		s.log.Info("shutting down service")
+
 		return nil
 	case err := <-errch:
 		return fmt.Errorf("error at service runtime. %w", err)

@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 )
 
 type PingController interface {
-	HandlePing(ctx context.Context, req *http.Request, w http.ResponseWriter) error
+	Ping(w http.ResponseWriter, req *http.Request) error
 }
 
 type pingController struct {
@@ -22,7 +21,7 @@ func NewPingController(
 	}
 }
 
-func (c *pingController) HandlePing(ctx context.Context, req *http.Request, w http.ResponseWriter) error {
+func (c *pingController) Ping(w http.ResponseWriter, req *http.Request) error {
 	_, err := w.Write([]byte("pong"))
 
 	return err
