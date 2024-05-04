@@ -1,12 +1,10 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
 )
@@ -48,19 +46,7 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
 
 	// todo create user
 
-	// move to presenter
-	out, err := json.Marshal(domain.JoinResponse{
-		Mnemonic: mnemonic,
-	})
-	if err != nil {
-		return fmt.Errorf("error marshal join response. %w", err)
-	}
-
-	w.Write(out)
-
-	// move to presenter
-
-	return nil
+	return c.presenter.ResponseJoin(w, mnemonic)
 }
 
 func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
