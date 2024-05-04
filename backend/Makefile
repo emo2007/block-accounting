@@ -16,7 +16,7 @@ d.net:
 d.drop-net:
 	sudo docker network rm blockd-net
 
-up:
+up: d.build d.net
 	sudo docker compose up -d
 
 .PHONY: run.local
