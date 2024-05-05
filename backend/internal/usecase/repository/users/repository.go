@@ -3,8 +3,10 @@ package users
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	sqltools "github.com/emochka2007/block-accounting/internal/pkg/sqlutils"
 	"github.com/google/uuid"
 )
 
@@ -28,11 +30,21 @@ type repositorySQL struct {
 }
 
 func NewRepository(db *sql.DB) Repository {
-	return nil
+	return &repositorySQL{
+		db: db,
+	}
 }
 
 func (r *repositorySQL) Get(ctx context.Context, params GetParams) (*models.User, error) {
+	var user *models.User
 
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return user, nil
 }
 
 func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
