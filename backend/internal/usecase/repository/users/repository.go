@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	sqltools "github.com/emochka2007/block-accounting/internal/pkg/sqlutils"
 	"github.com/google/uuid"
@@ -35,6 +36,14 @@ func NewRepository(db *sql.DB) Repository {
 	}
 }
 
+func (s *repositorySQL) Conn(ctx context.Context) sqltools.DBTX {
+	if tx, ok := ctx.Value(sqltools.TxCtxKey{}).(*sql.Tx); ok {
+		return tx
+	}
+
+	return s.db
+}
+
 func (r *repositorySQL) Get(ctx context.Context, params GetParams) (*models.User, error) {
 	var user *models.User
 
@@ -48,17 +57,60 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) (*models.User
 }
 
 func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Insert("users").Columns(
+			"id", "seed", "created_at",
+		).Values(
+			user.ID,
+			user.Bip32Seed,
+			user.CteatedAt,
+		)
 
+		if user.Activated {
+			query = query.Columns("activated_at").Values(user.CteatedAt)
+		}
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error insert new user. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
 }
 
 func (r *repositorySQL) Activate(ctx context.Context, id string) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
 
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
 }
 
 func (r *repositorySQL) Update(ctx context.Context, user *models.User) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
 
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
 }
 
 func (r *repositorySQL) Delete(ctx context.Context, id string) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
 
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
 }

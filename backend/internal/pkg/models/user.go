@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -15,6 +17,7 @@ type User struct {
 	Bip32Seed []byte
 	Admin     bool
 	Activated bool
+	CteatedAt time.Time
 }
 
 func NewUser(id uuid.UUID, seed []byte) *User {
