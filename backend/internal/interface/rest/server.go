@@ -92,7 +92,7 @@ func (s *Server) buildRouter() {
 			r.Delete("/{tx_id}", nil) // remove
 		})
 
-		s.Post("/invite", nil) // create a new invite link
+		s.Post("/invite/{hash}", nil) // create a new invite link
 
 		s.Route("/employees", func(r chi.Router) {
 			r.Get("/", nil)                 // list

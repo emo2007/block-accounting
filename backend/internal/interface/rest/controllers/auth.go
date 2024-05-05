@@ -1,12 +1,17 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
+)
+
+var (
+	ErrorAuthInvalidMnemonic = errors.New("Invalid Mnemonic")
 )
 
 type AuthController interface {
@@ -34,19 +39,20 @@ func NewAuthController(
 const mnemonicEntropyBitSize int = 256
 
 func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
-	entropy, err := bip32.NewEntropy(mnemonicEntropyBitSize)
+	request, err := c.presenter.CreateJoinRequest(req)
 	if err != nil {
-		return fmt.Errorf("error generate new entropy. %w", err)
+		return fmt.Errorf("error create join request. %w", err)
 	}
 
-	mnemonic, err := bip32.NewMnemonic(entropy)
-	if err != nil {
-		return fmt.Errorf("error generate mnemonic from entropy. %w", err)
+	c.log.Debug("join request", slog.String("mnemonic", request.Mnemonic))
+
+	if !bip32.IsMnemonicValid(request.Mnemonic) {
+		return fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
 	}
 
 	// todo create user
 
-	return c.presenter.ResponseJoin(w, mnemonic)
+	return nil
 }
 
 func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {

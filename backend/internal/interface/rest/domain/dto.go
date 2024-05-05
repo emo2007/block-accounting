@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type JoinResponse struct {
+type JoinRequest struct {
 	Mnemonic string `json:"mnemonic"`
 }
 
