@@ -1,7 +1,6 @@
 version: '3'
 networks:
   blockd-net:
-    external: true
     name: blockd-net
     driver: bridge
 

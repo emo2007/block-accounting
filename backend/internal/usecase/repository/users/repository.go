@@ -37,7 +37,7 @@ func NewRepository(db *sql.DB) Repository {
 }
 
 func (s *repositorySQL) Conn(ctx context.Context) sqltools.DBTX {
-	if tx, ok := ctx.Value(sqltools.TxCtxKey{}).(*sql.Tx); ok {
+	if tx, ok := ctx.Value(sqltools.TxCtxKey).(*sql.Tx); ok {
 		return tx
 	}
 
@@ -58,17 +58,26 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) (*models.User
 
 func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
-		query := sq.Insert("users").Columns(
-			"id", "seed", "created_at",
-		).Values(
+		columns := []string{"id", "seed", "created_at"}
+
+		values := []any{
 			user.ID,
 			user.Bip32Seed,
-			user.CteatedAt,
-		)
+			user.CreatedAt,
+		}
 
 		if user.Activated {
-			query = query.Columns("activated_at").Values(user.CteatedAt)
+			columns = append(columns, "activated_at")
+			values = append(values, user.CreatedAt)
 		}
+
+		query := sq.Insert("users").Columns(
+			columns...,
+		).Values(
+			values...,
+		).PlaceholderFormat(sq.Dollar)
+
+		fmt.Println(query.ToSql())
 
 		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
 			return fmt.Errorf("error insert new user. %w", err)

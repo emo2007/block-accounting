@@ -105,6 +105,8 @@ func (s *Server) buildRouter() {
 }
 
 func (s *Server) responseError(w http.ResponseWriter, e error) {
+	s.log.Error("error handle request", logger.Err(e))
+
 	apiErr := mapError(e)
 
 	out, err := json.Marshal(apiErr)

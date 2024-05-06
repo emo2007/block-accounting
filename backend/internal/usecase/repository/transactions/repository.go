@@ -59,7 +59,7 @@ type repositorySQL struct {
 }
 
 func (s *repositorySQL) Conn(ctx context.Context) sqltools.DBTX {
-	if tx, ok := ctx.Value(sqltools.TxCtxKey{}).(*sql.Tx); ok {
+	if tx, ok := ctx.Value(sqltools.TxCtxKey).(*sql.Tx); ok {
 		return tx
 	}
 
@@ -260,7 +260,7 @@ func buildGetTransactionsQuery(params GetTransactionsParams) sq.SelectBuilder {
 		InnerJoin("users as u on u.id = t.created_by").
 		Where(sq.Eq{
 			"t.organization_id": params.OrganizationId,
-		})
+		}).PlaceholderFormat(sq.Dollar)
 
 	if len(params.Ids) > 0 {
 		query = query.Where(sq.Eq{

@@ -17,13 +17,22 @@ type User struct {
 	Bip32Seed []byte
 	Admin     bool
 	Activated bool
-	CteatedAt time.Time
+	CreatedAt time.Time
 }
 
-func NewUser(id uuid.UUID, seed []byte) *User {
+func NewUser(
+	id uuid.UUID,
+	seed []byte,
+	isAdmin bool,
+	activated bool,
+	createdAt time.Time,
+) *User {
 	return &User{
 		ID:        id,
 		Bip32Seed: seed,
+		Admin:     isAdmin,
+		Activated: activated,
+		CreatedAt: createdAt,
 	}
 }
 

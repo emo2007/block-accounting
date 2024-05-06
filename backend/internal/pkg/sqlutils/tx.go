@@ -21,11 +21,11 @@ type TransactionalStorage interface {
 	Conn(ctx context.Context) DBTX
 }
 
-type TxCtxKey struct{}
+type txCtxKey struct{}
 
-func Transaction(ctx context.Context, db *sql.DB, fn func(context.Context) error) error {
-	var err error
+var TxCtxKey = txCtxKey{}
 
+func Transaction(ctx context.Context, db *sql.DB, fn func(context.Context) error) (err error) {
 	var tx *sql.Tx = new(sql.Tx)
 
 	hasExternalTx := hasExternalTransaction(ctx)
@@ -70,14 +70,14 @@ func Transaction(ctx context.Context, db *sql.DB, fn func(context.Context) error
 			return fmt.Errorf("error begin transaction. %w", err)
 		}
 
-		ctx = context.WithValue(ctx, TxCtxKey{}, tx)
+		ctx = context.WithValue(ctx, TxCtxKey, tx)
 	}
 
 	return fn(ctx)
 }
 
 func hasExternalTransaction(ctx context.Context) bool {
-	if _, ok := ctx.Value(TxCtxKey{}).(*sql.Tx); ok {
+	if _, ok := ctx.Value(TxCtxKey).(*sql.Tx); ok {
 		return true
 	}
 
