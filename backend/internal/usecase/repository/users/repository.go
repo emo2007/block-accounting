@@ -77,8 +77,6 @@ func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 			values...,
 		).PlaceholderFormat(sq.Dollar)
 
-		fmt.Println(query.ToSql())
-
 		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
 			return fmt.Errorf("error insert new user. %w", err)
 		}
