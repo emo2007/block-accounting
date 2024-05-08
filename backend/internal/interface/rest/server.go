@@ -3,16 +3,20 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
+	"github.com/emochka2007/block-accounting/internal/pkg/metrics"
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Server struct {
@@ -59,6 +63,8 @@ func (s *Server) Serve(ctx context.Context) error {
 		return http.ListenAndServeTLS(s.addr, "/todo", "/todo", s)
 	}
 
+	metrics.Initialize(s.Mux)
+
 	return http.ListenAndServe(s.addr, s)
 }
 
@@ -81,8 +87,8 @@ func (s *Server) buildRouter() {
 	s.Get("/ping", s.handlePing) // debug
 
 	// auth
-	s.Post("/join", s.handleJoin) // new user
-	s.Post("/login", nil)         // login
+	s.Post("/join", s.handle(s.handleJoin, "join")) // new user
+	s.Post("/login", nil)                           // login
 
 	s.Route("/organization/{organization_id}", func(r chi.Router) {
 		s.Route("/transactions", func(r chi.Router) {
@@ -102,6 +108,26 @@ func (s *Server) buildRouter() {
 		})
 	})
 
+}
+
+func (s *Server) handle(h http.HandlerFunc, method_name string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		defer func() {
+			reqId := r.Context().Value(mw.RequestIDKey)
+
+			metrics.RequestDurations.(prometheus.ExemplarObserver).ObserveWithExemplar(
+				time.Since(started).Seconds(), prometheus.Labels{
+					"reqId":       fmt.Sprint(reqId),
+					"method_name": method_name,
+				},
+			)
+
+			metrics.RequestsAccepted.Add(1)
+		}()
+
+		h(w, r)
+	}
 }
 
 func (s *Server) responseError(w http.ResponseWriter, e error) {

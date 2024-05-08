@@ -6,20 +6,19 @@ networks:
 
 volumes:
   blockd-data: {}
+  prometheus_data: {}
 
 services:
   blockd:
     container_name: blockd
     image: blockd:latest
     ports:
-      - 8071:8071
-    expose: 
-      - 8080
+      - 8080:8080
     networks:
       - blockd-net
     depends_on:
       blockd-db:
-        condition: service_started
+        condition: service_healthy
 
   blockd-db:
     container_name: blockd-db
@@ -37,8 +36,36 @@ services:
     networks:
       - blockd-net
     healthcheck:
-      test: [ "CMD", "-U", "blockd", "pg_isready" ]
-      interval: 5s
+      test: pg_isready -U blockd -d blockd
+      interval: 1s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 5s
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    networks:
+      - blockd-net
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    networks:
+      - blockd-net
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -94,6 +95,8 @@ func main() {
 					Secret:    c.String("db-secret"),
 				},
 			}
+
+			fmt.Println(config)
 
 			service, cleanup, err := factory.ProvideService(config)
 			if err != nil {

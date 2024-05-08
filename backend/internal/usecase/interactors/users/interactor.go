@@ -72,10 +72,6 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 		time.Now(),
 	)
 
-	w, _ := hdwallet.NewFromSeed(seed)
-
-	fmt.Println(w)
-
 	if err = i.usersRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("error create new user. %w", err)
 	}
