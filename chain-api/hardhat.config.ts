@@ -14,6 +14,7 @@ const config = {
   paths: {
     sources: './src/hardhat/contracts',
     // tests: './src/hardhat/test',
+    ignition: './src/hardhat/ignition',
     cache: './src/hardhat/cache',
     artifacts: './src/hardhat/artifacts',
   },

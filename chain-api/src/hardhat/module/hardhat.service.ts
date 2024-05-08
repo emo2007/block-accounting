@@ -1,28 +1,39 @@
-const hre = require('hardhat');
-// import hre from 'hardhat';
+// const hre = require('hardhat');
+import * as hre from 'hardhat';
 import { Injectable } from '@nestjs/common';
-
+import { ethers } from 'ethers';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class HardhatService {
+  constructor(private readonly configService: ConfigService) {}
   async deploySalaryContract() {
-    // const { salaryAmount, userAddress } = req.body;
+    const provider = new ethers.JsonRpcProvider(
+      'https://polygon-amoy.g.alchemy.com/v2/pEtFFy_Qr_NrM1vMnlzSXmYXkozVNzLy',
+      80002,
+    );
 
-    // // Read the Solidity contract template file
-    // const solidityCode = readSolidityTemplate(); // Implement this function to read the Solidity template file
+    const salary = await hre.artifacts.readArtifact('Salaries');
+    const abi = salary.abi;
+    console.log('🚀 ~ HardhatService ~ deploySalaryContract ~ abi:', abi);
+    const bytecode = salary.deployedBytecode;
+    console.log(
+      '🚀 ~ HardhatService ~ deploySalaryContract ~ bytecode:',
+      bytecode,
+    );
+    const signer = new ethers.Wallet(
+      this.configService.getOrThrow('POLYGON_PK'),
+      provider,
+    );
 
-    // // Replace placeholders in the Solidity contract template with provided values
-    // const finalSolidityCode = replacePlaceholders(solidityCode, {
-    //   salaryAmount,
-    //   userAddress,
-    // });
+    const salaryContract = new ethers.ContractFactory(
+      abi,
+      salary.bytecode,
+      signer,
+    );
 
-    // // Compile the Solidity contract
-    // const compiledContract = await compileSolidity(finalSolidityCode);
+    const myContract = await salaryContract.deploy();
+    await myContract.waitForDeployment();
 
-    // // Deploy the contract
-    // const deployedContract = await deployContract(compiledContract);
-    const salaryC = await hre.ethers.getContractFactory('Salaries');
-    const myContract = await salaryC.deploy();
     console.log(
       '🚀 ~ HardhatService ~ deploySalaryContract ~ myContract:',
       myContract,
