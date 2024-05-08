@@ -10,6 +10,7 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 )
 
@@ -28,6 +29,7 @@ type authController struct {
 	log             *slog.Logger
 	presenter       presenters.AuthPresenter
 	usersInteractor users.UsersInteractor
+	jwtInteractor   jwt.JWTInteractor
 }
 
 func NewAuthController(
@@ -45,27 +47,32 @@ func NewAuthController(
 func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
 	request, err := c.presenter.CreateJoinRequest(req)
 	if err != nil {
-		return fmt.Errorf("error create join request. %w", err)
+		return c.presenter.ResponseJoin(
+			w, nil, fmt.Errorf("error create join request. %w", err),
+		)
 	}
 
 	c.log.Debug("join request", slog.String("mnemonic", request.Mnemonic))
 
 	if !bip32.IsMnemonicValid(request.Mnemonic) {
-		return fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
+		return c.presenter.ResponseJoin(
+			w, nil, fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic),
+		)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 	defer cancel()
 
-	if _, err = c.usersInteractor.Create(ctx, users.CreateParams{
+	user, err := c.usersInteractor.Create(ctx, users.CreateParams{
 		Mnemonic: request.Mnemonic,
 		IsAdmin:  true,
 		Activate: true,
-	}); err != nil {
-		return fmt.Errorf("error create new user. %w", err)
+	})
+	if err != nil {
+		return c.presenter.ResponseJoin(w, nil, fmt.Errorf("error create new user. %w", err))
 	}
 
-	return nil
+	return c.presenter.ResponseJoin(w, user, nil)
 }
 
 func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) error {

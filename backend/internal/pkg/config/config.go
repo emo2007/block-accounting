@@ -12,6 +12,8 @@ type CommonConfig struct {
 	LogLocal     bool
 	LogFile      string
 	LogAddSource bool
+
+	JWTSecret []byte
 }
 
 type RestConfig struct {

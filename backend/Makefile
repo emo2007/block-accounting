@@ -30,7 +30,8 @@ run.local: bin.build
 		-db-database=blockd \
 		-db-user=blockd \
 		-db-secret=blockd \
-		-db-enable-tls=false
+		-db-enable-tls=false \
+		-jwt-secret=local_jwt_secret
 
 .PHONY: run.debug
 run.debug: bin.build

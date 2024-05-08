@@ -4,13 +4,22 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/google/wire"
+
 	"github.com/emochka2007/block-accounting/internal/interface/rest"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
-	urepo "github.com/emochka2007/block-accounting/internal/usecase/repository/users"
+)
+
+var interfaceSet wire.ProviderSet = wire.NewSet(
+	provideAuthController,
+	provideControllers,
+
+	provideAuthPresenter,
 )
 
 func provideLogger(c config.Config) *slog.Logger {
@@ -36,20 +45,31 @@ func provideLogger(c config.Config) *slog.Logger {
 	return lb.Build()
 }
 
+func provideAuthPresenter(
+	jwtInteractor jwt.JWTInteractor,
+) presenters.AuthPresenter {
+	return presenters.NewAuthPresenter(jwtInteractor)
+}
+
+func provideAuthController(
+	log *slog.Logger,
+	usersInteractor users.UsersInteractor,
+	authPresenter presenters.AuthPresenter,
+) controllers.AuthController {
+	return controllers.NewAuthController(
+		log.WithGroup("auth-controller"),
+		authPresenter,
+		usersInteractor,
+	)
+}
+
 func provideControllers(
 	log *slog.Logger,
-	usersRepo urepo.Repository,
+	authController controllers.AuthController,
 ) *controllers.RootController {
 	return &controllers.RootController{
 		Ping: controllers.NewPingController(log.WithGroup("ping-controller")),
-		Auth: controllers.NewAuthController(
-			log.WithGroup("auth-controller"),
-			presenters.NewAuthPresenter(),
-			users.NewUsersInteractor(
-				log.WithGroup("users-interactor"),
-				usersRepo,
-			),
-		),
+		Auth: authController,
 	}
 }
 

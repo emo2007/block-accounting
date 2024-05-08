@@ -11,9 +11,11 @@ import (
 
 func ProvideService(c config.Config) (service.Service, func(), error) {
 	wire.Build(
-		provideUsersRepository,
 		provideLogger,
-		provideControllers,
+		provideUsersRepository,
+		provideUsersInteractor,
+		provideJWTInteractor,
+		interfaceSet,
 		provideRestServer,
 		service.NewService,
 	)

@@ -5,19 +5,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
+	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 )
 
 type AuthPresenter interface {
 	CreateJoinRequest(r *http.Request) (*domain.JoinRequest, error)
-	// ResponseJoin(w http.ResponseWriter, mnemonic string) error
+	ResponseJoin(w http.ResponseWriter, user *models.User, err error) error
 }
 
-type authPresenter struct{}
+type authPresenter struct {
+	jwtInteractor jwt.JWTInteractor
+}
 
-func NewAuthPresenter() AuthPresenter {
-	return &authPresenter{}
+func NewAuthPresenter(
+	jwtInteractor jwt.JWTInteractor,
+) AuthPresenter {
+	return &authPresenter{
+		jwtInteractor: jwtInteractor,
+	}
 }
 
 func (p *authPresenter) CreateJoinRequest(r *http.Request) (*domain.JoinRequest, error) {
@@ -37,17 +46,29 @@ func (p *authPresenter) CreateJoinRequest(r *http.Request) (*domain.JoinRequest,
 	return &request, nil
 }
 
-// func (p *authPresenter) ResponseJoin(w http.ResponseWriter, mnemonic string) error {
-// 	out, err := json.Marshal(domain.JoinResponse{
-// 		Mnemonic: mnemonic,
-// 	})
-// 	if err != nil {
-// 		return fmt.Errorf("error marshal join response. %w", err)
-// 	}
+func (p *authPresenter) ResponseJoin(w http.ResponseWriter, user *models.User, err error) error {
+	resp := new(domain.JoinResponse)
 
-// 	if _, err = w.Write(out); err != nil {
-// 		return fmt.Errorf("error write response. %w", err)
-// 	}
+	if err != nil {
+		// todo map error
+	} else {
+		token, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
+		if err != nil {
+			return fmt.Errorf("error create access token. %w", err)
+		}
 
-// 	return nil
-// }
+		resp.Ok = true
+		resp.Token = token
+	}
+
+	out, err := json.Marshal(resp)
+	if err != nil {
+		return fmt.Errorf("error marshal join response. %w", err)
+	}
+
+	if _, err = w.Write(out); err != nil {
+		return fmt.Errorf("error write response. %w", err)
+	}
+
+	return nil
+}

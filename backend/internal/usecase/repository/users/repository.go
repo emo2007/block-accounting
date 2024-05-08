@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
@@ -21,7 +22,7 @@ type GetParams struct {
 type Repository interface {
 	Get(ctx context.Context, params GetParams) (*models.User, error)
 	Create(ctx context.Context, user *models.User) error
-	Activate(ctx context.Context, id string) error
+	Activate(ctx context.Context, id uuid.UUID) error
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, id string) error
 }
@@ -89,8 +90,19 @@ func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-func (r *repositorySQL) Activate(ctx context.Context, id string) error {
+func (r *repositorySQL) Activate(ctx context.Context, id uuid.UUID) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Update("users").
+			SetMap(sq.Eq{
+				"activated_at": time.Now(),
+			}).
+			Where(sq.Eq{
+				"id": id,
+			})
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error mark user as activated in database. %w", err)
+		}
 
 		return nil
 	}); err != nil {

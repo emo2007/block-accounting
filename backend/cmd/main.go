@@ -34,6 +34,9 @@ func main() {
 				Name:  "log-add-source",
 				Value: true,
 			},
+			&cli.StringFlag{
+				Name: "jwt-secret",
+			},
 
 			// rest
 			&cli.StringFlag{
@@ -77,6 +80,7 @@ func main() {
 					LogLocal:     c.Bool("log-local"),
 					LogFile:      c.String("log-file"),
 					LogAddSource: c.Bool("log-add-source"),
+					JWTSecret:    []byte(c.String("jwt-secret")),
 				},
 				Rest: config.RestConfig{
 					Address: c.String("rest-address"),
