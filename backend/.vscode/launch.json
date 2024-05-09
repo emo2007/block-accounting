@@ -16,7 +16,7 @@
                                 "-log-add-source=true",
                                 "-jwt-secret=local_jwt_secret",
 
-                                "-rest-address=localhost:8080",
+                                "-rest-address=localhost:8081",
                                 "-db-host=localhost:8432",
                                 "-db-database=blockd",
                                 "-db-user=blockd",

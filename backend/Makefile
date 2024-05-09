@@ -25,7 +25,7 @@ run.local: bin.build
 		-log-level=debug \
 		-log-local=true \
 		-log-add-source=true \
-		-rest-address=localhost:8080 \
+		-rest-address=localhost:8081 \
 		-db-host=localhost:8432 \
 		-db-database=blockd \
 		-db-user=blockd \
@@ -39,7 +39,7 @@ run.debug: bin.build
 		-log-level=debug \
 		-log-local=false \
 		-log-add-source=true \
-		-rest-address=localhost:8080 \
+		-rest-address=localhost:8081 \
 		-db-host=localhost:8432 \
 		-db-database=blockd \
 		-db-user=blockd \

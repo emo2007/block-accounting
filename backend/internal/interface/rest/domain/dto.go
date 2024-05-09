@@ -10,24 +10,15 @@ type JoinRequest struct {
 }
 
 type JoinResponse struct {
-	Ok    bool   `json:"ok"`
-	Token string `json:"token,omitempty"`
-	Error *Error `json:"error,omitempty"`
+	Token string `json:"token"`
 }
 
 type LoginRequest struct {
-	Mnemonc string `json:"mnemonic"`
+	Mnemonic string `json:"mnemonic"`
 }
 
 type LoginResponse struct {
-	Ok    bool   `json:"ok"`
-	Token string `json:"token,omitempty"`
-	Error *Error `json:"error,omitempty"`
-}
-
-type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Token string `json:"token"`
 }
 
 func BuildRequest[T any](data []byte) (*T, error) {

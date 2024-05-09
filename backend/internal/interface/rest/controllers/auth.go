@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
+	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 )
@@ -45,19 +47,15 @@ func NewAuthController(
 }
 
 func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
-	request, err := c.presenter.CreateJoinRequest(req)
+	request, err := presenters.CreateRequest[domain.JoinRequest](req)
 	if err != nil {
-		return c.presenter.ResponseJoin(
-			w, nil, fmt.Errorf("error create join request. %w", err),
-		)
+		return fmt.Errorf("error create join request. %w", err)
 	}
 
 	c.log.Debug("join request", slog.String("mnemonic", request.Mnemonic))
 
 	if !bip32.IsMnemonicValid(request.Mnemonic) {
-		return c.presenter.ResponseJoin(
-			w, nil, fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic),
-		)
+		return fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
@@ -69,22 +67,53 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
 		Activate: true,
 	})
 	if err != nil {
-		return c.presenter.ResponseJoin(w, nil, fmt.Errorf("error create new user. %w", err))
+		return fmt.Errorf("error create new user. %w", err)
 	}
 
-	return c.presenter.ResponseJoin(w, user, nil)
+	c.log.Debug("join request", slog.String("user id", user.ID.String()))
+
+	return c.presenter.ResponseJoin(w, user)
+}
+
+// NIT: wrap with idempotent action handler
+func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
+	request, err := presenters.CreateRequest[domain.LoginRequest](req)
+	if err != nil {
+		return fmt.Errorf("error create login request. %w", err)
+	}
+
+	c.log.Debug("login request", slog.String("mnemonic", request.Mnemonic))
+
+	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
+
+	seed, err := hdwallet.NewSeedFromMnemonic(request.Mnemonic)
+	if err != nil {
+		return fmt.Errorf("error create seed from mnemonic. %w", err)
+	}
+
+	users, err := c.usersInteractor.Get(ctx, users.GetParams{
+		Seed: seed,
+	})
+	if err != nil {
+		return fmt.Errorf("error fetch user by seed. %w", err)
+	}
+
+	if len(users) == 0 {
+		return fmt.Errorf("error empty users set")
+	}
+
+	c.log.Debug("login request", slog.String("user id", users[0].ID.String()))
+
+	return c.presenter.ResponseLogin(w, users[0])
+}
+
+// const mnemonicEntropyBitSize int = 256
+
+func (c *authController) Invite(w http.ResponseWriter, req *http.Request) error {
+	return nil
 }
 
 func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) error {
-	return nil // implement
-}
-
-func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
-	return nil // implement
-}
-
-const mnemonicEntropyBitSize int = 256
-
-func (c *authController) Invite(w http.ResponseWriter, req *http.Request) error {
 	return nil // implement
 }

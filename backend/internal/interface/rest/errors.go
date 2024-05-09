@@ -1,22 +1,28 @@
 package rest
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+
+	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
+)
 
 type apiError struct {
-	Code  int    `json:"code"`
-	Error string `json:"error"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 func buildApiError(code int, message string) apiError {
 	return apiError{
-		Code:  code,
-		Error: message,
+		Code:    code,
+		Message: message,
 	}
 }
 
-func mapError(_ error) apiError {
-	// todo map typed errors
+func mapError(err error) apiError {
 	switch {
+	case errors.Is(err, controllers.ErrorAuthInvalidMnemonic):
+		return buildApiError(http.StatusBadRequest, "Invalid Mnemonic")
 	default:
 		return buildApiError(http.StatusInternalServerError, "Internal Server Error")
 	}

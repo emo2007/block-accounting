@@ -84,11 +84,11 @@ func (s *Server) buildRouter() {
 	s.Use(s.handleMw)
 	s.Use(render.SetContentType(render.ContentTypeJSON))
 
-	s.Get("/ping", s.handlePing) // debug
+	s.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping"))
 
 	// auth
-	s.Post("/join", s.handle(s.handleJoin, "join")) // new user
-	s.Post("/login", nil)                           // login
+	s.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
+	s.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
 
 	s.Route("/organization/{organization_id}", func(r chi.Router) {
 		s.Route("/transactions", func(r chi.Router) {
@@ -110,7 +110,10 @@ func (s *Server) buildRouter() {
 
 }
 
-func (s *Server) handle(h http.HandlerFunc, method_name string) http.HandlerFunc {
+func (s *Server) handle(
+	h func(w http.ResponseWriter, req *http.Request) error,
+	method_name string,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
 		defer func() {
@@ -122,11 +125,17 @@ func (s *Server) handle(h http.HandlerFunc, method_name string) http.HandlerFunc
 					"method_name": method_name,
 				},
 			)
-
-			metrics.RequestsAccepted.Add(1)
 		}()
 
-		h(w, r)
+		if err := h(w, r); err != nil {
+			s.log.Error(
+				"http error",
+				slog.String("method_name", method_name),
+				logger.Err(err),
+			)
+
+			s.responseError(w, err)
+		}
 	}
 }
 
@@ -161,18 +170,4 @@ func (s *Server) handleMw(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
-}
-
-func (s *Server) handleJoin(w http.ResponseWriter, req *http.Request) {
-	if err := s.controllers.Auth.Join(w, req); err != nil {
-		s.responseError(w, err)
-	}
-}
-
-func (s *Server) handlePing(w http.ResponseWriter, req *http.Request) {
-	s.log.Debug("ping request")
-
-	if err := s.controllers.Ping.Ping(w, req); err != nil {
-		s.responseError(w, err)
-	}
 }

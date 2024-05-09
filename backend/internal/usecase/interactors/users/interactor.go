@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,6 +11,10 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 	"github.com/google/uuid"
+)
+
+var (
+	ErrorUsersNotFound = errors.New("users not found")
 )
 
 type CreateParams struct {
@@ -88,7 +93,20 @@ func (i *usersInteractor) Activate(ctx context.Context, params ActivateParams) e
 }
 
 func (i *usersInteractor) Get(ctx context.Context, params GetParams) ([]*models.User, error) {
-	return nil, nil
+	users, err := i.usersRepo.Get(ctx, users.GetParams{
+		Ids:            params.Ids,
+		OrganizationId: params.OrganizationId,
+		Seed:           params.Seed,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch users from repository. %w", err)
+	}
+
+	if len(users) == 0 {
+		return nil, fmt.Errorf("error empty users set. %w", ErrorUsersNotFound)
+	}
+
+	return users, nil
 }
 
 func (i *usersInteractor) Delete(ctx context.Context, params DeleteParams) error {
