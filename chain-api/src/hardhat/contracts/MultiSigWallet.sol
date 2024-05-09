@@ -8,7 +8,7 @@ pragma solidity ^0.8.19;
 contract MultiSigWallet {
     event Deposit(address indexed sender, uint amount, uint balance);
     event SubmitTransaction(
-        address indexed owener,
+        address indexed owner,
         uint indexed txIndex,
         address indexed to,
         uint value,
@@ -38,36 +38,36 @@ contract MultiSigWallet {
     Transaction[] public transactions;
 
     modifier onlyOwner() {
-        require(isOwner[msg.sender], "not owner");
+        require(isOwner[msg.sender], 'not owner');
         _;
     }
 
     modifier txExists(uint _txIndex) {
-        require(_txIndex < transactions.length, "tx does not exist");
+        require(_txIndex < transactions.length, 'tx does not exist');
         _;
     }
 
     modifier notConfirmed(uint _txIndex) {
-        require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
+        require(!isConfirmed[_txIndex][msg.sender], 'tx already confirmed');
         _;
     }
 
     modifier notExecuted(uint _txIndex) {
-        require(!transactions[_txIndex].executed, "tx already confirmed");
+        require(!transactions[_txIndex].executed, 'tx already confirmed');
         _;
     }
 
     constructor(address[] memory _owners, uint _numConfirmationsRequired) {
-        require(_owners.length > 0, "owners required");
+        require(_owners.length > 0, 'owners required');
         require(
             _numConfirmationsRequired > 0 &&
                 _numConfirmationsRequired <= _owners.length,
-            "invalid number of required confirmations"
+            'invalid number of required confirmations'
         );
         for (uint i = 0; i < _owners.length; i++) {
             address owner = _owners[i];
-            require(owner != address(0), "invalid owner");
-            require(!isOwner[owner], "owner not unique");
+            require(owner != address(0), 'invalid owner');
+            require(!isOwner[owner], 'owner not unique');
             isOwner[owner] = true;
             owners.push(owner);
         }
@@ -117,13 +117,13 @@ contract MultiSigWallet {
         Transaction storage transaction = transactions[_txIndex];
         require(
             transaction.numConfirmations >= numConfirmationsRequired,
-            "cannot execute tx"
+            'cannot execute tx'
         );
         transaction.executed = true;
         (bool success, ) = transaction.to.call{value: transaction.value}(
             transaction.data
         );
-        require(success, "tx failed");
+        require(success, 'tx failed');
         emit ExecuteTransaction(msg.sender, _txIndex);
     }
 
@@ -131,7 +131,7 @@ contract MultiSigWallet {
         uint _txIndex
     ) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
-        require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
+        require(isConfirmed[_txIndex][msg.sender], 'tx not confirmed');
         transaction.numConfirmations -= 1;
         isConfirmed[_txIndex][msg.sender] = false;
 

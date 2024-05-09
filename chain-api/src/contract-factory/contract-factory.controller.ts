@@ -11,6 +11,7 @@ import { ContractFactoryService } from './contract-factory.service';
 import { CreateContractFactoryDto } from './dto/create-contract-factory.dto';
 import { UpdateContractFactoryDto } from './dto/update-contract-factory.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { MultiSigWalletDto } from 'src/hardhat/modules/dto/multi-sig.dto';
 @ApiTags('contract-factory')
 @Controller('contract-factory')
 export class ContractFactoryController {
@@ -18,8 +19,8 @@ export class ContractFactoryController {
     private readonly contractFactoryService: ContractFactoryService,
   ) {}
 
-  @Post('')
-  create(@Body() createContractFactoryDto: CreateContractFactoryDto) {
-    return this.contractFactoryService.create(createContractFactoryDto);
+  @Post('multi-sig')
+  create(@Body() createContractFactoryDto: MultiSigWalletDto) {
+    return this.contractFactoryService.createMultiSig(createContractFactoryDto);
   }
 }

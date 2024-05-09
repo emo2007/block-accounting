@@ -1,25 +1,19 @@
-// const hre = require('hardhat');
-import * as hre from 'hardhat';
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
+import * as hre from 'hardhat';
+import { BaseContractService } from './base-contract.service';
+
 @Injectable()
-export class HardhatService {
-  constructor(private readonly configService: ConfigService) {}
-  async deploySalaryContract() {
-    const provider = new ethers.JsonRpcProvider(
-      'https://polygon-amoy.g.alchemy.com/v2/pEtFFy_Qr_NrM1vMnlzSXmYXkozVNzLy',
-      80002,
-    );
+export class SalariesService extends BaseContractService {
+  getSalaries() {}
+
+  async deploy() {
+    const provider = await this.providerService.getProvider();
 
     const salary = await hre.artifacts.readArtifact('Salaries');
     const abi = salary.abi;
-    console.log('🚀 ~ HardhatService ~ deploySalaryContract ~ abi:', abi);
     const bytecode = salary.deployedBytecode;
-    console.log(
-      '🚀 ~ HardhatService ~ deploySalaryContract ~ bytecode:',
-      bytecode,
-    );
     const signer = new ethers.Wallet(
       this.configService.getOrThrow('POLYGON_PK'),
       provider,
@@ -31,12 +25,17 @@ export class HardhatService {
       signer,
     );
 
-    const myContract = await salaryContract.deploy();
+    const myContract = await salaryContract.deploy(
+      'multisig address',
+      this.configService.getOrThrow('CHAINLINK_AGGREGATOR_V3'),
+    );
     await myContract.waitForDeployment();
 
     console.log(
       '🚀 ~ HardhatService ~ deploySalaryContract ~ myContract:',
       myContract,
     );
+    const address = myContract.getAddress();
+    console.log('🚀 ~ SalariesService ~ deploy ~ address:', address);
   }
 }
