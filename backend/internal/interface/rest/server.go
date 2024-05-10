@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/controllers"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
+	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/pkg/metrics"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
@@ -28,6 +31,8 @@ type Server struct {
 	addr        string
 	tls         bool
 	controllers *controllers.RootController
+
+	jwt jwt.JWTInteractor
 
 	closeMu sync.RWMutex
 	closed  bool
@@ -89,23 +94,27 @@ func (s *Server) buildRouter() {
 	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
 
-	router.Post("/organization", s.handle(s.controllers.Auth.Invite, "organization"))
+	router.Route("/organization", func(r chi.Router) {
+		r.With(s.withAuthorization)
 
-	router.Route("/organization/{organization_id}", func(r chi.Router) {
-		router.Route("/transactions", func(r chi.Router) {
-			r.Get("/", nil)           // list
-			r.Post("/", nil)          // add
-			r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
-			r.Delete("/{tx_id}", nil) // remove
-		})
+		r.Get("/", s.handle(s.controllers.Auth.Invite, "organization"))
 
-		r.Post("/invite/{hash}", s.handle(s.controllers.Auth.Invite, "invite")) // create a new invite link
+		r.Route("/{organization_id}", func(r chi.Router) {
+			r.Route("/transactions", func(r chi.Router) {
+				r.Get("/", nil)           // list
+				r.Post("/", nil)          // add
+				r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
+				r.Delete("/{tx_id}", nil) // remove
+			})
 
-		r.Route("/employees", func(r chi.Router) {
-			r.Get("/", nil)                 // list
-			r.Post("/", nil)                // add
-			r.Put("/{employee_id}", nil)    // update (or maybe body?)
-			r.Delete("/{employee_id}", nil) // remove
+			r.Post("/invite/{hash}", s.handle(s.controllers.Auth.Invite, "invite")) // create a new invite link
+
+			r.Route("/employees", func(r chi.Router) {
+				r.Get("/", nil)                 // list
+				r.Post("/", nil)                // add
+				r.Put("/{employee_id}", nil)    // update (or maybe body?)
+				r.Delete("/{employee_id}", nil) // remove
+			})
 		})
 	})
 
@@ -169,6 +178,44 @@ func (s *Server) handleMw(next http.Handler) http.Handler {
 		w.Header().Add("Content-Type", "application/json")
 
 		next.ServeHTTP(w, r)
+	}
+
+	return http.HandlerFunc(fn)
+}
+
+func (s *Server) withAuthorization(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		tokenStringRaw := r.Header.Get("Authorization")
+		if tokenStringRaw == "" {
+			s.log.Warn(
+				"unauthorized request",
+				slog.String("remote_addr", r.RemoteAddr),
+				slog.String("endpoint", r.RequestURI),
+			)
+
+			w.WriteHeader(401)
+
+			return
+		}
+
+		tokenString := strings.Split(tokenStringRaw, " ")[1]
+
+		user, err := s.jwt.User(tokenString)
+		if err != nil {
+			s.log.Warn(
+				"unauthorized request",
+				slog.String("remote_addr", r.RemoteAddr),
+				slog.String("endpoint", r.RequestURI),
+				logger.Err(err),
+			)
+
+			s.responseError(w, err)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(
+			ctxmeta.UserContext(r.Context(), user),
+		))
 	}
 
 	return http.HandlerFunc(fn)

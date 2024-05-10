@@ -109,39 +109,6 @@ Response:
 }
 ```
 
-
-## POST **/join**  
-### Request body:  
-name (string, optional)  
-credentals (object, optional)  
-        credentals.email (string, optional)   
-        credentals.phone (string, optional)   
-        credentals.telegram (string, optional)   
-mnemonic (string, **required**)   
-
-### Example
-Request: 
-``` bash
-curl --location 'http://localhost:8081/login' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name": "Bladee The Grand Drainer",
-    "credentals": {
-        "email": "bladeee@gmail.com",
-        "phone": "+79999999999",
-        "telegram": "@thebladee"
-    },
-    "mnemonic":"airport donate language disagree dumb access insect tribe ozone humor foot jealous much digital confirm"
-}'
-```
-
-Response: 
-``` json 
-{
-    "token": "token-here"
-}
-```
-
 ## POST **/organization**  
 ### Request body:  
 name (string, **required**)  
