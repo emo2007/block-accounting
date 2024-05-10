@@ -51,3 +51,118 @@ Just run
 ``` sh
 make up
 ```
+
+# API 
+Request content type: application/json  
+Response content type: application/json  
+
+## POST **/join**  
+### Request body:  
+name (string, optional)  
+credentals (object, optional)  
+        credentals.email (string, optional)   
+        credentals.phone (string, optional)   
+        credentals.telegram (string, optional)   
+mnemonic (string, **required**)   
+
+### Example
+Request: 
+``` bash
+curl --location 'http://localhost:8081/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "Bladee The Grand Drainer",
+    "credentals": {
+        "email": "bladeee@gmail.com",
+        "phone": "+79999999999",
+        "telegram": "@thebladee"
+    },
+    "mnemonic":"airport donate language disagree dumb access insect tribe ozone humor foot jealous much digital confirm"
+}'
+```
+
+Response: 
+``` json 
+{
+    "token": "token-here"
+}
+```
+
+## POST **/login**  
+### Request body:  
+mnemonic (string, **required**)   
+
+### Example
+Request: 
+``` bash
+curl --location 'http://localhost:8081/login' \
+--header 'Content-Type: application/json' \
+--data '{
+    "mnemonic":"airport donate language disagree dumb access insect tribe ozone humor foot jealous much digital confirm"
+}'
+```
+
+Response: 
+``` json 
+{
+    "token": "token-here"
+}
+```
+
+
+## POST **/join**  
+### Request body:  
+name (string, optional)  
+credentals (object, optional)  
+        credentals.email (string, optional)   
+        credentals.phone (string, optional)   
+        credentals.telegram (string, optional)   
+mnemonic (string, **required**)   
+
+### Example
+Request: 
+``` bash
+curl --location 'http://localhost:8081/login' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "Bladee The Grand Drainer",
+    "credentals": {
+        "email": "bladeee@gmail.com",
+        "phone": "+79999999999",
+        "telegram": "@thebladee"
+    },
+    "mnemonic":"airport donate language disagree dumb access insect tribe ozone humor foot jealous much digital confirm"
+}'
+```
+
+Response: 
+``` json 
+{
+    "token": "token-here"
+}
+```
+
+## POST **/organization**  
+### Request body:  
+name (string, **required**)  
+address (string, optional)
+// org wallet address maybe??
+
+### Example
+Request: 
+``` bash
+curl --location 'http://localhost:8081/organization' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTU0NTY4Mzg4NTAsInVpZCI6ImI2NmU1Mjk4LTU1ZTctNGIxNy1hYzliLTA0MzU3YjBlN2Q0ZSJ9.K1I0QoZEdDYK_HEsJ0PdWOfZ8ugTcPfLqy7fHhvK9nk' \
+--data '{
+    "name": "The Drain Gang Inc",
+    "address": "Backsippestigen 22, 432 36 Varberg, Sweden"
+}'
+```
+
+Response: 
+``` json 
+{
+    "id": "dfac7846-0f0a-11ef-9262-0242ac120002"
+}
+```

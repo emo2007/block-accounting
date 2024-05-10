@@ -19,6 +19,7 @@ services:
     depends_on:
       blockd-db:
         condition: service_healthy
+    profiles: [blockd]
 
   blockd-db:
     container_name: blockd-db
@@ -41,6 +42,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+    profiles: [blockd, database]
 
   prometheus:
     image: prom/prometheus
@@ -55,6 +57,7 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
+    profiles: [blockd, metrics]
 
   grafana:
     image: grafana/grafana
@@ -69,3 +72,4 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
       - ./grafana:/etc/grafana/provisioning/datasources
+    profiles: [blockd, metrics]

@@ -55,11 +55,13 @@ func provideAuthController(
 	log *slog.Logger,
 	usersInteractor users.UsersInteractor,
 	authPresenter presenters.AuthPresenter,
+	jwtInteractor jwt.JWTInteractor,
 ) controllers.AuthController {
 	return controllers.NewAuthController(
 		log.WithGroup("auth-controller"),
 		authPresenter,
 		usersInteractor,
+		jwtInteractor,
 	)
 }
 

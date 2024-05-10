@@ -1,4 +1,4 @@
-package bip32
+package bip39
 
 import (
 	"crypto/rand"

@@ -16,6 +16,6 @@ func provideUsersInteractor(
 	return users.NewUsersInteractor(log.WithGroup("users-interactor"), usersRepo)
 }
 
-func provideJWTInteractor(c config.Config) jwt.JWTInteractor {
-	return jwt.NewWardenJWT(c.Common.JWTSecret)
+func provideJWTInteractor(c config.Config, usersInteractor users.UsersInteractor) jwt.JWTInteractor {
+	return jwt.NewWardenJWT(c.Common.JWTSecret, usersInteractor)
 }

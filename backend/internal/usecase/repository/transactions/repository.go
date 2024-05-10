@@ -58,6 +58,12 @@ type repositorySQL struct {
 	db *sql.DB
 }
 
+func NewRepository(db *sql.DB) Repository {
+	return &repositorySQL{
+		db: db,
+	}
+}
+
 func (s *repositorySQL) Conn(ctx context.Context) sqltools.DBTX {
 	if tx, ok := ctx.Value(sqltools.TxCtxKey).(*sql.Tx); ok {
 		return tx
@@ -139,7 +145,7 @@ func (r *repositorySQL) GetTransactions(
 				MaxFeeAllowed:  maxFeeAllowed,
 				CreatedBy: &models.User{
 					ID:        createdById,
-					Bip32Seed: createdBySeed,
+					Bip39Seed: createdBySeed,
 				},
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,

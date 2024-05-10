@@ -55,7 +55,9 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 			PlaceholderFormat(sq.Dollar)
 
 		if len(params.Ids) > 0 {
-			query = query.Where("id", params.Ids)
+			query = query.Where(sq.Eq{
+				"id": params.Ids,
+			})
 		}
 
 		// if params.OrganizationId != uuid.Nil {
@@ -92,7 +94,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 
 			users = append(users, &models.User{
 				ID:        id,
-				Bip32Seed: seed,
+				Bip39Seed: seed,
 				//Admin:     isAdmin,
 				CreatedAt: createdAt,
 				Activated: activatedAt.Valid,
@@ -113,7 +115,7 @@ func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 
 		values := []any{
 			user.ID,
-			user.Bip32Seed,
+			user.Bip39Seed,
 			user.CreatedAt,
 		}
 

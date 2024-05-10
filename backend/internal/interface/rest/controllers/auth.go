@@ -6,18 +6,20 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
-	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
+	"github.com/emochka2007/block-accounting/internal/pkg/bip39"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 )
 
 var (
-	ErrorAuthInvalidMnemonic = errors.New("Invalid Mnemonic")
+	ErrorAuthInvalidMnemonic = errors.New("invalid mnemonic")
+	ErrorTokenRequired       = errors.New("token required")
 )
 
 type AuthController interface {
@@ -38,11 +40,13 @@ func NewAuthController(
 	log *slog.Logger,
 	presenter presenters.AuthPresenter,
 	usersInteractor users.UsersInteractor,
+	jwtInteractor jwt.JWTInteractor,
 ) AuthController {
 	return &authController{
 		log:             log,
 		presenter:       presenter,
 		usersInteractor: usersInteractor,
+		jwtInteractor:   jwtInteractor,
 	}
 }
 
@@ -54,7 +58,7 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
 
 	c.log.Debug("join request", slog.String("mnemonic", request.Mnemonic))
 
-	if !bip32.IsMnemonicValid(request.Mnemonic) {
+	if !bip39.IsMnemonicValid(request.Mnemonic) {
 		return fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
 	}
 
@@ -111,6 +115,20 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
 // const mnemonicEntropyBitSize int = 256
 
 func (c *authController) Invite(w http.ResponseWriter, req *http.Request) error {
+	tokenStringRaw := req.Header.Get("Authorization")
+	if tokenStringRaw == "" {
+		return fmt.Errorf("error token requeired. %w", ErrorTokenRequired)
+	}
+
+	tokenString := strings.Split(tokenStringRaw, " ")[1]
+
+	user, err := c.jwtInteractor.User(tokenString)
+	if err != nil {
+		return fmt.Errorf("error fetch user from token. %w", err)
+	}
+
+	c.log.Debug("auth token", slog.Any("user", user))
+
 	return nil
 }
 

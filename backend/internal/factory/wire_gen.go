@@ -20,9 +20,9 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 		return nil, nil, err
 	}
 	usersInteractor := provideUsersInteractor(logger, repository)
-	jwtInteractor := provideJWTInteractor(c)
+	jwtInteractor := provideJWTInteractor(c, usersInteractor)
 	authPresenter := provideAuthPresenter(jwtInteractor)
-	authController := provideAuthController(logger, usersInteractor, authPresenter)
+	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor)
 	rootController := provideControllers(logger, authController)
 	server := provideRestServer(logger, rootController, c)
 	serviceService := service.NewService(logger, server)

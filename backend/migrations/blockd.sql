@@ -1,14 +1,31 @@
 create table if not exists users (
         id uuid not null,
+        name varchar(250),
+        email varchar(200),
+        phone varchar(16),
+        tg varchar(200),
         seed bytea not null unique,
         created_at timestamp default current_timestamp,
         activated_at  timestamp default null,
         primary key (id, seed)
 );
 
+create index if not exists index_users_name
+        on users using hash (name); 
+
+create index if not exists index_users_email
+        on users using hash (email); 
+
+create index if not exists index_users_phone
+        on users using hash (phone); 
+
+create index if not exists index_users_seed
+        on users using hash (seed); 
+
 create table if not exists organizations (
         id uuid primary key, 
         name varchar(300) default 'My Organization' not null, 
+        address varchar(750) default "", 
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
 );
@@ -30,6 +47,17 @@ create index if not exists index_organizations_users_organization_id_user_id_is_
 
 create index if not exists index_organizations_users_organization_id_user_id
         on organizations_users (organization_id, user_id); 
+
+create table employees (
+        id uuid primary key, 
+        organization_id uuid not null,
+        wallet_address text not null, 
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp
+);
+
+create index if not exists index_employees_id_organization_id
+        on employees (id, organization_id); 
 
 create table if not exists transactions (
         id uuid primary key,

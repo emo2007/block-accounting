@@ -6,6 +6,13 @@ import (
 )
 
 type JoinRequest struct {
+	Name       string `json:"name,omitempty"`
+	Credentals struct {
+		Email    string `json:"email,omitempty"`
+		Phone    string `json:"phone,omitempty"`
+		Telegram string `json:"telegram,omitempty"`
+	} `json:"credentals,omitempty"`
+
 	Mnemonic string `json:"mnemonic"`
 }
 

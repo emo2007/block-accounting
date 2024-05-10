@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
-	"github.com/emochka2007/block-accounting/internal/pkg/bip32"
+	"github.com/emochka2007/block-accounting/internal/pkg/bip39"
 )
 
 func main() {
@@ -28,13 +28,13 @@ func main() {
 			var reqc int
 
 			for {
-				e, err := bip32.NewEntropy(256)
+				e, err := bip39.NewEntropy(256)
 				if err != nil {
 					log.Println("ERROR: ", err)
 					break
 				}
 
-				m, err := bip32.NewMnemonic(e)
+				m, err := bip39.NewMnemonic(e)
 				if err != nil {
 					log.Println("ERROR: ", err)
 					break

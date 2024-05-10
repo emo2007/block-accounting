@@ -77,30 +77,31 @@ func (s *Server) Close() {
 }
 
 func (s *Server) buildRouter() {
-	s.Mux = chi.NewRouter()
+	router := chi.NewRouter()
 
-	s.Use(mw.Recoverer)
-	s.Use(mw.RequestID)
-	s.Use(s.handleMw)
-	s.Use(render.SetContentType(render.ContentTypeJSON))
+	router.Use(mw.Recoverer)
+	router.Use(mw.RequestID)
+	router.Use(s.handleMw)
+	router.Use(render.SetContentType(render.ContentTypeJSON))
 
-	s.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping"))
+	router.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping"))
 
-	// auth
-	s.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
-	s.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
+	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
+	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
 
-	s.Route("/organization/{organization_id}", func(r chi.Router) {
-		s.Route("/transactions", func(r chi.Router) {
+	router.Post("/organization", s.handle(s.controllers.Auth.Invite, "organization"))
+
+	router.Route("/organization/{organization_id}", func(r chi.Router) {
+		router.Route("/transactions", func(r chi.Router) {
 			r.Get("/", nil)           // list
 			r.Post("/", nil)          // add
 			r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
 			r.Delete("/{tx_id}", nil) // remove
 		})
 
-		s.Post("/invite/{hash}", nil) // create a new invite link
+		r.Post("/invite/{hash}", s.handle(s.controllers.Auth.Invite, "invite")) // create a new invite link
 
-		s.Route("/employees", func(r chi.Router) {
+		r.Route("/employees", func(r chi.Router) {
 			r.Get("/", nil)                 // list
 			r.Post("/", nil)                // add
 			r.Put("/{employee_id}", nil)    // update (or maybe body?)
@@ -108,6 +109,7 @@ func (s *Server) buildRouter() {
 		})
 	})
 
+	s.Mux = router
 }
 
 func (s *Server) handle(

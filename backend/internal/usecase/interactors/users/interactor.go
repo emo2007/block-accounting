@@ -72,7 +72,6 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 	user := models.NewUser(
 		uuid.New(),
 		seed,
-		params.IsAdmin,
 		params.Activate,
 		time.Now(),
 	)
