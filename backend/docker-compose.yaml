@@ -42,7 +42,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
-    profiles: [blockd, database]
+    profiles: [blockd, database, noback]
 
   prometheus:
     image: prom/prometheus
@@ -57,7 +57,7 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus_data:/prometheus
-    profiles: [blockd, metrics]
+    profiles: [blockd, metrics, noback]
 
   grafana:
     image: grafana/grafana
@@ -72,4 +72,4 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
       - ./grafana:/etc/grafana/provisioning/datasources
-    profiles: [blockd, metrics]
+    profiles: [blockd, metrics, noback]
