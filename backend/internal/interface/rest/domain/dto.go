@@ -28,6 +28,12 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+type NewOrganizationRequest struct {
+	Name           string `json:"name"`
+	Address        string `json:"address"`
+	WalletMnemonic string `json:"wallet_mnemonic,omitempty"`
+}
+
 func BuildRequest[T any](data []byte) (*T, error) {
 	var req T
 

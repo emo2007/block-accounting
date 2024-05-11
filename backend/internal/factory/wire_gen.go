@@ -24,7 +24,7 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	authPresenter := provideAuthPresenter(jwtInteractor)
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor)
 	rootController := provideControllers(logger, authController)
-	server := provideRestServer(logger, rootController, c)
+	server := provideRestServer(logger, rootController, c, jwtInteractor)
 	serviceService := service.NewService(logger, server)
 	return serviceService, func() {
 		cleanup()

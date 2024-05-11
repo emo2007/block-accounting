@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
@@ -23,10 +22,10 @@ var (
 )
 
 type AuthController interface {
-	Join(w http.ResponseWriter, req *http.Request) error
-	JoinWithInvite(w http.ResponseWriter, req *http.Request) error
-	Login(w http.ResponseWriter, req *http.Request) error
-	Invite(w http.ResponseWriter, req *http.Request) error
+	Join(w http.ResponseWriter, req *http.Request) ([]byte, error)
+	JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error)
+	Login(w http.ResponseWriter, req *http.Request) ([]byte, error)
+	Invite(w http.ResponseWriter, req *http.Request) ([]byte, error)
 }
 
 type authController struct {
@@ -50,28 +49,31 @@ func NewAuthController(
 	}
 }
 
-func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
+func (c *authController) Join(w http.ResponseWriter, req *http.Request) ([]byte, error) {
 	request, err := presenters.CreateRequest[domain.JoinRequest](req)
 	if err != nil {
-		return fmt.Errorf("error create join request. %w", err)
+		return nil, fmt.Errorf("error create join request. %w", err)
 	}
 
 	c.log.Debug("join request", slog.String("mnemonic", request.Mnemonic))
 
 	if !bip39.IsMnemonicValid(request.Mnemonic) {
-		return fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
+		return nil, fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
 	}
 
 	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 	defer cancel()
 
 	user, err := c.usersInteractor.Create(ctx, users.CreateParams{
+		Name:     request.Name,
+		Email:    request.Credentals.Email,
+		Phone:    request.Credentals.Phone,
+		Tg:       request.Credentals.Telegram,
 		Mnemonic: request.Mnemonic,
-		IsAdmin:  true,
 		Activate: true,
 	})
 	if err != nil {
-		return fmt.Errorf("error create new user. %w", err)
+		return nil, fmt.Errorf("error create new user. %w", err)
 	}
 
 	c.log.Debug("join request", slog.String("user id", user.ID.String()))
@@ -80,10 +82,10 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) error {
 }
 
 // NIT: wrap with idempotent action handler
-func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
+func (c *authController) Login(w http.ResponseWriter, req *http.Request) ([]byte, error) {
 	request, err := presenters.CreateRequest[domain.LoginRequest](req)
 	if err != nil {
-		return fmt.Errorf("error create login request. %w", err)
+		return nil, fmt.Errorf("error create login request. %w", err)
 	}
 
 	c.log.Debug("login request", slog.String("mnemonic", request.Mnemonic))
@@ -93,18 +95,18 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
 
 	seed, err := hdwallet.NewSeedFromMnemonic(request.Mnemonic)
 	if err != nil {
-		return fmt.Errorf("error create seed from mnemonic. %w", err)
+		return nil, fmt.Errorf("error create seed from mnemonic. %w", err)
 	}
 
 	users, err := c.usersInteractor.Get(ctx, users.GetParams{
 		Seed: seed,
 	})
 	if err != nil {
-		return fmt.Errorf("error fetch user by seed. %w", err)
+		return nil, fmt.Errorf("error fetch user by seed. %w", err)
 	}
 
 	if len(users) == 0 {
-		return fmt.Errorf("error empty users set")
+		return nil, fmt.Errorf("error empty users set")
 	}
 
 	c.log.Debug("login request", slog.String("user id", users[0].ID.String()))
@@ -114,24 +116,11 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) error {
 
 // const mnemonicEntropyBitSize int = 256
 
-func (c *authController) Invite(w http.ResponseWriter, req *http.Request) error {
-	tokenStringRaw := req.Header.Get("Authorization")
-	if tokenStringRaw == "" {
-		return fmt.Errorf("error token requeired. %w", ErrorTokenRequired)
-	}
+func (c *authController) Invite(w http.ResponseWriter, req *http.Request) ([]byte, error) {
 
-	tokenString := strings.Split(tokenStringRaw, " ")[1]
-
-	user, err := c.jwtInteractor.User(tokenString)
-	if err != nil {
-		return fmt.Errorf("error fetch user from token. %w", err)
-	}
-
-	c.log.Debug("auth token", slog.Any("user", user))
-
-	return nil
+	return nil, nil
 }
 
-func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) error {
-	return nil // implement
+func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+	return nil, nil // implement
 }

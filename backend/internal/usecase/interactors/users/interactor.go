@@ -18,8 +18,11 @@ var (
 )
 
 type CreateParams struct {
+	Name     string
+	Email    string
+	Phone    string
+	Tg       string
 	Mnemonic string
-	IsAdmin  bool
 	Activate bool
 }
 
@@ -66,7 +69,7 @@ func NewUsersInteractor(
 func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*models.User, error) {
 	seed, err := hdwallet.NewSeedFromMnemonic(params.Mnemonic)
 	if err != nil {
-		return nil, fmt.Errorf("error convert mnemonic into a bytes. %w", err)
+		return nil, fmt.Errorf("error convert mnemonic into a seed. %w", err)
 	}
 
 	user := models.NewUser(
@@ -75,6 +78,11 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 		params.Activate,
 		time.Now(),
 	)
+
+	user.Name = params.Name
+	user.Credentails.Email = params.Email
+	user.Credentails.Phone = params.Phone
+	user.Credentails.Telegram = params.Tg
 
 	if err = i.usersRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("error create new user. %w", err)

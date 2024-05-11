@@ -79,10 +79,12 @@ func provideRestServer(
 	log *slog.Logger,
 	controllers *controllers.RootController,
 	c config.Config,
+	jwt jwt.JWTInteractor,
 ) *rest.Server {
 	return rest.NewServer(
 		log.WithGroup("rest"),
 		c.Rest,
 		controllers,
+		jwt,
 	)
 }

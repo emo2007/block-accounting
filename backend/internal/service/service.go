@@ -29,6 +29,8 @@ func NewService(
 }
 
 func (s *ServiceImpl) Run(ctx context.Context) error {
+	s.log.Info("starting blockd service 0w0")
+
 	errch := make(chan error)
 
 	defer s.rest.Close()
@@ -52,5 +54,5 @@ func (s *ServiceImpl) Run(ctx context.Context) error {
 }
 
 func (s *ServiceImpl) Stop() {
-
+	s.log.Info(">w< bye bye! :3")
 }

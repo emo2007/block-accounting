@@ -42,12 +42,14 @@ func NewServer(
 	log *slog.Logger,
 	conf config.RestConfig,
 	controllers *controllers.RootController,
+	jwt jwt.JWTInteractor,
 ) *Server {
 	s := &Server{
 		log:         log,
 		addr:        conf.Address,
 		tls:         conf.TLS,
 		controllers: controllers,
+		jwt:         jwt,
 	}
 
 	s.buildRouter()
@@ -87,6 +89,7 @@ func (s *Server) buildRouter() {
 	router.Use(mw.Recoverer)
 	router.Use(mw.RequestID)
 	router.Use(s.handleMw)
+
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 
 	router.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping"))
@@ -94,12 +97,16 @@ func (s *Server) buildRouter() {
 	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
 
-	router.Route("/organization", func(r chi.Router) {
-		r.With(s.withAuthorization)
+	router.Route("/organizations", func(r chi.Router) {
+		r = r.With(s.withAuthorization)
 
-		r.Get("/", s.handle(s.controllers.Auth.Invite, "organization"))
+		// r.Get("/", s.handle(s.controllers.Auth.Invite, "list_organizations"))
+		// r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
+			// r.Put("/", s.handle(s.controllers.Organizations.NewOrganization, "update_organization"))
+			// r.Delete("/", s.handle(s.controllers.Organizations.NewOrganization, "delete_organization"))
+
 			r.Route("/transactions", func(r chi.Router) {
 				r.Get("/", nil)           // list
 				r.Post("/", nil)          // add
@@ -122,7 +129,7 @@ func (s *Server) buildRouter() {
 }
 
 func (s *Server) handle(
-	h func(w http.ResponseWriter, req *http.Request) error,
+	h func(w http.ResponseWriter, req *http.Request) ([]byte, error),
 	method_name string,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +145,8 @@ func (s *Server) handle(
 			)
 		}()
 
-		if err := h(w, r); err != nil {
+		out, err := h(w, r)
+		if err != nil {
 			s.log.Error(
 				"http error",
 				slog.String("method_name", method_name),
@@ -146,6 +154,17 @@ func (s *Server) handle(
 			)
 
 			s.responseError(w, err)
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		if _, err = w.Write(out); err != nil {
+			s.log.Error(
+				"error write http response",
+				slog.String("method_name", method_name),
+				logger.Err(err),
+			)
 		}
 	}
 }

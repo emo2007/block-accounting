@@ -68,7 +68,7 @@ mnemonic (string, **required**)
 ### Example
 Request: 
 ``` bash
-curl --location 'http://localhost:8081/login' \
+curl --location 'http://localhost:8081/join' \
 --header 'Content-Type: application/json' \
 --data-raw '{
     "name": "Bladee The Grand Drainer",
@@ -109,11 +109,11 @@ Response:
 }
 ```
 
-## POST **/organization**  
+## POST **/organizations**  
 ### Request body:  
 name (string, **required**)  
 address (string, optional)
-// org wallet address maybe??
+wallet_mnemonic (string, optional. *if not provided, creators mnemonic will me used*)
 
 ### Example
 Request: 

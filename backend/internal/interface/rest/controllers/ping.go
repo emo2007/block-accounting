@@ -6,7 +6,7 @@ import (
 )
 
 type PingController interface {
-	Ping(w http.ResponseWriter, req *http.Request) error
+	Ping(w http.ResponseWriter, req *http.Request) ([]byte, error)
 }
 
 type pingController struct {
@@ -21,8 +21,6 @@ func NewPingController(
 	}
 }
 
-func (c *pingController) Ping(w http.ResponseWriter, req *http.Request) error {
-	_, err := w.Write([]byte("pong"))
-
-	return err
+func (c *pingController) Ping(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+	return []byte("pong"), nil
 }
