@@ -6,14 +6,18 @@ package factory
 import (
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/service"
+	"github.com/emochka2007/block-accounting/internal/usecase/repository"
 	"github.com/google/wire"
 )
 
 func ProvideService(c config.Config) (service.Service, func(), error) {
 	wire.Build(
+		repository.ProvideDatabaseConnection,
 		provideLogger,
 		provideUsersRepository,
 		provideUsersInteractor,
+		provideOrganizationsRepository,
+		provideOrganizationsInteractor,
 		provideJWTInteractor,
 		interfaceSet,
 		provideRestServer,

@@ -12,11 +12,13 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 )
 
 var interfaceSet wire.ProviderSet = wire.NewSet(
 	provideAuthController,
+	provideOrganizationsCOntroller,
 	provideControllers,
 
 	provideAuthPresenter,
@@ -65,13 +67,25 @@ func provideAuthController(
 	)
 }
 
+func provideOrganizationsCOntroller(
+	log *slog.Logger,
+	organizationsInteractor organizations.OrganizationsInteractor,
+) controllers.OrganizationsController {
+	return controllers.NewOrganizationsController(
+		log.WithGroup("organizations-controller"),
+		organizationsInteractor,
+	)
+}
+
 func provideControllers(
 	log *slog.Logger,
 	authController controllers.AuthController,
+	orgController controllers.OrganizationsController,
 ) *controllers.RootController {
 	return &controllers.RootController{
-		Ping: controllers.NewPingController(log.WithGroup("ping-controller")),
-		Auth: authController,
+		Ping:          controllers.NewPingController(log.WithGroup("ping-controller")),
+		Auth:          authController,
+		Organizations: orgController,
 	}
 }
 

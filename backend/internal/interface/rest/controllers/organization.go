@@ -19,11 +19,25 @@ type organizationsController struct {
 	orgInteractor organizations.OrganizationsInteractor
 }
 
+func NewOrganizationsController(
+	log *slog.Logger,
+	orgInteractor organizations.OrganizationsInteractor,
+) OrganizationsController {
+	return &organizationsController{
+		log:           log,
+		orgInteractor: orgInteractor,
+	}
+}
+
 func (c *organizationsController) NewOrganization(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	_, err := presenters.CreateRequest[domain.NewOrganizationRequest](r)
 	if err != nil {
 		return nil, fmt.Errorf("error build request. %w", err)
 	}
+
+	// todo call int.Create
+
+	// todo build response
 
 	return nil, nil
 }

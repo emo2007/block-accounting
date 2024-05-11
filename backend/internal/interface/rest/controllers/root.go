@@ -9,11 +9,11 @@ type RootController struct {
 func NewRootController(
 	ping PingController,
 	auth AuthController,
-	// organizations OrganizationsController,
+	organizations OrganizationsController,
 ) *RootController {
 	return &RootController{
-		Ping: ping,
-		Auth: auth,
-		// Organizations: organizations,
+		Ping:          ping,
+		Auth:          auth,
+		Organizations: organizations,
 	}
 }

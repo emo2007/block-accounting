@@ -5,7 +5,9 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
+	orepo "github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
 	urepo "github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 )
 
@@ -18,4 +20,11 @@ func provideUsersInteractor(
 
 func provideJWTInteractor(c config.Config, usersInteractor users.UsersInteractor) jwt.JWTInteractor {
 	return jwt.NewWardenJWT(c.Common.JWTSecret, usersInteractor)
+}
+
+func provideOrganizationsInteractor(
+	log *slog.Logger,
+	orgRepo orepo.Repository,
+) organizations.OrganizationsInteractor {
+	return organizations.NewOrganizationsInteractor(log, orgRepo)
 }

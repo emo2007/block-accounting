@@ -101,7 +101,7 @@ func (s *Server) buildRouter() {
 		r = r.With(s.withAuthorization)
 
 		// r.Get("/", s.handle(s.controllers.Auth.Invite, "list_organizations"))
-		// r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
+		r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
 			// r.Put("/", s.handle(s.controllers.Organizations.NewOrganization, "update_organization"))
