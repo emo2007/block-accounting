@@ -50,22 +50,26 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 	var users []*models.User = make([]*models.User, 0, len(params.Ids))
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
-		query := sq.Select("id, name, email, phone, tg, seed, created_at, activated_at").
-			From("users").
+		query := sq.Select("u.id, u.name, u.email, u.phone, u.tg, u.seed, u.created_at, u.activated_at").
+			From("users as u").
 			PlaceholderFormat(sq.Dollar)
 
 		if len(params.Ids) > 0 {
 			query = query.Where(sq.Eq{
-				"id": params.Ids,
+				"u.id": params.Ids,
 			})
 		}
 
-		// if params.OrganizationId != uuid.Nil {
-		// 	// todo join org users
-		// }
+		if params.OrganizationId != uuid.Nil {
+			query = query.InnerJoin(
+				"organizations_users as ou on ou.user_id = u.id",
+			).Where(sq.Eq{
+				"ou.organization_id": params.OrganizationId,
+			})
+		}
 
 		if params.Seed != nil {
-			query = query.Where("seed = ?", params.Seed)
+			query = query.Where("u.seed = ?", params.Seed)
 		}
 
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
