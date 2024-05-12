@@ -61,7 +61,7 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) ([]byte,
 		return nil, fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
 	}
 
-	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
 	defer cancel()
 
 	user, err := c.usersInteractor.Create(ctx, users.CreateParams{
@@ -78,7 +78,7 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) ([]byte,
 
 	c.log.Debug("join request", slog.String("user id", user.ID.String()))
 
-	return c.presenter.ResponseJoin(w, user)
+	return c.presenter.ResponseJoin(user)
 }
 
 // NIT: wrap with idempotent action handler
@@ -90,7 +90,7 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) ([]byte
 
 	c.log.Debug("login request", slog.String("mnemonic", request.Mnemonic))
 
-	ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
 	defer cancel()
 
 	seed, err := hdwallet.NewSeedFromMnemonic(request.Mnemonic)
@@ -111,7 +111,7 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) ([]byte
 
 	c.log.Debug("login request", slog.String("user id", users[0].ID.String()))
 
-	return c.presenter.ResponseLogin(w, users[0])
+	return c.presenter.ResponseLogin(users[0])
 }
 
 // const mnemonicEntropyBitSize int = 256

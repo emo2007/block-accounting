@@ -54,7 +54,7 @@ create index if not exists index_user_id_organization_id
 create table organizations_users (
         organization_id uuid not null references organizations(id), 
         user_id uuid not null references users(id), 
-        employee_id uuid references employees(id) default null,
+        employee_id uuid default null,
         added_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp,
         deleted_at timestamp default null,

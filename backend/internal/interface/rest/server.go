@@ -100,7 +100,7 @@ func (s *Server) buildRouter() {
 	router.Route("/organizations", func(r chi.Router) {
 		r = r.With(s.withAuthorization)
 
-		// r.Get("/", s.handle(s.controllers.Auth.Invite, "list_organizations"))
+		r.Get("/", s.handle(s.controllers.Organizations.ListOrganizations, "list_organizations"))
 		r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
@@ -108,7 +108,7 @@ func (s *Server) buildRouter() {
 			// r.Delete("/", s.handle(s.controllers.Organizations.NewOrganization, "delete_organization"))
 
 			r.Route("/transactions", func(r chi.Router) {
-				r.Get("/", nil)           // list
+				r.Get("/", nil)           // list todo add cache
 				r.Post("/", nil)          // add
 				r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
 				r.Delete("/{tx_id}", nil) // remove
@@ -117,7 +117,7 @@ func (s *Server) buildRouter() {
 			r.Post("/invite/{hash}", s.handle(s.controllers.Auth.Invite, "invite")) // create a new invite link
 
 			r.Route("/employees", func(r chi.Router) {
-				r.Get("/", nil)                 // list
+				r.Get("/", nil)                 // list. todo add cache
 				r.Post("/", nil)                // add
 				r.Put("/{employee_id}", nil)    // update (or maybe body?)
 				r.Delete("/{employee_id}", nil) // remove
@@ -154,6 +154,8 @@ func (s *Server) handle(
 			)
 
 			s.responseError(w, err)
+
+			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")
@@ -186,6 +188,8 @@ func (s *Server) responseError(w http.ResponseWriter, e error) {
 }
 
 func (s *Server) handleMw(next http.Handler) http.Handler {
+	// todo add rate limiter && cirquit braker
+
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		s.closeMu.RLock()
 		defer s.closeMu.RUnlock()

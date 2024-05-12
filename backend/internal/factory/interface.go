@@ -18,10 +18,11 @@ import (
 
 var interfaceSet wire.ProviderSet = wire.NewSet(
 	provideAuthController,
-	provideOrganizationsCOntroller,
+	provideOrganizationsController,
 	provideControllers,
 
 	provideAuthPresenter,
+	provideOrganizationsPresenter,
 )
 
 func provideLogger(c config.Config) *slog.Logger {
@@ -53,6 +54,10 @@ func provideAuthPresenter(
 	return presenters.NewAuthPresenter(jwtInteractor)
 }
 
+func provideOrganizationsPresenter() presenters.OrganizationsPresenter {
+	return presenters.NewOrganizationsPresenter()
+}
+
 func provideAuthController(
 	log *slog.Logger,
 	usersInteractor users.UsersInteractor,
@@ -67,13 +72,15 @@ func provideAuthController(
 	)
 }
 
-func provideOrganizationsCOntroller(
+func provideOrganizationsController(
 	log *slog.Logger,
 	organizationsInteractor organizations.OrganizationsInteractor,
+	presenter presenters.OrganizationsPresenter,
 ) controllers.OrganizationsController {
 	return controllers.NewOrganizationsController(
 		log.WithGroup("organizations-controller"),
 		organizationsInteractor,
+		presenter,
 	)
 }
 

@@ -3,7 +3,6 @@ package presenters
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
@@ -12,8 +11,8 @@ import (
 )
 
 type AuthPresenter interface {
-	ResponseJoin(w http.ResponseWriter, user *models.User) ([]byte, error)
-	ResponseLogin(w http.ResponseWriter, user *models.User) ([]byte, error)
+	ResponseJoin(user *models.User) ([]byte, error)
+	ResponseLogin(user *models.User) ([]byte, error)
 }
 
 type authPresenter struct {
@@ -28,7 +27,7 @@ func NewAuthPresenter(
 	}
 }
 
-func (p *authPresenter) ResponseJoin(w http.ResponseWriter, user *models.User) ([]byte, error) {
+func (p *authPresenter) ResponseJoin(user *models.User) ([]byte, error) {
 	resp := new(domain.JoinResponse)
 
 	token, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
@@ -46,7 +45,7 @@ func (p *authPresenter) ResponseJoin(w http.ResponseWriter, user *models.User) (
 	return out, nil
 }
 
-func (p *authPresenter) ResponseLogin(w http.ResponseWriter, user *models.User) ([]byte, error) {
+func (p *authPresenter) ResponseLogin(user *models.User) ([]byte, error) {
 	resp := new(domain.LoginResponse)
 
 	token, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
