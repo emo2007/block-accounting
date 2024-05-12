@@ -31,7 +31,7 @@ type AddParticipantParams struct {
 
 type Repository interface {
 	Create(ctx context.Context, org models.Organization) error
-	Get(ctx context.Context, params GetParams) ([]*models.Organization, error)
+	Get(ctx context.Context, params GetParams) ([]models.Organization, error)
 	Update(ctx context.Context, org models.Organization) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	AddParticipant(ctx context.Context, params AddParticipantParams) error
@@ -86,8 +86,8 @@ func (r *repositorySQL) Create(ctx context.Context, org models.Organization) err
 	return nil
 }
 
-func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Organization, error) {
-	organizations := make([]*models.Organization, 0, params.Limit)
+func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]models.Organization, error) {
+	organizations := make([]models.Organization, 0, params.Limit)
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
 		query := sq.Select(
@@ -158,7 +158,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Or
 				return fmt.Errorf("error scan row. %w", err)
 			}
 
-			organizations = append(organizations, &models.Organization{
+			organizations = append(organizations, models.Organization{
 				ID:         id,
 				Name:       name,
 				Address:    address,

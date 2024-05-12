@@ -26,13 +26,16 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	authPresenter := provideAuthPresenter(jwtInteractor)
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor)
 	organizationsRepository := provideOrganizationsRepository(db)
-	organizationsInteractor := provideOrganizationsInteractor(logger, organizationsRepository)
+	client, cleanup2 := provideRedisConnection(c)
+	cache := provideRedisCache(client, logger)
+	organizationsInteractor := provideOrganizationsInteractor(logger, organizationsRepository, cache)
 	organizationsPresenter := provideOrganizationsPresenter()
 	organizationsController := provideOrganizationsController(logger, organizationsInteractor, organizationsPresenter)
 	rootController := provideControllers(logger, authController, organizationsController)
 	server := provideRestServer(logger, rootController, c, jwtInteractor)
 	serviceService := service.NewService(logger, server)
 	return serviceService, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

@@ -21,7 +21,9 @@
                                 "-db-database=blockd",
                                 "-db-user=blockd",
                                 "-db-secret=blockd",
-                                "-db-enable-tls=false"
+                                "-db-enable-tls=false",
+
+                                "-cache-host=localhost:6379"
                         ]
                 }
         ]

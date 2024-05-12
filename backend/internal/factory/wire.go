@@ -13,7 +13,9 @@ import (
 func ProvideService(c config.Config) (service.Service, func(), error) {
 	wire.Build(
 		repository.ProvideDatabaseConnection,
+		provideRedisConnection,
 		provideLogger,
+		provideRedisCache,
 		provideUsersRepository,
 		provideUsersInteractor,
 		provideOrganizationsRepository,

@@ -11,7 +11,9 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
+	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	"github.com/emochka2007/block-accounting/internal/usecase/repository/cache"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
 	"github.com/google/uuid"
 )
@@ -49,15 +51,18 @@ type OrganizationsInteractor interface {
 type organizationsInteractor struct {
 	log           *slog.Logger
 	orgRepository organizations.Repository
+	cache         cache.Cache
 }
 
 func NewOrganizationsInteractor(
 	log *slog.Logger,
 	orgRepository organizations.Repository,
+	cache cache.Cache,
 ) OrganizationsInteractor {
 	return &organizationsInteractor{
 		log:           log,
 		orgRepository: orgRepository,
+		cache:         cache,
 	}
 }
 
@@ -96,8 +101,12 @@ func (c *organizationsListCursor) decode(s string) error {
 }
 
 type ListResponse struct {
-	Organizations []*models.Organization
-	NextCursor    string
+	Organizations []models.Organization `json:"Organizations"`
+	NextCursor    string                `json:"NextCursor"`
+}
+
+func (i ListResponse) MarshalBinary() ([]byte, error) {
+	return json.Marshal(i)
 }
 
 func (i *organizationsInteractor) List(
@@ -116,6 +125,16 @@ func (i *organizationsInteractor) List(
 	} else {
 		params.UserId = user.Id()
 	}
+
+	out := new(ListResponse)
+
+	// BUG: empty org set fetched from cache
+	// if err := i.cache.Get(ctx, params, out); err != nil && errors.Is(err, redis.Nil) {
+	// 	i.log.Error("no cache hit!", logger.Err(err))
+	// } else {
+	// 	i.log.Debug("cache hit!", slog.AnyValue(out))
+	// 	return out, nil
+	// }
 
 	if params.Limit <= 0 || params.Limit > 50 {
 		params.Limit = 50
@@ -158,10 +177,16 @@ func (i *organizationsInteractor) List(
 		}
 	}
 
-	return &ListResponse{
+	out = &ListResponse{
 		Organizations: orgs,
 		NextCursor:    nextCursor,
-	}, nil
+	}
+
+	if err = i.cache.Cache(ctx, params, *out, time.Hour*1); err != nil {
+		i.log.Error("error add cache record", logger.Err(err))
+	}
+
+	return out, nil
 }
 
 func (i *organizationsInteractor) Create(

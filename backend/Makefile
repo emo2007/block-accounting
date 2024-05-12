@@ -31,7 +31,8 @@ run.local: bin.build
 		-db-user=blockd \
 		-db-secret=blockd \
 		-db-enable-tls=false \
-		-jwt-secret=local_jwt_secret
+		-jwt-secret=local_jwt_secret \ 
+		-cache-host=localhost:6379 
 
 .PHONY: run.debug
 run.debug: bin.build
@@ -44,7 +45,10 @@ run.debug: bin.build
 		-db-database=blockd \
 		-db-user=blockd \
 		-db-secret=blockd \
-		-db-enable-tls=false
+		-db-enable-tls=false \
+		-jwt-secret=local_jwt_secret \ 
+		-cache-host=localhost:6379 
+
 
 start.d:
 	sudo systemctl start docker

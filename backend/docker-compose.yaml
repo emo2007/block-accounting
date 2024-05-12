@@ -44,6 +44,16 @@ services:
       start_period: 5s
     profiles: [blockd, database, noback]
 
+  blockd-cache:
+    container_name: blockd-cache 
+    image: redis:7.2.4
+    restart: always
+    networks:
+      - blockd-net
+    ports:
+      - 6379:6379
+    profiles: [blockd, database, noback]
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus

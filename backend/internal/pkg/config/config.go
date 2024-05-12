@@ -22,11 +22,17 @@ type RestConfig struct {
 }
 
 type DBConfig struct {
+	// persistent database config
 	Host      string
 	EnableSSL bool
 	Database  string
 	User      string
 	Secret    string
+
+	// cache config
+	CacheHost   string
+	CacheUser   string
+	CacheSecret string
 }
 
 type EthConfig struct {
