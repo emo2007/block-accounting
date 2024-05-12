@@ -126,8 +126,6 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Or
 			})
 		}
 
-		fmt.Println(query.ToSql())
-
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
 			return fmt.Errorf("error fetch organizations from database. %w", err)
