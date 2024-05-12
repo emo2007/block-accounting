@@ -12,7 +12,7 @@
                         "program": "${workspaceRoot}/cmd/main.go",
                         "args": [
                                 "-log-level=debug",
-                                "-log-local=true",
+                                "-log-local=false",
                                 "-log-add-source=true",
                                 "-jwt-secret=local_jwt_secret",
 

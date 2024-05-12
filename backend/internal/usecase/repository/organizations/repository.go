@@ -109,7 +109,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Or
 		}
 
 		if params.CursorId != uuid.Nil {
-			query = query.Where(sq.Lt{
+			query = query.Where(sq.Gt{
 				"o.id": params.CursorId,
 			})
 		}

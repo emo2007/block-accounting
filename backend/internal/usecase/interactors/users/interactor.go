@@ -73,7 +73,7 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 	}
 
 	user := models.NewUser(
-		uuid.New(),
+		uuid.Must(uuid.NewV7()),
 		seed,
 		params.Activate,
 		time.Now(),

@@ -129,6 +129,15 @@ func (i *organizationsInteractor) List(
 		}
 	}
 
+	i.log.Debug(
+		"organizations_list",
+		slog.String("cursor", params.Cursor),
+		slog.Int("limit", int(params.Limit)),
+		slog.Any("cursor-id", cursor.Id),
+		slog.Any("ids", params.Ids),
+		slog.Any("user_id", params.UserId),
+	)
+
 	orgs, err := i.orgRepository.Get(ctx, organizations.GetParams{
 		UserId:     params.UserId,
 		Ids:        params.Ids,
@@ -179,7 +188,7 @@ func (i *organizationsInteractor) Create(
 	}
 
 	org := models.Organization{
-		ID:         uuid.New(),
+		ID:         uuid.Must(uuid.NewV7()),
 		Name:       params.Name,
 		Address:    params.Address,
 		WalletSeed: walletSeed,

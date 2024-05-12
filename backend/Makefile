@@ -45,3 +45,6 @@ run.debug: bin.build
 		-db-user=blockd \
 		-db-secret=blockd \
 		-db-enable-tls=false
+
+start.d:
+	sudo systemctl start docker
