@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class SubmitTransactionDto {
   @IsString()
@@ -15,4 +15,30 @@ export class SubmitTransactionDto {
   @IsString()
   //   @ApiProperty()
   data: string;
+}
+
+export class ConfirmTransactionDto {
+  @IsString()
+  @ApiProperty()
+  contractAddress: string;
+  @ApiProperty()
+  @IsNumber()
+  index: number;
+}
+
+export class ExecuteTransactionDto extends ConfirmTransactionDto {}
+
+export class RevokeConfirmationDto extends ConfirmTransactionDto {}
+
+export class GetTransactionCount {}
+
+export class GetTransactionDto extends ConfirmTransactionDto {}
+
+export class DepositMultiSigDto {
+  @IsString()
+  @ApiProperty()
+  contractAddress: string;
+  @IsString()
+  @ApiProperty()
+  value: string;
 }

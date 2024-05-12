@@ -9,6 +9,7 @@ contract Salaries {
     address public multisigWallet;
     mapping(address => uint) public salaries;
 
+    //0xF0d50568e3A7e8259E16663972b11910F89BD8e7
     constructor(address _multisigWallet, address _priceFeedAddress) {
         multisigWallet = _multisigWallet;
         dataFeed = AggregatorV3Interface(_priceFeedAddress);
@@ -17,6 +18,10 @@ contract Salaries {
     modifier onlyMultisig() {
         require(msg.sender == multisigWallet, 'Unauthorized');
         _;
+    }
+
+    function getSalary(address employee) public view returns(uint) {
+        return salaries[employee];
     }
 
     function getLatestUSDTPriceInETH() public view returns (int) {
