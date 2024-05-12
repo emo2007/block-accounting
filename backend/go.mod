@@ -15,6 +15,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.12.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/urfave/cli/v2 v2.27.2
 	golang.org/x/crypto v0.22.0
@@ -50,7 +51,6 @@ require (
 	github.com/prometheus/client_model v0.2.1-0.20210607210712-147c58e9608a // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/redis/go-redis/v9 v9.5.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/supranational/blst v0.3.11 // indirect
