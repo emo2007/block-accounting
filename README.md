@@ -1,6 +1,7 @@
 ![LOGIN FLOW](./login-flow.png "Login")
 ![Example architecture](./arch.png "Arch")
 ![License](./license.png "Arch")
+![Salaries](./salaries.png "Arch")
 
 # Registration Flow
 
