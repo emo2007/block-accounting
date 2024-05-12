@@ -64,9 +64,11 @@ func (p *organizationsPresenter) Organizations(orgs []*models.Organization) []do
 
 	for i, o := range orgs {
 		out[i] = domain.Organization{
-			Id:      o.ID.String(),
-			Name:    o.Name,
-			Address: o.Address,
+			Id:        o.ID.String(),
+			Name:      o.Name,
+			Address:   o.Address,
+			CreatedAt: uint64(o.CreatedAt.UnixMilli()),
+			UpdatedAt: uint64(o.UpdatedAt.UnixMilli()),
 		}
 	}
 

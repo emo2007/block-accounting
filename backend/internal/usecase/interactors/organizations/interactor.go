@@ -151,7 +151,6 @@ func (i *organizationsInteractor) List(
 
 	var nextCursor string
 
-	// BUG: pagination by cursor works with errors. empty set as return value
 	if len(orgs) >= 50 || len(orgs) >= int(params.Limit) {
 		cursor.Id = orgs[len(orgs)-1].ID
 		if nextCursor, err = cursor.encode(); err != nil {

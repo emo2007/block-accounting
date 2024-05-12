@@ -71,7 +71,6 @@ func (c *organizationsController) ListOrganizations(w http.ResponseWriter, r *ht
 		return nil, fmt.Errorf("error fetch user from context. %w", err)
 	}
 
-	// BUG: empty created_at and updfated_at
 	resp, err := c.orgInteractor.List(ctx, organizations.ListParams{
 		UserId:     user.Id(),
 		Cursor:     req.Cursor,
