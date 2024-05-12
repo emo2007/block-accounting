@@ -147,53 +147,48 @@ curl --location --request GET 'http://localhost:8081/organizations' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTU2MDIyNDMwOTEsInVpZCI6IjUyNTNkMzdjLTMxZDQtNDgxMi1iZTcxLWE5ODQwMTVlNGVlMyJ9.IKd-sM9cy5ehj0Scvbi3HPvhjnWD1MDl-POUlvVo9sA' \
 --data '{
-    "limit":10
+    "limit":5,
+    "cursor":"eyJpZCI6IjAxOGY2ZTc3LWUxNDMtNzcyZi04NjJkLTlkZDM5NzUxYTZkMyJ9"
 }'
 ```
 
 Response: 
 ``` json 
 {
+    {
     "items": [
         {
-            "id": "758787be-7c09-4bc5-950b-e41adaf9cc0d",
-            "name": "ertyertyrtye",
-            "address": "rtyrtyetyetry",
-            "created_at": 0,
-            "updated_at": 0
+            "id": "018f6e77-ebcc-7547-bc84-2556fbf12300",
+            "name": "The Drain Gang Inc 6",
+            "address": "1",
+            "created_at": 1715556104012,
+            "updated_at": 1715556104012
         },
         {
-            "id": "eb691423-cd34-43b4-bb92-3bb3cd646e63",
-            "name": "ertyertyrtye",
-            "address": "rtyrtyetyetry",
-            "created_at": 0,
-            "updated_at": 0
+            "id": "018f6e77-f5f5-7bcb-b98f-9966e7a8b706",
+            "name": "The Drain Gang Inc 7",
+            "address": "1",
+            "created_at": 1715556106613,
+            "updated_at": 1715556106613
         },
         {
-            "id": "7840246b-a67b-4e7b-a26c-43a11c2baec9",
-            "name": "ertyertyrtye",
-            "address": "rtyrtyetyetry",
-            "created_at": 0,
-            "updated_at": 0
+            "id": "018f6e78-0029-7913-9016-d0793c378c42",
+            "name": "The Drain Gang Inc 8",
+            "address": "1",
+            "created_at": 1715556109225,
+            "updated_at": 1715556109225
         },
         {
-            "id": "79a649aa-dfc9-4009-9e04-1a3bdbf49959",
-            "name": "ertyertyrtye",
-            "address": "rtyrtyetyetry",
-            "created_at": 0,
-            "updated_at": 0
-        },
-        {
-            "id": "d13ff660-9927-4d08-b679-146818c00d0c",
-            "name": "ertyertyrtye",
-            "address": "rtyrtyetyetry",
-            "created_at": 0,
-            "updated_at": 0
+            "id": "018f6e7e-9f41-7d7b-8d95-f9be832c09c1",
+            "name": "The Drain Gang Inc 9",
+            "address": "1",
+            "created_at": 1715556543169,
+            "updated_at": 1715556543169
         }
     ],
     "pagination": {
-        "next_cursor": "eyJpZCI6ImQxM2ZmNjYwLTk5MjctNGQwOC1iNjc5LTE0NjgxOGMwMGQwYyJ9",
-        "total_items": 5
+        "total_items": 4
     }
+}
 }
 ```
