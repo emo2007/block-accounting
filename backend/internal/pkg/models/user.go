@@ -21,6 +21,7 @@ type User struct {
 	Bip39Seed []byte
 	Activated bool
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type UserCredentials struct {
@@ -51,8 +52,20 @@ func (u *User) Seed() []byte {
 	return u.Bip39Seed
 }
 
+type OrganizationParticipantType int
+
+const (
+	OrganizationParticipantTypeUser OrganizationParticipantType = iota
+	OrganizationParticipantTypeEmployee
+)
+
 type OrganizationParticipant interface {
 	UserIdentity
+
+	Type() OrganizationParticipantType
+
+	GetUser() *OrganizationUser
+	GetEmployee() *Employee
 
 	IsAdmin() bool
 	Position() string
@@ -63,6 +76,20 @@ type OrganizationUser struct {
 
 	OrgPosition string
 	Admin       bool
+
+	Employee *Employee
+}
+
+func (u *OrganizationUser) Type() OrganizationParticipantType {
+	return OrganizationParticipantTypeUser
+}
+
+func (u *OrganizationUser) GetUser() *OrganizationUser {
+	return u
+}
+
+func (u *OrganizationUser) GetEmployee() *Employee {
+	return u.Employee
 }
 
 func (u *OrganizationUser) IsAdmin() bool {
@@ -71,4 +98,32 @@ func (u *OrganizationUser) IsAdmin() bool {
 
 func (u *OrganizationUser) Position() string {
 	return u.OrgPosition
+}
+
+type Employee struct {
+	ID             uuid.UUID
+	OrganizationId uuid.UUID
+	WalletAddress  []byte
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (u *Employee) Type() OrganizationParticipantType {
+	return OrganizationParticipantTypeEmployee
+}
+
+func (u *Employee) GetUser() *OrganizationUser {
+	return nil
+}
+
+func (u *Employee) GetEmployee() *Employee {
+	return u
+}
+
+func (u *Employee) IsAdmin() bool {
+	return false
+}
+
+func (u *Employee) Position() string {
+	return "" // todo
 }

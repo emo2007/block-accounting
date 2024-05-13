@@ -101,8 +101,8 @@ func (c *organizationsListCursor) decode(s string) error {
 }
 
 type ListResponse struct {
-	Organizations []models.Organization `json:"Organizations"`
-	NextCursor    string                `json:"NextCursor"`
+	Organizations models.Organizations
+	NextCursor    string
 }
 
 func (i ListResponse) MarshalBinary() ([]byte, error) {

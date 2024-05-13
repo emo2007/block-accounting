@@ -10,8 +10,8 @@ import (
 
 type OrganizationsPresenter interface {
 	ResponseCreate(organization *models.Organization) ([]byte, error)
-	ResponseList(orgs []models.Organization, nextCursor string) ([]byte, error)
-	Organizations(orgs []models.Organization) []domain.Organization
+	ResponseList(orgs []*models.Organization, nextCursor string) ([]byte, error)
+	Organizations(orgs []*models.Organization) []domain.Organization
 }
 
 type organizationsPresenter struct {
@@ -40,7 +40,7 @@ func (p *organizationsPresenter) ResponseCreate(o *models.Organization) ([]byte,
 	return out, nil
 }
 
-func (p *organizationsPresenter) ResponseList(orgs []models.Organization, nextCursor string) ([]byte, error) {
+func (p *organizationsPresenter) ResponseList(orgs []*models.Organization, nextCursor string) ([]byte, error) {
 	resp := &domain.ListOrganizationsResponse{
 		Collection: domain.Collection[domain.Organization]{
 			Items: p.Organizations(orgs),
@@ -59,7 +59,7 @@ func (p *organizationsPresenter) ResponseList(orgs []models.Organization, nextCu
 	return out, nil
 }
 
-func (p *organizationsPresenter) Organizations(orgs []models.Organization) []domain.Organization {
+func (p *organizationsPresenter) Organizations(orgs []*models.Organization) []domain.Organization {
 	out := make([]domain.Organization, len(orgs))
 
 	for i, o := range orgs {

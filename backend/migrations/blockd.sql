@@ -55,6 +55,7 @@ create table organizations_users (
         organization_id uuid not null references organizations(id), 
         user_id uuid not null references users(id), 
         employee_id uuid default null,
+        position varchar(300),
         added_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp,
         deleted_at timestamp default null,

@@ -22,6 +22,16 @@ type GetParams struct {
 	Limit      int64
 }
 
+type ParticipantsParams struct {
+	OrganizationId uuid.UUID
+	Ids            uuid.UUIDs
+
+	// Filters
+	UsersOnly     bool
+	ActiveOnly    bool
+	EmployeesOnly bool
+}
+
 type AddParticipantParams struct {
 	OrganizationId uuid.UUID
 	UserId         uuid.UUID
@@ -29,13 +39,20 @@ type AddParticipantParams struct {
 	IsAdmin        bool
 }
 
+type DeleteParticipantParams struct {
+	OrganizationId uuid.UUID
+	UserId         uuid.UUID
+	EmployeeId     uuid.UUID
+}
+
 type Repository interface {
 	Create(ctx context.Context, org models.Organization) error
-	Get(ctx context.Context, params GetParams) ([]models.Organization, error)
+	Get(ctx context.Context, params GetParams) ([]*models.Organization, error)
 	Update(ctx context.Context, org models.Organization) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	AddParticipant(ctx context.Context, params AddParticipantParams) error
 	CreateAndAdd(ctx context.Context, org models.Organization, user *models.User) error
+	DeleteParticipant(ctx context.Context, params DeleteParticipantParams) error
 }
 
 type repositorySQL struct {
@@ -86,8 +103,8 @@ func (r *repositorySQL) Create(ctx context.Context, org models.Organization) err
 	return nil
 }
 
-func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]models.Organization, error) {
-	organizations := make([]models.Organization, 0, params.Limit)
+func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Organization, error) {
+	organizations := make([]*models.Organization, 0, params.Limit)
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
 		query := sq.Select(
@@ -158,7 +175,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]models.Org
 				return fmt.Errorf("error scan row. %w", err)
 			}
 
-			organizations = append(organizations, models.Organization{
+			organizations = append(organizations, &models.Organization{
 				ID:         id,
 				Name:       name,
 				Address:    address,
@@ -177,37 +194,42 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]models.Org
 }
 
 func (r *repositorySQL) Update(ctx context.Context, org models.Organization) error {
-	panic("implement me!")
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
+		query := sq.Update("organizations as o").
+			SetMap(sq.Eq{
+				"o.name":        org.Name,
+				"o.address":     org.Address,
+				"o.wallet_seed": org.WalletSeed,
+				"o.created_at":  org.CreatedAt,
+				"o.updated_at":  org.UpdatedAt,
+			}).
+			Where(sq.Eq{
+				"o.id": org.ID,
+			}).
+			PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error update organization. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
 
 	return nil
 }
 
 func (r *repositorySQL) Delete(ctx context.Context, id uuid.UUID) error {
-	panic("implement me!")
-
-	return nil
-}
-
-func (r *repositorySQL) AddParticipant(ctx context.Context, params AddParticipantParams) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
-		query := sq.Insert("organizations_users").Columns(
-			"organization_id",
-			"user_id",
-			"employee_id",
-			"added_at",
-			"updated_at",
-			"is_admin",
-		).Values(
-			params.OrganizationId,
-			params.UserId,
-			params.EmployeeId,
-			time.Now(),
-			time.Now(),
-			params.IsAdmin,
-		).PlaceholderFormat(sq.Dollar)
+		query := sq.Delete("organizations as o").
+			Where(sq.Eq{
+				"o.id": id,
+			}).
+			PlaceholderFormat(sq.Dollar)
 
 		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
-			return fmt.Errorf("error add new participant to organization. %w", err)
+			return fmt.Errorf("error delete organization. %w", err)
 		}
 
 		return nil
@@ -230,6 +252,94 @@ func (r *repositorySQL) CreateAndAdd(ctx context.Context, org models.Organizatio
 			IsAdmin:        true,
 		}); err != nil {
 			return fmt.Errorf("error add user to newly created organization. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
+}
+
+func (r *repositorySQL) Participants(
+	ctx context.Context,
+	params ParticipantsParams,
+) ([]models.OrganizationParticipant, error) {
+	participants := make([]models.OrganizationParticipant, 0, len(params.Ids))
+
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
+
+		return nil
+	}); err != nil {
+
+	}
+
+	return participants, nil
+}
+
+func (r *repositorySQL) AddParticipant(ctx context.Context, params AddParticipantParams) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
+		query := sq.Insert("organizations_users").
+			Columns(
+				"organization_id",
+				"user_id",
+				"employee_id",
+				"added_at",
+				"updated_at",
+				"is_admin",
+			).
+			Values(
+				params.OrganizationId,
+				params.UserId,
+				params.EmployeeId,
+				time.Now(),
+				time.Now(),
+				params.IsAdmin,
+			).
+			PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add new participant to organization. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error execute transactional operation. %w", err)
+	}
+
+	return nil
+}
+
+func (r *repositorySQL) DeleteParticipant(ctx context.Context, params DeleteParticipantParams) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
+		deletedAt := time.Now()
+
+		query := sq.Update("organizations_users as ou").
+			SetMap(sq.Eq{
+				"updated_at": deletedAt,
+				"deleted_at": deletedAt,
+				"is_admin":   false,
+			}).
+			Where(sq.Eq{
+				"ou.organization_id": params.OrganizationId,
+			}).
+			PlaceholderFormat(sq.Dollar)
+
+		if params.EmployeeId != uuid.Nil {
+			query = query.Where(sq.Eq{
+				"ou.employee_id": params.EmployeeId,
+			})
+		}
+
+		if params.UserId != uuid.Nil {
+			query = query.Where(sq.Eq{
+				"ou.user_id": params.UserId,
+			})
+		}
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error delete participant from organization. %w", err)
 		}
 
 		return nil
