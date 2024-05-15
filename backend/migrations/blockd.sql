@@ -114,3 +114,15 @@ create table transactions_confirmations (
 
 create index if not exists index_transactions_confirmations_tx_id_user_id_organization_id
         on transactions_confirmations (tx_id, user_id, organization_id);
+
+create table contracts (
+        id uuid primary key, 
+        title varchar(250) default 'New Contract', 
+        description text not null, 
+
+        created_by uuid not null references users(id), 
+        organization_id uuid not null references organizations(id), 
+
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp
+);

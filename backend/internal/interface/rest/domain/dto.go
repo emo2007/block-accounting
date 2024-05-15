@@ -3,11 +3,14 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/emochka2007/block-accounting/internal/interface/rest/domain/hal"
 )
 
 // Generic
 
 type Collection[T any] struct {
+	*hal.Resource
 	Items      []T        `json:"items,omitempty"`
 	Pagination Pagination `json:"pagination,omitempty"`
 }
@@ -50,18 +53,10 @@ type NewOrganizationRequest struct {
 	WalletMnemonic string `json:"wallet_mnemonic,omitempty"`
 }
 
-type NewOrganizationResponse struct {
-	Organization Organization `json:"organization"`
-}
-
 type ListOrganizationsRequest struct {
 	Cursor     string `json:"cursor,omitempty"`
 	Limit      uint8  `json:"limit,omitempty"`       // Default: 50, Max: 50
 	OffsetDate int64  `json:"offset_date,omitempty"` // List organizations, updated since the date
-}
-
-type ListOrganizationsResponse struct {
-	Collection[Organization]
 }
 
 func BuildRequest[T any](data []byte) (*T, error) {
