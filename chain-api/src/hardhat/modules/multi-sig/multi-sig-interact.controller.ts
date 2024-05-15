@@ -3,7 +3,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { MultiSigWalletService } from 'src/hardhat/modules/multi-sig/multi-sig.service';
 import {
   ConfirmTransactionDto,
-  DepositMultiSigDto,
+  DepositContractDto,
   ExecuteTransactionDto,
   GetTransactionDto,
   RevokeConfirmationDto,
@@ -59,7 +59,7 @@ export class MultiSigInteractController {
   }
 
   @Post('deposit')
-  async deposit(@Body() dto: DepositMultiSigDto) {
+  async deposit(@Body() dto: DepositContractDto) {
     return this.multiSigWalletService.deposit(dto);
   }
 }

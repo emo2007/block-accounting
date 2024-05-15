@@ -34,7 +34,7 @@ export class GetTransactionCount {}
 
 export class GetTransactionDto extends ConfirmTransactionDto {}
 
-export class DepositMultiSigDto {
+export class DepositContractDto {
   @IsString()
   @ApiProperty()
   contractAddress: string;

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-
+// 0x2F9442900d067a3D37A1C2aE99462E055e32c741
 pragma solidity ^0.8.7;
 
 import {AggregatorV3Interface} from '@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol';
@@ -8,7 +8,8 @@ contract Salaries {
     AggregatorV3Interface internal dataFeed;
     address public multisigWallet;
     mapping(address => uint) public salaries;
-
+    event Payout(address indexed employee, uint salaryInETH);
+    event PayoutFailed(address indexed employee, uint salaryInETH, string reason);
     //0xF0d50568e3A7e8259E16663972b11910F89BD8e7
     constructor(address _multisigWallet, address _priceFeedAddress) {
         multisigWallet = _multisigWallet;
@@ -42,7 +43,7 @@ contract Salaries {
         salaries[employee] = salaryInUSDT;
     }
 
-    function payoutInETH(address employee) external onlyMultisig {
+    function payoutInETH(address payable employee) external onlyMultisig {
         uint salaryInUSDT = salaries[employee];
         require(salaryInUSDT > 0, 'No salary set');
 
@@ -58,8 +59,16 @@ contract Salaries {
             'Insufficient contract balance'
         );
 
-        salaries[employee] = 0; // Reset salary after payment
-        payable(employee).transfer(salaryInETH);
+        (bool success, ) = employee.call{value: salaryInETH}("");
+        if (success) {
+            emit Payout(employee, salaryInETH);
+        } else {
+            emit PayoutFailed(employee, salaryInETH, "Transfer failed");
+        }
+    }
+
+    function dummy() public pure returns (uint){
+        return 1337;
     }
 
     // Fallback to receive ETH

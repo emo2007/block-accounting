@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// 0x74f11486DB0FCAA2dCDE0aEB477e1F37fCAa510A
 
 pragma solidity ^0.8.19;
 // The wallet owners can
@@ -18,6 +19,9 @@ contract MultiSigWallet {
     event ConfirmTransaction(address indexed owner, uint indexed txIndex);
     event RevokeConfirmation(address indexed owner, uint indexed txIndex);
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
+    event ExecuteTransactionFailed(address indexed owner, uint indexed txIndex, string reason);
+    event Payout(address indexed employee, uint salaryInETH);
+    event PayoutFailed(address indexed employee, uint salaryInETH, string reason);
 
     address[] public owners;
 
@@ -111,20 +115,63 @@ contract MultiSigWallet {
         emit ConfirmTransaction(msg.sender, _txIndex);
     }
 
-    function executeTransaction(
-        uint _txIndex
-    ) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
+    function executeTransaction(uint _txIndex)
+    public
+    onlyOwner
+    txExists(_txIndex)
+    notExecuted(_txIndex)
+    {
         Transaction storage transaction = transactions[_txIndex];
         require(
             transaction.numConfirmations >= numConfirmationsRequired,
-            'cannot execute tx'
+            "cannot execute tx"
         );
-        transaction.executed = true;
-        (bool success, ) = transaction.to.call{value: transaction.value}(
-            transaction.data
-        );
-        require(success, 'tx failed');
-        emit ExecuteTransaction(msg.sender, _txIndex);
+
+
+        (bool success, bytes memory returnData) = transaction.to.call{value: transaction.value}(transaction.data);
+        if (success) {
+            transaction.executed = true;
+            emit ExecuteTransaction(msg.sender, _txIndex);
+            if (returnData.length > 0) {
+                emitEventFromReturnData(returnData);
+            }
+        } else {
+            // Get the revert reason and emit it
+            if (returnData.length > 0) {
+                // The call reverted with a message
+                assembly {
+                    let returndata_size := mload(returnData)
+                    revert(add(32, returnData), returndata_size)
+                }
+            } else {
+                // The call reverted without a message
+                emit ExecuteTransactionFailed(msg.sender, _txIndex, "Transaction failed without a reason");
+            }
+        }
+    }
+
+    function emitEventFromReturnData(bytes memory returnData) internal {
+        // Decode the selector from returnData
+        bytes4 selector;
+        assembly {
+            selector := mload(add(returnData, 32))
+        }
+
+        // Match the selector to the known events
+        if (selector == Payout.selector) {
+            (address employee, uint salaryInETH) = abi.decode(slice(returnData, 4, returnData.length), (address, uint));
+            emit Payout(employee, salaryInETH);
+        } else if (selector == PayoutFailed.selector) {
+            (address employee, uint salaryInETH, string memory reason) = abi.decode(slice(returnData, 4, returnData.length), (address, uint, string));
+            emit PayoutFailed(employee, salaryInETH, reason);
+        }
+    }
+    function slice(bytes memory data, uint start, uint length) internal pure returns (bytes memory) {
+        bytes memory result = new bytes(length);
+        for (uint i = 0; i < length; i++) {
+            result[i] = data[start + i];
+        }
+        return result;
     }
 
     function revokeConfirmation(

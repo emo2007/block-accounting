@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { BaseContractService } from '../base-contract.service';
-import { ethers } from 'ethers';
+import { ethers, parseEther, TransactionReceipt } from 'ethers';
 import {
+  CreatePayoutDto,
   GetEmployeeSalariesDto,
   SalariesDeployDto,
   SetSalaryDto,
@@ -9,6 +10,7 @@ import {
 import * as hre from 'hardhat';
 import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
 import { ProviderService } from '../../../provider/provider.service';
+import { DepositContractDto } from '../../../contract-interact/dto/multi-sig.dto';
 
 @Injectable()
 export class SalariesService extends BaseContractService {
@@ -69,7 +71,43 @@ export class SalariesService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const answer: string = await contract.getSalary(employeeAddress);
-    return answer;
+    const answer: BigInt = await contract.getSalary(employeeAddress);
+    return {
+      salaryInUsd: answer.toString(),
+    };
+  }
+
+  async createPayout(dto: CreatePayoutDto) {
+    const { employeeAddress, contractAddress, multiSigWallet } = dto;
+    console.log('=>(salaries.service.ts:82) employeeAddress', employeeAddress);
+    const ISubmitMultiSig = new ethers.Interface([
+      'function payoutInETH(address employee)',
+    ]);
+    const data = ISubmitMultiSig.encodeFunctionData('payoutInETH', [
+      employeeAddress,
+    ]);
+
+    return await this.multiSigWalletService.submitTransaction({
+      contractAddress: multiSigWallet,
+      destination: contractAddress,
+      value: '0',
+      data,
+    });
+  }
+
+  async deposit(dto: DepositContractDto) {
+    const { contractAddress, value } = dto;
+    const signer = await this.providerService.getSigner();
+
+    const convertValue = parseEther(value);
+
+    const tx = await signer.sendTransaction({
+      to: contractAddress,
+      value: convertValue,
+    });
+
+    const txResponse: TransactionReceipt = await tx.wait();
+
+    return txResponse;
   }
 }

@@ -1,22 +1,16 @@
-import { TransactionReceipt, ethers } from 'ethers';
+import { TransactionReceipt, ethers, parseEther } from 'ethers';
 import { ConfigService } from '@nestjs/config';
 import * as hre from 'hardhat';
 import { BaseContractService } from '../base-contract.service';
 import { MultiSigWalletDto } from './multi-sig.dto';
 import {
   ConfirmTransactionDto,
-  DepositMultiSigDto,
+  DepositContractDto,
   ExecuteTransactionDto,
   GetTransactionDto,
   RevokeConfirmationDto,
   SubmitTransactionDto,
 } from 'src/contract-interact/dto/multi-sig.dto';
-import {
-  ConfirmTransactionLogs,
-  DepositLogs,
-  ExecuteTransactionLogs,
-  SubmitTransactionLogs,
-} from 'src/hardhat/modules/dto/ethers.dto';
 import { parseLogs } from 'src/contract-interact/ethers.helpers';
 
 export class MultiSigWalletService extends BaseContractService {
@@ -102,6 +96,7 @@ export class MultiSigWalletService extends BaseContractService {
     const tx = await contract.executeTransaction(index);
 
     const txResponse: TransactionReceipt = await tx.wait();
+    console.log('=>(multi-sig.service.ts:99) txResponse', txResponse.logs);
     const eventParse = parseLogs(txResponse, contract);
     return {
       txHash: txResponse.hash,
@@ -145,8 +140,9 @@ export class MultiSigWalletService extends BaseContractService {
     return tx;
   }
 
-  async deposit(dto: DepositMultiSigDto) {
+  async deposit(dto: DepositContractDto) {
     const { contractAddress, value } = dto;
+    const convertValue = parseEther(value);
     const signer = await this.providerService.getSigner();
 
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
@@ -154,7 +150,7 @@ export class MultiSigWalletService extends BaseContractService {
 
     const tx = await signer.sendTransaction({
       to: contractAddress,
-      value: BigInt(value),
+      value: convertValue,
     });
 
     const txResponse: TransactionReceipt = await tx.wait();

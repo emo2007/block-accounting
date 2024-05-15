@@ -21,12 +21,17 @@ export class SetSalaryDto {
   @IsNumber()
   salary: number;
 }
-
-export class GetEmployeeSalariesDto {
+export class GeneralEmpoyeeSalaryDto {
   @ApiProperty()
   @IsString()
   contractAddress: string;
   @ApiProperty()
   @IsString()
   employeeAddress: string;
+}
+export class GetEmployeeSalariesDto extends GeneralEmpoyeeSalaryDto {}
+
+export class CreatePayoutDto extends GeneralEmpoyeeSalaryDto {
+  @IsString()
+  multiSigWallet: string;
 }
