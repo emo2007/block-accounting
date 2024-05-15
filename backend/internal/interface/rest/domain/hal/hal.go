@@ -110,6 +110,10 @@ func (r *Resource) MarshalJSON() ([]byte, error) {
 
 	var b bytes.Buffer
 
+	if cap := b.Cap(); cap < (len(dataRoot) + len(dataChild)) {
+		b.Grow((len(dataRoot) + len(dataChild)) - cap)
+	}
+
 	b.Write(dataRoot[:len(dataRoot)-1])
 
 	if len(dataChild) != 2 {
