@@ -155,9 +155,19 @@ curl --location --request GET 'http://localhost:8081/organizations' \
 Response: 
 ``` json 
 {
-    {
+    "_type": "organizations",
+    "_links": {
+        "self": {
+            "href": "/organizations"
+        }
+    },
     "items": [
         {
+            "_links": {
+                "self": {
+                    "href": "/organizations/018f6e77-ebcc-7547-bc84-2556fbf12300"
+                }
+            },
             "id": "018f6e77-ebcc-7547-bc84-2556fbf12300",
             "name": "The Drain Gang Inc 6",
             "address": "1",
@@ -165,6 +175,11 @@ Response:
             "updated_at": 1715556104012
         },
         {
+            "_links": {
+                "self": {
+                    "href": "/organizations/018f6e77-f5f5-7bcb-b98f-9966e7a8b706"
+                }
+            },
             "id": "018f6e77-f5f5-7bcb-b98f-9966e7a8b706",
             "name": "The Drain Gang Inc 7",
             "address": "1",
@@ -172,6 +187,11 @@ Response:
             "updated_at": 1715556106613
         },
         {
+            "_links": {
+                "self": {
+                    "href": "/organizations/018f6e78-0029-7913-9016-d0793c378c42"
+                }
+            },
             "id": "018f6e78-0029-7913-9016-d0793c378c42",
             "name": "The Drain Gang Inc 8",
             "address": "1",
@@ -179,6 +199,11 @@ Response:
             "updated_at": 1715556109225
         },
         {
+            "_links": {
+                "self": {
+                    "href": "/organizations/018f6e7e-9f41-7d7b-8d95-f9be832c09c1"
+                }
+            },
             "id": "018f6e7e-9f41-7d7b-8d95-f9be832c09c1",
             "name": "The Drain Gang Inc 9",
             "address": "1",
@@ -189,6 +214,5 @@ Response:
     "pagination": {
         "total_items": 4
     }
-}
 }
 ```
