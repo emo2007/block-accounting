@@ -12,7 +12,7 @@ import (
 type OrganizationsPresenter interface {
 	ResponseCreate(organization *models.Organization) ([]byte, error)
 	ResponseList(orgs []*models.Organization, nextCursor string) ([]byte, error)
-	Organizations(orgs []*models.Organization) []domain.Organization
+	Organizations(orgs []*models.Organization) []*hal.Resource
 }
 
 type organizationsPresenter struct {
@@ -32,6 +32,7 @@ func (p *organizationsPresenter) ResponseCreate(o *models.Organization) ([]byte,
 	}
 
 	r := hal.NewResource(
+		org,
 		"/organizations/"+org.Id,
 		hal.WithType("organization"),
 	)
@@ -45,11 +46,7 @@ func (p *organizationsPresenter) ResponseCreate(o *models.Organization) ([]byte,
 }
 
 func (p *organizationsPresenter) ResponseList(orgs []*models.Organization, nextCursor string) ([]byte, error) {
-	dtoOrgs := domain.Collection[domain.Organization]{
-		Resource: hal.NewResource(
-			"/organizations",
-			hal.WithType("organizations"),
-		),
+	dtoOrgs := domain.Collection[*hal.Resource]{
 		Items: p.Organizations(orgs),
 		Pagination: domain.Pagination{
 			NextCursor: nextCursor,
@@ -57,7 +54,13 @@ func (p *organizationsPresenter) ResponseList(orgs []*models.Organization, nextC
 		},
 	}
 
-	out, err := json.Marshal(dtoOrgs)
+	r := hal.NewResource(
+		dtoOrgs,
+		"/organizations",
+		hal.WithType("organizations"),
+	)
+
+	out, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf("error marshal organizations list response. %w", err)
 	}
@@ -65,12 +68,11 @@ func (p *organizationsPresenter) ResponseList(orgs []*models.Organization, nextC
 	return out, nil
 }
 
-func (p *organizationsPresenter) Organizations(orgs []*models.Organization) []domain.Organization {
-	out := make([]domain.Organization, len(orgs))
+func (p *organizationsPresenter) Organizations(orgs []*models.Organization) []*hal.Resource {
+	out := make([]*hal.Resource, len(orgs))
 
 	for i, o := range orgs {
 		org := domain.Organization{
-			Resource:  hal.NewResource("/organizations/" + o.ID.String()),
 			Id:        o.ID.String(),
 			Name:      o.Name,
 			Address:   o.Address,
@@ -78,7 +80,9 @@ func (p *organizationsPresenter) Organizations(orgs []*models.Organization) []do
 			UpdatedAt: uint64(o.UpdatedAt.UnixMilli()),
 		}
 
-		out[i] = org
+		r := hal.NewResource(org, "/organizations/"+org.Id)
+
+		out[i] = r
 	}
 
 	return out

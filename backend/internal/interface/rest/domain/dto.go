@@ -3,14 +3,11 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/emochka2007/block-accounting/internal/interface/rest/domain/hal"
 )
 
 // Generic
 
 type Collection[T any] struct {
-	*hal.Resource
 	Items      []T        `json:"items,omitempty"`
 	Pagination Pagination `json:"pagination,omitempty"`
 }
