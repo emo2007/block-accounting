@@ -26,6 +26,7 @@ type AuthController interface {
 	JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error)
 	Login(w http.ResponseWriter, req *http.Request) ([]byte, error)
 	Invite(w http.ResponseWriter, req *http.Request) ([]byte, error)
+	Refresh(w http.ResponseWriter, req *http.Request) ([]byte, error)
 }
 
 type authController struct {
@@ -112,6 +113,29 @@ func (c *authController) Login(w http.ResponseWriter, req *http.Request) ([]byte
 	c.log.Debug("login request", slog.String("user id", users[0].ID.String()))
 
 	return c.presenter.ResponseLogin(users[0])
+}
+
+func (c *authController) Refresh(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+	request, err := presenters.CreateRequest[domain.RefreshRequest](req)
+	if err != nil {
+		return nil, fmt.Errorf("error create refresh request. %w", err)
+	}
+
+	c.log.Debug(
+		"refresh request",
+		slog.String("token", request.Token),
+		slog.String("refresh_token", request.RefreshToken),
+	)
+
+	ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
+	defer cancel()
+
+	newTokens, err := c.jwtInteractor.RefreshToken(ctx, request.Token, request.RefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("error refresh access token. %w", err)
+	}
+
+	return c.presenter.ResponseRefresh(newTokens)
 }
 
 // const mnemonicEntropyBitSize int = 256

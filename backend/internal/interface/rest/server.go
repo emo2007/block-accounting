@@ -96,6 +96,7 @@ func (s *Server) buildRouter() {
 
 	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
+	router.Get("/refresh", s.handle(s.controllers.Auth.Refresh, "refresh"))
 
 	router.Route("/organizations", func(r chi.Router) {
 		r = r.With(s.withAuthorization)

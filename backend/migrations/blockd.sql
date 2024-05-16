@@ -24,6 +24,22 @@ create index if not exists index_users_phone
 create index if not exists index_users_seed
         on users using hash (seed); 
 
+create table if not exists access_tokens (
+        user_id uuid not null references users(id),
+        token varchar(350) not null, 
+        token_expired_at timestamp, 
+        refresh_token varchar(350) not null, 
+        refresh_token_expired_at timestamp, 
+        created_at timestamp default current_timestamp,
+        remote_addr string
+);
+
+create index if not exists index_access_tokens_token_refresh_token
+        on access_tokens (token, refresh_token); 
+
+create index if not exists index_access_tokens_token_refresh_token_exp
+        on access_tokens (token, refresh_token, token_expired_at, refresh_token_expired_at); 
+
 create table if not exists organizations (
         id uuid primary key unique, 
         name varchar(300) default 'My Organization' not null, 
@@ -120,9 +136,12 @@ create table contracts (
         title varchar(250) default 'New Contract', 
         description text not null, 
 
+        address bytea not null, 
+
         created_by uuid not null references users(id), 
         organization_id uuid not null references organizations(id), 
 
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
 );
+

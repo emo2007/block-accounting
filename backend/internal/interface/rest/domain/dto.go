@@ -38,8 +38,16 @@ type LoginRequest struct {
 	Mnemonic string `json:"mnemonic"`
 }
 
+type RefreshRequest struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type LoginResponse struct {
-	Token string `json:"token"`
+	Token        string `json:"token"`
+	ExpiredAt    int64  `json:"token_expired_at"`
+	RefreshToken string `json:"refresh_token"`
+	RTExpiredAt  int64  `json:"refresh_token_expired_at"`
 }
 
 // Organizations

@@ -1,4 +1,4 @@
-# NoNameBlockchainAccounting backend
+# blockd backend
 ## Build
 ### Locally
 1. Install Go >= 1.22
@@ -84,7 +84,10 @@ curl --location 'http://localhost:8081/join' \
 Response: 
 ``` json 
 {
-    "token": "token-here"
+    "token": "token",
+    "token_expired_at": 1715975501581,
+    "refresh_token": "refresh_token",
+    "refresh_token_expired_at": 1716407501581
 }
 ```
 
@@ -105,7 +108,36 @@ curl --location 'http://localhost:8081/login' \
 Response: 
 ``` json 
 {
-    "token": "token-here"
+    "token": "token",
+    "token_expired_at": 1715975501581,
+    "refresh_token": "refresh_token",
+    "refresh_token_expired_at": 1716407501581
+}
+```
+
+## POST **/refresh**  
+### Request body:  
+token (string, **required**)   
+refresh_token (string, **required**)   
+
+### Example
+Request: 
+``` bash
+curl --location --request GET 'http://localhost:8081/refresh' \
+--header 'Content-Type: application/json' \
+--data '{
+        "token": "token",
+        "refresh_token": "refresh_token"
+}'
+```
+
+Response: 
+``` json 
+{
+    "token": "token",
+    "token_expired_at": 1715975501581,
+    "refresh_token": "refresh_token",
+    "refresh_token_expired_at": 1716407501581
 }
 ```
 

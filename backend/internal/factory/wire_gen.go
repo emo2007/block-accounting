@@ -22,7 +22,8 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	}
 	usersRepository := provideUsersRepository(db)
 	usersInteractor := provideUsersInteractor(logger, usersRepository)
-	jwtInteractor := provideJWTInteractor(c, usersInteractor)
+	authRepository := provideAuthRepository(db)
+	jwtInteractor := provideJWTInteractor(c, usersInteractor, authRepository)
 	authPresenter := provideAuthPresenter(jwtInteractor)
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor)
 	organizationsRepository := provideOrganizationsRepository(db)

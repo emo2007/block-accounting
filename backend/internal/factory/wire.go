@@ -20,6 +20,7 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 		provideUsersInteractor,
 		provideOrganizationsRepository,
 		provideOrganizationsInteractor,
+		provideAuthRepository,
 		provideJWTInteractor,
 		interfaceSet,
 		provideRestServer,

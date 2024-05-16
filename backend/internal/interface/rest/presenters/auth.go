@@ -13,6 +13,7 @@ import (
 type AuthPresenter interface {
 	ResponseJoin(user *models.User) ([]byte, error)
 	ResponseLogin(user *models.User) ([]byte, error)
+	ResponseRefresh(tokens jwt.AccessToken) ([]byte, error)
 }
 
 type authPresenter struct {
@@ -28,16 +29,17 @@ func NewAuthPresenter(
 }
 
 func (p *authPresenter) ResponseJoin(user *models.User) ([]byte, error) {
-	resp := new(domain.JoinResponse)
-
-	token, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
+	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("error create access token. %w", err)
 	}
 
-	resp.Token = token
-
-	out, err := json.Marshal(resp)
+	out, err := json.Marshal(domain.LoginResponse{
+		Token:        tokens.Token,
+		RefreshToken: tokens.RefreshToken,
+		ExpiredAt:    tokens.ExpiredAt.UnixMilli(),
+		RTExpiredAt:  tokens.RTExpiredAt.UnixMilli(),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshal join response. %w", err)
 	}
@@ -46,18 +48,33 @@ func (p *authPresenter) ResponseJoin(user *models.User) ([]byte, error) {
 }
 
 func (p *authPresenter) ResponseLogin(user *models.User) ([]byte, error) {
-	resp := new(domain.LoginResponse)
-
-	token, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
+	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("error create access token. %w", err)
 	}
 
-	resp.Token = token
-
-	out, err := json.Marshal(resp)
+	out, err := json.Marshal(domain.LoginResponse{
+		Token:        tokens.Token,
+		RefreshToken: tokens.RefreshToken,
+		ExpiredAt:    tokens.ExpiredAt.UnixMilli(),
+		RTExpiredAt:  tokens.RTExpiredAt.UnixMilli(),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshal login response. %w", err)
+	}
+
+	return out, nil
+}
+
+func (p *authPresenter) ResponseRefresh(tokens jwt.AccessToken) ([]byte, error) {
+	out, err := json.Marshal(domain.LoginResponse{
+		Token:        tokens.Token,
+		RefreshToken: tokens.RefreshToken,
+		ExpiredAt:    tokens.ExpiredAt.UnixMilli(),
+		RTExpiredAt:  tokens.RTExpiredAt.UnixMilli(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error marshal refresh response. %w", err)
 	}
 
 	return out, nil
