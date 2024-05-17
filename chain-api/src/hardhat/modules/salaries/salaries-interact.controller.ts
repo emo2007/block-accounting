@@ -54,4 +54,9 @@ export class SalariesController {
   async deposit(@Body() dto: DepositContractDto) {
     return this.salariesService.deposit(dto);
   }
+
+  @Get('get-license-request')
+  async getLicenseRequest() {
+    return this.salariesService.getLicenseRequest();
+  }
 }

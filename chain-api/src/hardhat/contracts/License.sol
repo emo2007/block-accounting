@@ -12,6 +12,7 @@ import "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
  */
+
 contract LinkWellStringBytesConsumerContractExample is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
 

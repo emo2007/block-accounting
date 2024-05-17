@@ -35,6 +35,42 @@ export class SalariesService extends BaseContractService {
     return await myContract.getAddress();
   }
 
+  async getLicenseRequest() {
+    const { abi } = await hre.artifacts.readArtifact(
+      'LinkWellStringBytesConsumerContractExample',
+    );
+    const signer = await this.providerService.getSigner();
+
+    const contract = new ethers.Contract(
+      '0xbc3c4fed4C3A977b8868b589662270F1aEA6A777',
+      abi,
+      signer,
+    );
+
+    const answer: string = await contract.request();
+    console.log('=>(salaries.service.ts:45) answer', answer);
+    const licenseres = await this.getLicenseResponse();
+    console.log('=>(salaries.service.ts:53) licenseres', licenseres);
+    return answer;
+  }
+
+  async getLicenseResponse() {
+    const { abi } = await hre.artifacts.readArtifact(
+      'LinkWellStringBytesConsumerContractExample',
+    );
+    const signer = await this.providerService.getSigner();
+
+    const contract = new ethers.Contract(
+      '0xbc3c4fed4C3A977b8868b589662270F1aEA6A777',
+      abi,
+      signer,
+    );
+
+    const answer: string = await contract.responseBytes();
+    console.log('=>(salaries.service.ts:45) answer', answer);
+    return answer;
+  }
+
   async getLatestUSDTPrice(contractAddress: string) {
     const { abi } = await hre.artifacts.readArtifact('Salaries');
     const signer = await this.providerService.getSigner();
