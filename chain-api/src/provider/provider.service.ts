@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class ProviderService {
   public provider: ethers.JsonRpcProvider;
@@ -29,10 +30,9 @@ export class ProviderService {
     if (!this.provider) {
       await this.getProvider();
     }
-    const signer = new ethers.Wallet(
+    return new ethers.Wallet(
       this.configService.getOrThrow('POLYGON_PK'),
       this.provider,
     );
-    return signer;
   }
 }

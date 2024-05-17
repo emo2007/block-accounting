@@ -21,7 +21,7 @@ contract Salaries {
         _;
     }
 
-    function getSalary(address employee) public view returns(uint) {
+    function getUsdtSalary(address employee) public view returns(uint) {
         return salaries[employee];
     }
 
@@ -43,16 +43,18 @@ contract Salaries {
         salaries[employee] = salaryInUSDT;
     }
 
-    function payoutInETH(address payable employee) external onlyMultisig {
+    function getEmployeeSalaryInEth(address employee) public view returns(uint){
         uint salaryInUSDT = salaries[employee];
         require(salaryInUSDT > 0, 'No salary set');
 
         int ethToUSDT = getLatestUSDTPriceInETH();
         require(ethToUSDT > 0, 'Invalid price data');
-
-        // Convert salary from USDT to ETH based on the latest price
         uint salaryInETH = uint(salaryInUSDT * 1e18) / uint(ethToUSDT);
+        return salaryInETH * 1e8;
+    }
 
+    function payoutInETH(address payable employee) external onlyMultisig {
+        uint salaryInETH = getEmployeeSalaryInEth(employee);
         // Check sufficient balance
         require(
             address(this).balance >= salaryInETH,
@@ -65,10 +67,6 @@ contract Salaries {
         } else {
             emit PayoutFailed(employee, salaryInETH, "Transfer failed");
         }
-    }
-
-    function dummy() public pure returns (uint){
-        return 1337;
     }
 
     // Fallback to receive ETH

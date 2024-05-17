@@ -1,5 +1,6 @@
 ![LOGIN FLOW](./login-flow.png "Login")
-![Example architecture](./arch.png "Arch")
+
+[//]: # (![Example architecture]&#40;./arch.png "Arch"&#41;)
 ![License](./license.png "Arch")
 ![Salaries](./salaries.png "Arch")
 

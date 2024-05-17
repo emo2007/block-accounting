@@ -20,7 +20,7 @@ export class SalariesService extends BaseContractService {
   ) {
     super(providerService);
   }
-  async deploy(dto: SalariesDeployDto): Promise<any> {
+  async deploy(dto: SalariesDeployDto) {
     const { abi, bytecode } = await hre.artifacts.readArtifact('Salaries');
 
     const signer = await this.providerService.getSigner();
@@ -71,7 +71,7 @@ export class SalariesService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const answer: BigInt = await contract.getSalary(employeeAddress);
+    const answer: BigInt = await contract.getUsdtSalary(employeeAddress);
     return {
       salaryInUsd: answer.toString(),
     };
@@ -79,7 +79,6 @@ export class SalariesService extends BaseContractService {
 
   async createPayout(dto: CreatePayoutDto) {
     const { employeeAddress, contractAddress, multiSigWallet } = dto;
-    console.log('=>(salaries.service.ts:82) employeeAddress', employeeAddress);
     const ISubmitMultiSig = new ethers.Interface([
       'function payoutInETH(address employee)',
     ]);

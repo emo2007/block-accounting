@@ -1,5 +1,4 @@
-import { TransactionReceipt, ethers, parseEther } from 'ethers';
-import { ConfigService } from '@nestjs/config';
+import { ethers, parseEther, TransactionReceipt } from 'ethers';
 import * as hre from 'hardhat';
 import { BaseContractService } from '../base-contract.service';
 import { MultiSigWalletDto } from './multi-sig.dto';
@@ -27,8 +26,7 @@ export class MultiSigWalletService extends BaseContractService {
       dto.confirmations,
     );
     await myContract.waitForDeployment();
-    const address = myContract.getAddress();
-    return address;
+    return myContract.getAddress();
   }
 
   async getOwners(address: string) {
@@ -39,9 +37,7 @@ export class MultiSigWalletService extends BaseContractService {
 
     const contract = new ethers.Contract(address, abi, signer);
 
-    const owners = await contract.getOwners();
-
-    return owners;
+    return await contract.getOwners();
   }
 
   async submitTransaction(dto: SubmitTransactionDto) {
@@ -54,7 +50,7 @@ export class MultiSigWalletService extends BaseContractService {
     const tx = await contract.submitTransaction(destination, value, data);
     const txResponse: TransactionReceipt = await tx.wait();
 
-    const eventParse = parseLogs(txResponse, contract);
+    const eventParse = parseLogs(txResponse, contract, 'SubmitTransaction');
 
     return {
       txHash: txResponse.hash,
@@ -77,7 +73,7 @@ export class MultiSigWalletService extends BaseContractService {
 
     const txResponse: TransactionReceipt = await tx.wait();
 
-    const eventParse = parseLogs(txResponse, contract);
+    const eventParse = parseLogs(txResponse, contract, 'ConfirmTransaction');
 
     return {
       txHash: txResponse.hash,
@@ -96,8 +92,7 @@ export class MultiSigWalletService extends BaseContractService {
     const tx = await contract.executeTransaction(index);
 
     const txResponse: TransactionReceipt = await tx.wait();
-    console.log('=>(multi-sig.service.ts:99) txResponse', txResponse.logs);
-    const eventParse = parseLogs(txResponse, contract);
+    const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
     return {
       txHash: txResponse.hash,
       sender: eventParse.args[0].toString(),
@@ -155,7 +150,7 @@ export class MultiSigWalletService extends BaseContractService {
 
     const txResponse: TransactionReceipt = await tx.wait();
 
-    const eventParse = parseLogs(txResponse, contract);
+    const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
 
     return {
       txHash: txResponse.hash,

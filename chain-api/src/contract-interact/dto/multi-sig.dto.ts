@@ -42,3 +42,7 @@ export class DepositContractDto {
   @ApiProperty()
   value: string;
 }
+export class DeployMultiSigResponseDto {
+  @IsString()
+  address: string;
+}

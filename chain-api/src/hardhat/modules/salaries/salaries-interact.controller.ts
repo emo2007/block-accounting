@@ -2,20 +2,32 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { SalariesService } from './salaries.service';
 import {
   CreatePayoutDto,
+  DeployContractResponseDto,
   GetEmployeeSalariesDto,
   SalariesDeployDto,
   SetSalaryDto,
 } from './salaries.dto';
-import { ApiTags } from '@nestjs/swagger';
-import { DepositContractDto } from '../../../contract-interact/dto/multi-sig.dto';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  DeployMultiSigResponseDto,
+  DepositContractDto,
+} from '../../../contract-interact/dto/multi-sig.dto';
 @ApiTags('salaries')
 @Controller('salaries')
 export class SalariesController {
   constructor(private readonly salariesService: SalariesService) {}
 
+  @ApiOkResponse({
+    type: DeployContractResponseDto,
+  })
   @Post('deploy')
-  async deploy(@Body() dto: SalariesDeployDto) {
-    return this.salariesService.deploy(dto);
+  async deploy(
+    @Body() dto: SalariesDeployDto,
+  ): Promise<DeployContractResponseDto> {
+    const address = await this.salariesService.deploy(dto);
+    return {
+      address,
+    };
   }
 
   @Get('usdt-price/:contractAddress')

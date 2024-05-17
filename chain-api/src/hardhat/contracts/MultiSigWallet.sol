@@ -20,8 +20,6 @@ contract MultiSigWallet {
     event RevokeConfirmation(address indexed owner, uint indexed txIndex);
     event ExecuteTransaction(address indexed owner, uint indexed txIndex);
     event ExecuteTransactionFailed(address indexed owner, uint indexed txIndex, string reason);
-    event Payout(address indexed employee, uint salaryInETH);
-    event PayoutFailed(address indexed employee, uint salaryInETH, string reason);
 
     address[] public owners;
 
@@ -132,9 +130,6 @@ contract MultiSigWallet {
         if (success) {
             transaction.executed = true;
             emit ExecuteTransaction(msg.sender, _txIndex);
-            if (returnData.length > 0) {
-                emitEventFromReturnData(returnData);
-            }
         } else {
             // Get the revert reason and emit it
             if (returnData.length > 0) {
@@ -148,30 +143,6 @@ contract MultiSigWallet {
                 emit ExecuteTransactionFailed(msg.sender, _txIndex, "Transaction failed without a reason");
             }
         }
-    }
-
-    function emitEventFromReturnData(bytes memory returnData) internal {
-        // Decode the selector from returnData
-        bytes4 selector;
-        assembly {
-            selector := mload(add(returnData, 32))
-        }
-
-        // Match the selector to the known events
-        if (selector == Payout.selector) {
-            (address employee, uint salaryInETH) = abi.decode(slice(returnData, 4, returnData.length), (address, uint));
-            emit Payout(employee, salaryInETH);
-        } else if (selector == PayoutFailed.selector) {
-            (address employee, uint salaryInETH, string memory reason) = abi.decode(slice(returnData, 4, returnData.length), (address, uint, string));
-            emit PayoutFailed(employee, salaryInETH, reason);
-        }
-    }
-    function slice(bytes memory data, uint start, uint length) internal pure returns (bytes memory) {
-        bytes memory result = new bytes(length);
-        for (uint i = 0; i < length; i++) {
-            result[i] = data[start + i];
-        }
-        return result;
     }
 
     function revokeConfirmation(

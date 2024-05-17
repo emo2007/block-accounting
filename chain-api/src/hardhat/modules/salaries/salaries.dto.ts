@@ -35,3 +35,8 @@ export class CreatePayoutDto extends GeneralEmpoyeeSalaryDto {
   @IsString()
   multiSigWallet: string;
 }
+
+export class DeployContractResponseDto {
+  @IsString()
+  address: string;
+}

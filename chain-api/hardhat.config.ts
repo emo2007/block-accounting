@@ -11,9 +11,13 @@ const config = {
       accounts: [process.env.POLYGON_PK || ''],
     },
   },
+  typechain: {
+    outDir: 'typechain',
+    target: 'ethers-v6',
+  },
   paths: {
     sources: './src/hardhat/contracts',
-    // tests: './src/hardhat/test',
+    tests: './src/hardhat/test',
     ignition: './src/hardhat/ignition',
     cache: './src/hardhat/cache',
     artifacts: './src/hardhat/artifacts',

@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { MultiSigWalletService } from 'src/hardhat/modules/multi-sig/multi-sig.service';
 import {
   ConfirmTransactionDto,
+  DeployMultiSigResponseDto,
   DepositContractDto,
   ExecuteTransactionDto,
   GetTransactionDto,
@@ -15,9 +16,17 @@ import { MultiSigWalletDto } from './multi-sig.dto';
 export class MultiSigInteractController {
   constructor(private readonly multiSigWalletService: MultiSigWalletService) {}
 
+  @ApiOkResponse({
+    type: DeployMultiSigResponseDto,
+  })
   @Post('deploy')
-  async deploy(@Body() dto: MultiSigWalletDto) {
-    return this.multiSigWalletService.deploy(dto);
+  async deploy(
+    @Body() dto: MultiSigWalletDto,
+  ): Promise<DeployMultiSigResponseDto> {
+    const addr = await this.multiSigWalletService.deploy(dto);
+    return {
+      address: addr,
+    };
   }
   @Get('owners/:address')
   async getOwners(@Param('address') address: string) {
