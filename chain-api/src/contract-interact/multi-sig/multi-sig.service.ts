@@ -1,6 +1,5 @@
 import { ethers, parseEther, TransactionReceipt } from 'ethers';
 import * as hre from 'hardhat';
-import { BaseContractService } from '../base-contract.service';
 import { MultiSigWalletDto } from './multi-sig.dto';
 import {
   ConfirmTransactionDto,
@@ -9,8 +8,10 @@ import {
   GetTransactionDto,
   RevokeConfirmationDto,
   SubmitTransactionDto,
-} from 'src/contract-interact/dto/multi-sig.dto';
-import { parseLogs } from 'src/contract-interact/ethers.helpers';
+} from 'src/contract-interact/multi-sig.dto';
+import { parseLogs } from 'src/ethers-custom/ethers.helpers';
+import { BaseContractService } from '../../base/base-contract.service';
+import { getContractAddress } from '@ethersproject/address';
 
 export class MultiSigWalletService extends BaseContractService {
   async deploy(dto: MultiSigWalletDto) {
@@ -31,7 +32,6 @@ export class MultiSigWalletService extends BaseContractService {
 
   async getOwners(address: string) {
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const multiSigContract = new ethers.Contract(address, abi);
 
     const signer = await this.providerService.getSigner();
 
@@ -47,7 +47,11 @@ export class MultiSigWalletService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const tx = await contract.submitTransaction(destination, value, data);
+    const tx = await contract.submitTransaction(
+      destination || '0x0000000000000000000000000000000000000000',
+      value,
+      data,
+    );
     const txResponse: TransactionReceipt = await tx.wait();
 
     const eventParse = parseLogs(txResponse, contract, 'SubmitTransaction');
@@ -83,21 +87,40 @@ export class MultiSigWalletService extends BaseContractService {
   }
 
   async executeTransaction(dto: ExecuteTransactionDto) {
-    const { index, contractAddress } = dto;
+    const { index, contractAddress, isDeploy } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
     const signer = await this.providerService.getSigner();
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
+    const deployedAddress = await this.calculateFutureAddress(contractAddress);
 
     const tx = await contract.executeTransaction(index);
 
     const txResponse: TransactionReceipt = await tx.wait();
+    console.log('=>(multi-sig.service.ts:101) txResponse', txResponse.logs);
+
     const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
-    return {
+    const data = {
       txHash: txResponse.hash,
       sender: eventParse.args[0].toString(),
       txIndex: eventParse.args[1].toString(),
     };
+    if (isDeploy) {
+      return { ...data, deployedAddress };
+    } else {
+      return data;
+    }
+  }
+
+  async calculateFutureAddress(contractAddress: string) {
+    const provider = await this.providerService.getProvider();
+
+    const nonce = await provider.getTransactionCount(contractAddress);
+
+    return getContractAddress({
+      from: contractAddress,
+      nonce: nonce + 1,
+    });
   }
 
   async revokeConfirmation(dto: RevokeConfirmationDto) {

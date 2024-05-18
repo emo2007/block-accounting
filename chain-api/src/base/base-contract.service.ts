@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ProviderService } from 'src/provider/provider.service';
+import { ProviderService } from './provider/provider.service';
 
 @Injectable()
 export abstract class BaseContractService {

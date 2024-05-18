@@ -18,8 +18,10 @@ contract MultiSigWallet {
 
     event ConfirmTransaction(address indexed owner, uint indexed txIndex);
     event RevokeConfirmation(address indexed owner, uint indexed txIndex);
-    event ExecuteTransaction(address indexed owner, uint indexed txIndex);
+    event ExecuteTransaction(address indexed owner, uint indexed txIndex, address indexed to);
     event ExecuteTransactionFailed(address indexed owner, uint indexed txIndex, string reason);
+    event ContractDeployed(address indexed contractAddress);
+
 
     address[] public owners;
 
@@ -129,7 +131,16 @@ contract MultiSigWallet {
         (bool success, bytes memory returnData) = transaction.to.call{value: transaction.value}(transaction.data);
         if (success) {
             transaction.executed = true;
-            emit ExecuteTransaction(msg.sender, _txIndex);
+            emit ExecuteTransaction(msg.sender, _txIndex, transaction.to);
+            if (returnData.length > 0) {
+                address deployedContractAddress;
+                assembly {
+                    deployedContractAddress := mload(add(returnData, 20))
+                }
+                // You can emit an event with the address of the deployed contract
+                emit ContractDeployed(deployedContractAddress);
+            }
+            removeTransaction(_txIndex);
         } else {
             // Get the revert reason and emit it
             if (returnData.length > 0) {
@@ -154,6 +165,11 @@ contract MultiSigWallet {
         isConfirmed[_txIndex][msg.sender] = false;
 
         emit RevokeConfirmation(msg.sender, _txIndex);
+    }
+
+    function removeTransaction(uint _txIndex) public onlyOwner {
+        require(_txIndex < transactions.length, "tx does not exist");
+        delete transactions[_txIndex];
     }
 
     function getOwners() public view returns (address[] memory) {

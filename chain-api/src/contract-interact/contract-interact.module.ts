@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { HardhatModule } from 'src/hardhat/modules/hardhat.module';
+import { SalariesModule } from './salaries/salaries.module';
+import { MultiSigModule } from './multi-sig/multi-sig.module';
+import { LicenseModule } from './license/license.module';
 
 @Module({
-  imports: [HardhatModule],
+  imports: [SalariesModule, MultiSigModule, LicenseModule],
   controllers: [],
   providers: [],
 })

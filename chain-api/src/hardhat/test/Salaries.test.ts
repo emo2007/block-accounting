@@ -1,11 +1,13 @@
-import { PriceFeedMock, Salaries } from '../../../typechain';
+import { PriceFeedMock, Payroll } from '../../../typechain';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { ethers } = require('hardhat');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { expect } = require('chai');
 import { SignerWithAddress } from '@nomicfoundation/hardhat-ethers/signers';
 
 describe('Salaries', function () {
-  let salaries: Salaries;
+  let salaries: Payroll;
   let owner: SignerWithAddress;
   let multisigWallet: SignerWithAddress;
   let addr1: SignerWithAddress;
@@ -19,11 +21,11 @@ describe('Salaries', function () {
     priceFeedMock = await PriceFeedMockFactory.deploy();
     await priceFeedMock.getDeployedCode();
     // Deploy the Salaries contract
-    const SalariesFactory = await ethers.getContractFactory('Salaries');
+    const SalariesFactory = await ethers.getContractFactory('Payroll');
     salaries = (await SalariesFactory.deploy(
       multisigWallet.address,
       await priceFeedMock.getAddress(),
-    )) as Salaries;
+    )) as Payroll;
     await salaries.getDeployedCode();
   });
 

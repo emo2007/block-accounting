@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 
-import { ProviderModule } from 'src/provider/provider.module';
-
-import { BaseContractService } from '../base-contract.service';
-import { ProviderService } from 'src/provider/provider.service';
 import { MultiSigWalletService } from './multi-sig.service';
 import { MultiSigInteractController } from './multi-sig-interact.controller';
+import { BaseModule } from '../../base/base.module';
 
 @Module({
-  imports: [ProviderModule],
+  imports: [BaseModule],
   controllers: [MultiSigInteractController],
   providers: [MultiSigWalletService],
   exports: [MultiSigWalletService],

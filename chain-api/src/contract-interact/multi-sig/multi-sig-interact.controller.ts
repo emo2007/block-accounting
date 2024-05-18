@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { MultiSigWalletService } from 'src/hardhat/modules/multi-sig/multi-sig.service';
+
+import { MultiSigWalletDto } from './multi-sig.dto';
+import { MultiSigWalletService } from './multi-sig.service';
 import {
   ConfirmTransactionDto,
   DeployMultiSigResponseDto,
@@ -9,8 +11,7 @@ import {
   GetTransactionDto,
   RevokeConfirmationDto,
   SubmitTransactionDto,
-} from '../../../contract-interact/dto/multi-sig.dto';
-import { MultiSigWalletDto } from './multi-sig.dto';
+} from '../multi-sig.dto';
 @ApiTags('multi-sig')
 @Controller('multi-sig')
 export class MultiSigInteractController {

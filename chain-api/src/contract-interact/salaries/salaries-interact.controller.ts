@@ -8,10 +8,8 @@ import {
   SetSalaryDto,
 } from './salaries.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import {
-  DeployMultiSigResponseDto,
-  DepositContractDto,
-} from '../../../contract-interact/dto/multi-sig.dto';
+import { DepositContractDto } from '../multi-sig.dto';
+
 @ApiTags('salaries')
 @Controller('salaries')
 export class SalariesController {
@@ -53,10 +51,5 @@ export class SalariesController {
   @Post('deposit')
   async deposit(@Body() dto: DepositContractDto) {
     return this.salariesService.deposit(dto);
-  }
-
-  @Get('get-license-request')
-  async getLicenseRequest() {
-    return this.salariesService.getLicenseRequest();
   }
 }
