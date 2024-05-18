@@ -109,8 +109,8 @@ func (s *Server) buildRouter() {
 			// r.Delete("/", s.handle(s.controllers.Organizations.NewOrganization, "delete_organization"))
 
 			r.Route("/transactions", func(r chi.Router) {
-				r.Get("/", nil)           // list todo add cache
-				r.Post("/", nil)          // add
+				r.Get("/", s.handle(s.controllers.Transactions.List, "tx_list"))
+				r.Post("/", s.handle(s.controllers.Transactions.New, "new_tx"))
 				r.Put("/{tx_id}", nil)    // update / approve (or maybe body?)
 				r.Delete("/{tx_id}", nil) // remove
 			})

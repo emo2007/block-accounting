@@ -9,13 +9,14 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
-	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 )
 
 type OrganizationsController interface {
 	NewOrganization(w http.ResponseWriter, r *http.Request) ([]byte, error)
 	ListOrganizations(w http.ResponseWriter, r *http.Request) ([]byte, error)
+	// todo delete
+	// todo update
 }
 
 type organizationsController struct {
@@ -66,13 +67,7 @@ func (c *organizationsController) ListOrganizations(w http.ResponseWriter, r *ht
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
-	user, err := ctxmeta.User(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error fetch user from context. %w", err)
-	}
-
 	resp, err := c.orgInteractor.List(ctx, organizations.ListParams{
-		UserId:     user.Id(),
 		Cursor:     req.Cursor,
 		Limit:      req.Limit,
 		OffsetDate: time.UnixMilli(req.OffsetDate),

@@ -143,9 +143,11 @@ func (r *repositorySQL) GetTransactions(
 				Amount:         amount,
 				ToAddr:         toAddr,
 				MaxFeeAllowed:  maxFeeAllowed,
-				CreatedBy: &models.User{
-					ID:        createdById,
-					Bip39Seed: createdBySeed,
+				CreatedBy: &models.OrganizationUser{
+					User: models.User{
+						ID:        createdById,
+						Bip39Seed: createdBySeed,
+					},
 				},
 				CreatedAt: createdAt,
 				UpdatedAt: updatedAt,

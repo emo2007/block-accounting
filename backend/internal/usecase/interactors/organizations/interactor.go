@@ -37,6 +37,24 @@ type ListParams struct {
 	Limit      uint8 // Max limit is 50 (may change)
 }
 
+type ParticipantParams struct {
+	ID             uuid.UUID
+	OrganizationID uuid.UUID
+
+	UsersOnly     bool
+	ActiveOnly    bool
+	EmployeesOnly bool
+}
+
+type ParticipantsParams struct {
+	IDs            uuid.UUIDs
+	OrganizationID uuid.UUID
+
+	UsersOnly     bool
+	ActiveOnly    bool
+	EmployeesOnly bool
+}
+
 type OrganizationsInteractor interface {
 	Create(
 		ctx context.Context,
@@ -46,6 +64,14 @@ type OrganizationsInteractor interface {
 		ctx context.Context,
 		params ListParams,
 	) (*ListResponse, error)
+	Participant(
+		ctx context.Context,
+		params ParticipantParams,
+	) (models.OrganizationParticipant, error)
+	Participants(
+		ctx context.Context,
+		params ParticipantsParams,
+	) ([]models.OrganizationParticipant, error)
 }
 
 type organizationsInteractor struct {
@@ -225,4 +251,63 @@ func (i *organizationsInteractor) Create(
 	}
 
 	return &org, nil
+}
+
+func (i *organizationsInteractor) Participant(
+	ctx context.Context,
+	params ParticipantParams,
+) (models.OrganizationParticipant, error) {
+	participants, err := i.Participants(ctx, ParticipantsParams{
+		IDs:            uuid.UUIDs{params.ID},
+		OrganizationID: params.OrganizationID,
+		ActiveOnly:     params.ActiveOnly,
+		UsersOnly:      params.UsersOnly,
+		EmployeesOnly:  params.EmployeesOnly,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization participant. %w", err)
+	}
+
+	if len(participants) == 0 {
+		return nil, fmt.Errorf("error organization participant empty. %w", err)
+	}
+
+	return participants[0], nil
+}
+
+func (i *organizationsInteractor) Participants(
+	ctx context.Context,
+	params ParticipantsParams,
+) ([]models.OrganizationParticipant, error) {
+	// TODO check access for ctx user
+	user, err := ctxmeta.User(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	_, err = i.orgRepository.Participants(ctx, organizations.ParticipantsParams{
+		Ids:            uuid.UUIDs{user.Id()},
+		OrganizationId: params.OrganizationID,
+		ActiveOnly:     params.ActiveOnly,
+		UsersOnly:      true,
+	})
+	if err != nil {
+		return nil, errors.Join(
+			fmt.Errorf("error fetch organization user. %w", err),
+			ErrorUnauthorizedAccess,
+		)
+	}
+
+	participants, err := i.orgRepository.Participants(ctx, organizations.ParticipantsParams{
+		Ids:            params.IDs,
+		OrganizationId: params.OrganizationID,
+		UsersOnly:      params.UsersOnly,
+		EmployeesOnly:  params.EmployeesOnly,
+		ActiveOnly:     params.ActiveOnly,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization participants. %w", err)
+	}
+
+	return participants, nil
 }

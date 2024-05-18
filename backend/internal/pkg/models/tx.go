@@ -11,7 +11,7 @@ type Transaction struct {
 
 	Description    string
 	OrganizationId uuid.UUID
-	CreatedBy      *User
+	CreatedBy      *OrganizationUser
 	Amount         int64
 
 	ToAddr []byte

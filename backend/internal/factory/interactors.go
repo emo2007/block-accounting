@@ -6,10 +6,12 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/cache"
 	orepo "github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
+	txRepo "github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
 	urepo "github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 )
 
@@ -34,4 +36,16 @@ func provideOrganizationsInteractor(
 	cache cache.Cache,
 ) organizations.OrganizationsInteractor {
 	return organizations.NewOrganizationsInteractor(log, orgRepo, cache)
+}
+
+func provideTxInteractor(
+	log *slog.Logger,
+	txRepo txRepo.Repository,
+	orgInteractor organizations.OrganizationsInteractor,
+) transactions.TransactionsInteractor {
+	return transactions.NewTransactionsInteractor(
+		log.WithGroup("transaction-interactor"),
+		txRepo,
+		orgInteractor,
+	)
 }

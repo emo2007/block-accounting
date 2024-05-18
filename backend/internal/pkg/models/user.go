@@ -60,7 +60,7 @@ const (
 )
 
 type OrganizationParticipant interface {
-	UserIdentity
+	Id() uuid.UUID
 
 	Type() OrganizationParticipantType
 
@@ -102,10 +102,19 @@ func (u *OrganizationUser) Position() string {
 
 type Employee struct {
 	ID             uuid.UUID
+	UserID         uuid.UUID
 	OrganizationId uuid.UUID
 	WalletAddress  []byte
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+}
+
+func (u *Employee) Id() uuid.UUID {
+	return u.ID
+}
+
+func (u *Employee) UserId() uuid.UUID {
+	return u.UserID
 }
 
 func (u *Employee) Type() OrganizationParticipantType {

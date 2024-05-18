@@ -54,7 +54,7 @@ create index if not exists index_organizations_id
 
 create table employees (
         id uuid primary key, 
-        user_id uuid references users(id), 
+        user_id uuid, 
         organization_id uuid not null references organizations(id),
         wallet_address text not null, 
         created_at timestamp default current_timestamp,
@@ -97,6 +97,7 @@ create table if not exists transactions (
         amount bigint default 0,
 
         to_addr bytea not null,
+        tx_index bytea default null,
 
         max_fee_allowed bigint default 0, 
         deadline timestamp default null,
@@ -138,8 +139,13 @@ create table contracts (
 
         address bytea not null, 
 
+        payload bytea not null,
+
         created_by uuid not null references users(id), 
         organization_id uuid not null references organizations(id), 
+
+        status tinyint default 0,
+        tx_index bytea default null,
 
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
