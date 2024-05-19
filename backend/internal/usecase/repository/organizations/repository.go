@@ -361,45 +361,49 @@ func (r *repositorySQL) Participants(
 		eg, egCtx := errgroup.WithContext(ctx)
 
 		var employees []*models.Employee = make([]*models.Employee, 0, len(orgUsersModels))
-		eg.Go(func() error {
-			ids := make(uuid.UUIDs, 0, len(orgUsersModels))
+		if !params.UsersOnly {
+			eg.Go(func() error {
+				ids := make(uuid.UUIDs, 0, len(orgUsersModels))
 
-			for _, m := range orgUsersModels {
-				if m.employeeID != uuid.Nil {
-					ids = append(ids, m.employeeID)
+				for _, m := range orgUsersModels {
+					if m.employeeID != uuid.Nil {
+						ids = append(ids, m.employeeID)
+					}
 				}
-			}
 
-			employees, err = r.fetchEmployees(egCtx, fetchEmployeesParams{
-				IDs:            ids,
-				OrganizationId: params.OrganizationId,
+				employees, err = r.fetchEmployees(egCtx, fetchEmployeesParams{
+					IDs:            ids,
+					OrganizationId: params.OrganizationId,
+				})
+				if err != nil {
+					return fmt.Errorf("error fetch employees. %w", err)
+				}
+
+				return nil
 			})
-			if err != nil {
-				return fmt.Errorf("error fetch employees. %w", err)
-			}
-
-			return nil
-		})
+		}
 
 		var usrs []*models.User
-		eg.Go(func() error {
-			ids := make(uuid.UUIDs, 0, len(orgUsersModels))
+		if !params.EmployeesOnly {
+			eg.Go(func() error {
+				ids := make(uuid.UUIDs, 0, len(orgUsersModels))
 
-			for _, m := range orgUsersModels {
-				if m.userID != uuid.Nil {
-					ids = append(ids, m.employeeID)
+				for _, m := range orgUsersModels {
+					if m.userID != uuid.Nil {
+						ids = append(ids, m.userID)
+					}
 				}
-			}
 
-			usrs, err = r.usersRepository.Get(egCtx, users.GetParams{
-				Ids: ids,
+				usrs, err = r.usersRepository.Get(egCtx, users.GetParams{
+					Ids: ids,
+				})
+				if err != nil {
+					return fmt.Errorf("error fetch users by ids. %w", err)
+				}
+
+				return nil
 			})
-			if err != nil {
-				return fmt.Errorf("error fetch users by ids. %w", err)
-			}
-
-			return nil
-		})
+		}
 
 		if err = eg.Wait(); err != nil {
 			return fmt.Errorf("error organizations users entitiels. %w", err)
@@ -422,20 +426,18 @@ func (r *repositorySQL) Participants(
 				participants = append(participants, employee)
 			}
 
-			var orgUser *models.OrganizationUser
-
 			for _, u := range usrs {
 				if u.Id() == ou.userID {
-					orgUser = &models.OrganizationUser{
+					participants = append(participants, &models.OrganizationUser{
 						User:        *u,
 						OrgPosition: ou.position,
 						Admin:       ou.isAdmin,
 						Employee:    employee,
-					}
+					})
+
+					break
 				}
 			}
-
-			participants = append(participants, orgUser)
 		}
 
 		return nil
@@ -479,13 +481,16 @@ func (r *repositorySQL) fetchOrganizationUsers(
 			"ou.is_admin",
 		).Where(sq.Eq{
 			"ou.organization_id": params.OrganizationId,
-		}).PlaceholderFormat(sq.Dollar)
+		}).From("organizations_users as ou").
+			PlaceholderFormat(sq.Dollar)
 
 		if len(params.Ids) > 0 {
 			ouQuery = ouQuery.Where(sq.Eq{
 				"ou.user_id": params.Ids,
 			})
 		}
+
+		fmt.Println(ouQuery.ToSql())
 
 		rows, err := ouQuery.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
@@ -503,7 +508,7 @@ func (r *repositorySQL) fetchOrganizationUsers(
 				organizationID uuid.UUID
 				userID         uuid.UUID
 				employeeID     uuid.UUID
-				position       string
+				position       sql.NullString
 				addedAt        time.Time
 				updatedAt      time.Time
 				deletedAt      sql.NullTime
@@ -539,7 +544,7 @@ func (r *repositorySQL) fetchOrganizationUsers(
 				organizationID: organizationID,
 				userID:         userID,
 				employeeID:     employeeID,
-				position:       position,
+				position:       position.String,
 				addedAt:        addedAt,
 				updatedAt:      updatedAt,
 				deletedAt:      deletedAt.Time,
@@ -576,13 +581,16 @@ func (r *repositorySQL) fetchEmployees(
 			"e.updated_at",
 		).Where(sq.Eq{
 			"e.organization_id": params.OrganizationId,
-		}).PlaceholderFormat(sq.Dollar)
+		}).From("employees as e").
+			PlaceholderFormat(sq.Dollar)
 
 		if len(params.IDs) > 0 {
 			query = query.Where(sq.Eq{
 				"e.id": params.IDs,
 			})
 		}
+
+		fmt.Println(query.ToSql())
 
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {

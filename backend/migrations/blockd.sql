@@ -31,7 +31,7 @@ create table if not exists access_tokens (
         refresh_token varchar(350) not null, 
         refresh_token_expired_at timestamp, 
         created_at timestamp default current_timestamp,
-        remote_addr string
+        remote_addr varchar(100)
 );
 
 create index if not exists index_access_tokens_token_refresh_token
@@ -94,12 +94,12 @@ create table if not exists transactions (
         description text default 'New Transaction', 
         organization_id uuid not null, 
         created_by uuid  not null, 
-        amount bigint default 0,
+        amount decimal default 0,
 
         to_addr bytea not null,
         tx_index bytea default null,
 
-        max_fee_allowed bigint default 0, 
+        max_fee_allowed decimal default 0, 
         deadline timestamp default null,
 
         created_at timestamp default current_timestamp,
@@ -144,7 +144,7 @@ create table contracts (
         created_by uuid not null references users(id), 
         organization_id uuid not null references organizations(id), 
 
-        status tinyint default 0,
+        status smallint default 0,
         tx_index bytea default null,
 
         created_at timestamp default current_timestamp,

@@ -113,10 +113,15 @@ func (i *transactionsInteractor) Create(
 
 	tx := params.Tx
 
+	if tx.Id == uuid.Nil {
+		tx.Id = uuid.Must(uuid.NewV7())
+	}
+
 	participant, err := i.orgInteractor.Participant(ctx, organizations.ParticipantParams{
-		ID:         user.Id(),
-		ActiveOnly: true,
-		UsersOnly:  true,
+		ID:             user.Id(),
+		OrganizationID: params.OrganizationId,
+		ActiveOnly:     true,
+		UsersOnly:      true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error fetch actor prticipant. %w", err)
@@ -124,6 +129,7 @@ func (i *transactionsInteractor) Create(
 
 	tx.CreatedBy = participant.GetUser()
 	tx.CreatedAt = time.Now()
+	tx.UpdatedAt = tx.CreatedAt
 
 	if err = i.txRepo.CreateTransaction(ctx, tx); err != nil {
 		return nil, fmt.Errorf("error create new tx. %w", err)
@@ -135,6 +141,7 @@ func (i *transactionsInteractor) Create(
 func (i *transactionsInteractor) Confirm(ctx context.Context, params ConfirmParams) (*models.Transaction, error) {
 	panic("implement me!")
 }
+
 func (i *transactionsInteractor) Cancel(ctx context.Context, params CancelParams) (*models.Transaction, error) {
 	panic("implement me!")
 }

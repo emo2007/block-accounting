@@ -16,8 +16,8 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name:     "biocom-ioannes",
-		Version:  "0.0.1a",
+		Name:     "blockd",
+		Version:  "0.1.0",
 		Commands: commands.Commands(),
 		Flags: []cli.Flag{
 			// common

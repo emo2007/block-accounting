@@ -8,6 +8,10 @@ import (
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 )
 
+var (
+	ErrorBadPathParams = errors.New("bad path params")
+)
+
 type apiError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -22,6 +26,9 @@ func buildApiError(code int, message string) apiError {
 
 func mapError(err error) apiError {
 	switch {
+	// server error
+	case errors.Is(err, ErrorBadPathParams):
+		return buildApiError(http.StatusBadRequest, "Invalid Path Params")
 	// auth controller errors
 	case errors.Is(err, controllers.ErrorAuthInvalidMnemonic):
 		return buildApiError(http.StatusBadRequest, "Invalid Mnemonic")

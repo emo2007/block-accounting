@@ -12,11 +12,11 @@ type Transaction struct {
 	Description    string
 	OrganizationId uuid.UUID
 	CreatedBy      *OrganizationUser
-	Amount         int64
+	Amount         float64
 
 	ToAddr []byte
 
-	MaxFeeAllowed int64
+	MaxFeeAllowed float64
 	Deadline      time.Time
 
 	CreatedAt time.Time

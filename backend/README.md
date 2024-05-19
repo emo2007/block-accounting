@@ -225,3 +225,48 @@ Response:
     }
 }
 ```
+
+## POST **/{organization_id}/transactions**  
+### Request body:  
+description (string, optional)
+amount (float)
+to
+max_fee_allowed
+deadline
+
+### Example
+Request: 
+``` bash
+curl --location 'http://localhost:8081/organizations/018f8ccd-2431-7d21-a0c2-a2735c852764/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TOKEN' \
+--data '{
+    "description":"New test tx!",
+    "amount": 100,  
+    "to":"0x323b5d4c32345ced77393b3530b1eed0f346429d",
+    "max_fee_allowed":5, 
+    "deadline": 123456767
+}'
+```
+
+Response: 
+``` json 
+{
+    "_type": "transaction",
+    "_links": {
+        "self": {
+            "href": "/organizations/{organization_id}/transactions"
+        }
+    },
+    "id": "018f8ce2-dada-75fb-9745-8560e5736bec",
+    "description": "New test tx!",
+    "organization_id": "018f8ccd-2431-7d21-a0c2-a2735c852764",
+    "created_by": "018f8ccc-e4fc-7a46-9628-15f9c3301f5b",
+    "amount": 100,
+    "to": "MjtdTDI0XO13OTs1MLHu0PNGQp0=",
+    "max_fee_allowed": 5,
+    "deadline": 123456767,
+    "created_at": 1716055628507,
+    "updated_at": 1716055628507
+}
+```

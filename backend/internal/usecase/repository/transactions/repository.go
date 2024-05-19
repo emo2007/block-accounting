@@ -96,9 +96,9 @@ func (r *repositorySQL) GetTransactions(
 				id             uuid.UUID
 				description    string
 				organizationId uuid.UUID
-				amount         int64
+				amount         float64
 				toAddr         []byte
-				maxFeeAllowed  int64
+				maxFeeAllowed  float64
 				deadline       sql.NullTime
 				createdAt      time.Time
 				updatedAt      time.Time
@@ -188,21 +188,16 @@ func (r *repositorySQL) GetTransactions(
 func (r *repositorySQL) CreateTransaction(ctx context.Context, tx models.Transaction) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
 		query := sq.Insert("transactions").Columns(
-			"t.id",
-			"t.description",
-			"t.organization_id",
-			"t.created_by",
-			"t.amount",
-			"t.to_addr",
-			"t.max_fee_allowed",
-
-			// todo insert later
-			// "t.deadline",
-			// "t.created_at",
-			// "t.updated_at",
-			// "t.confirmed_at",
-			// "t.cancelled_at",
-			// "t.commited_at",
+			"id",
+			"description",
+			"organization_id",
+			"created_by",
+			"amount",
+			"to_addr",
+			"max_fee_allowed",
+			"deadline",
+			"created_at",
+			"updated_at",
 		).Values(
 			tx.Id,
 			tx.Description,
@@ -211,7 +206,10 @@ func (r *repositorySQL) CreateTransaction(ctx context.Context, tx models.Transac
 			tx.Amount,
 			tx.ToAddr,
 			tx.MaxFeeAllowed,
-		)
+			tx.Deadline,
+			tx.CreatedAt,
+			tx.CreatedAt,
+		).PlaceholderFormat(sq.Dollar)
 
 		// todo add optional insertions
 

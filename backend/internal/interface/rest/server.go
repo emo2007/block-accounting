@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	mw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -237,9 +238,27 @@ func (s *Server) withAuthorization(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(
-			ctxmeta.UserContext(r.Context(), user),
-		))
+		ctx := ctxmeta.UserContext(r.Context(), user)
+
+		if organizationID := chi.URLParam(r, "organization_id"); organizationID != "" {
+			organizationUUID, err := uuid.Parse(organizationID)
+			if err != nil {
+				s.log.Warn(
+					"invalid path org id",
+					slog.String("remote_addr", r.RemoteAddr),
+					slog.String("endpoint", r.RequestURI),
+					slog.String("org path id", organizationID),
+					logger.Err(err),
+				)
+
+				s.responseError(w, ErrorBadPathParams)
+				return
+			}
+
+			ctx = ctxmeta.OrganizationIdContext(ctx, organizationUUID)
+		}
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 
 	return http.HandlerFunc(fn)

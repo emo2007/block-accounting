@@ -93,6 +93,7 @@ func provideTxController(
 	return controllers.NewTransactionsController(
 		log.WithGroup("transactions-controller"),
 		txInteractor,
+		presenters.NewTransactionsPresenter(),
 	)
 }
 

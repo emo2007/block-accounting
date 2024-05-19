@@ -64,6 +64,31 @@ type ListOrganizationsRequest struct {
 	OffsetDate int64  `json:"offset_date,omitempty"` // List organizations, updated since the date
 }
 
+// Transactions
+
+type NewTransactionRequest struct {
+	Description   string  `json:"description,omitempty"`
+	Amount        float64 `json:"amount,omitempty"`
+	ToAddr        string  `json:"to,omitempty"`
+	MaxFeeAllowed float64 `json:"max_fee_allowed,omitempty"`
+	Deadline      int64   `json:"deadline,omitempty"`
+}
+
+type ListTransactionsRequest struct {
+	IDs       []string `json:"ids,omitempty"`
+	CreatedBy string   `json:"created_by,omitempty"`
+	To        string   `json:"to,omitempty"`
+
+	WithCancelled bool `json:"cancelled,omitempty"`
+	WithConfirmed bool `json:"confirmed,omitempty"`
+	WithCommited  bool `json:"commited,omitempty"`
+	WithExpired   bool `json:"expired,omitempty"`
+
+	Cursor     string `json:"cursor,omitempty"`
+	Limit      uint8  `json:"limit,omitempty"`       // Default: 50, Max: 50
+	OffsetDate int64  `json:"offset_date,omitempty"` // List organizations, updated since the date
+}
+
 func BuildRequest[T any](data []byte) (*T, error) {
 	var req T
 
