@@ -33,5 +33,6 @@ export class GetLicenseResponseDto extends GetLicenseInfoDto {}
 
 export class GetShareLicense extends GetLicenseInfoDto {
   @IsString()
+  @ApiProperty()
   ownerAddress: string;
 }

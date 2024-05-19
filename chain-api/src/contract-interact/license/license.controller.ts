@@ -3,6 +3,7 @@ import { LicenseService } from './license.service';
 import { ApiTags } from '@nestjs/swagger';
 import {
   DeployLicenseDto,
+  GetLicenseInfoDto,
   GetShareLicense,
   RequestLicenseDto,
 } from './license.dto';
@@ -10,7 +11,7 @@ import {
 @Controller('license')
 export class LicenseController {
   constructor(private readonly licenseService: LicenseService) {}
-  @Get('request')
+  @Post('request')
   async getLicenseRequest(@Body() dto: RequestLicenseDto) {
     return this.licenseService.request(dto);
   }
@@ -21,7 +22,7 @@ export class LicenseController {
   }
 
   @Get('total-payout')
-  async getLicenseResponse(@Body() dto: RequestLicenseDto) {
+  async getLicenseResponse(@Body() dto: GetLicenseInfoDto) {
     return this.licenseService.getTotalPayoutInUSD(dto);
   }
 
@@ -31,7 +32,7 @@ export class LicenseController {
   }
 
   @Get('owners')
-  async getOwners(@Body() dto: GetShareLicense) {
+  async getOwners(@Body() dto: GetLicenseInfoDto) {
     return this.licenseService.getOwners(dto);
   }
 

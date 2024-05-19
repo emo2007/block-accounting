@@ -92,23 +92,34 @@ export class MultiSigWalletService extends BaseContractService {
     const signer = await this.providerService.getSigner();
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
-    const deployedAddress = await this.calculateFutureAddress(contractAddress);
 
-    const tx = await contract.executeTransaction(index);
+    const input = dto.index + new Date().getTime().toString();
+    const hashed = ethers.keccak256(ethers.toUtf8Bytes(input));
+    const salt = BigInt(hashed.substring(0, 10));
 
-    const txResponse: TransactionReceipt = await tx.wait();
-    console.log('=>(multi-sig.service.ts:101) txResponse', txResponse.logs);
-
-    const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
-    const data = {
-      txHash: txResponse.hash,
-      sender: eventParse.args[0].toString(),
-      txIndex: eventParse.args[1].toString(),
-    };
     if (isDeploy) {
-      return { ...data, deployedAddress };
+      const tx = await contract.executeDeployTransaction(index, salt);
+
+      const txResponse: TransactionReceipt = await tx.wait();
+      const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
+      const deployedParse = parseLogs(txResponse, contract, 'ContractDeployed');
+      return {
+        txHash: txResponse.hash,
+        sender: eventParse.args[0].toString(),
+        txIndex: eventParse.args[1].toString(),
+        deployedAddress: deployedParse.args[0].toString(),
+      };
     } else {
-      return data;
+      const tx = await contract.executeTransaction(index);
+
+      const txResponse: TransactionReceipt = await tx.wait();
+
+      const eventParse = parseLogs(txResponse, contract, 'ExecuteTransaction');
+      return {
+        txHash: txResponse.hash,
+        sender: eventParse.args[0].toString(),
+        txIndex: eventParse.args[1].toString(),
+      };
     }
   }
 
@@ -119,7 +130,7 @@ export class MultiSigWalletService extends BaseContractService {
 
     return getContractAddress({
       from: contractAddress,
-      nonce: nonce + 1,
+      nonce: nonce,
     });
   }
 

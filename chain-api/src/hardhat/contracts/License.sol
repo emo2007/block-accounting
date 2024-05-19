@@ -68,13 +68,13 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
     //update share
     //change payout address
     //
-    function getShare(address owner) public returns(uint){
+    function getShare(address owner) public view returns(uint){
         return ownerShare[owner];
     }
 
 
     // Send a request to the Chainlink oracle
-    function request() public {
+    function request() external onlyOwner{
 
         Chainlink.Request memory req = _buildOperatorRequest(jobId, this.fulfill.selector);
 

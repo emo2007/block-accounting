@@ -35,7 +35,7 @@ export class LicenseService extends BaseContractService {
     });
   }
 
-  async getTotalPayoutInUSD(dto: GetLicenseResponseDto) {
+  async getTotalPayoutInUSD(dto: GetLicenseInfoDto) {
     const { contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
@@ -44,7 +44,7 @@ export class LicenseService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const answer: bigint = await contract.totalPayoutInUSD();
+    const answer: bigint = await contract.request();
     console.log('=>(license.service.ts:45) answer', answer);
     return answer.toString();
   }
@@ -57,23 +57,36 @@ export class LicenseService extends BaseContractService {
     );
     const signer = await this.providerService.getSigner();
 
-    const licenseContract = new ethers.ContractFactory(abi, bytecode, signer);
+    const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
-    const myContract = await licenseContract.getDeployTransaction(
-      CHAINLINK.AMOY.CHAINLINK_TOKEN,
-      CHAINLINK.AMOY.ORACLE_ADDRESS,
-      CHAINLINK.AMOY.JOB_IDS.UINT,
-      0,
-      multiSigWallet,
-      owners,
-      shares,
-      payrollAddress,
+    const abiEncodedConstructorArguments = abiCoder.encode(
+      [
+        'address',
+        'address',
+        'string',
+        'uint',
+        'address',
+        'address[]',
+        'uint[]',
+        'address',
+      ],
+      [
+        CHAINLINK.AMOY.CHAINLINK_TOKEN,
+        CHAINLINK.AMOY.ORACLE_ADDRESS,
+        CHAINLINK.AMOY.JOB_IDS.UINT,
+        0,
+        multiSigWallet,
+        owners,
+        shares,
+        payrollAddress,
+      ],
     );
+    const fullBytecode = bytecode + abiEncodedConstructorArguments.substring(2);
     const submitData = await this.multiSigService.submitTransaction({
       contractAddress: multiSigWallet,
       destination: null,
       value: '0',
-      data: myContract.data,
+      data: fullBytecode,
     });
     delete submitData.data;
     return submitData;
@@ -102,9 +115,20 @@ export class LicenseService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const answer: string[] = await contract.owners();
+    const owners: string[] = [];
 
-    return answer;
+    for (let i = 0; i < 10; i++) {
+      try {
+        const owner = await contract.owners(i);
+        owners.push(owner);
+      } catch (e) {
+        // this.logger.error(e);
+        console.log('OWNERS LIMIT');
+        break;
+      }
+    }
+
+    return owners;
   }
 
   async getShares(dto: GetShareLicense) {
@@ -117,20 +141,7 @@ export class LicenseService extends BaseContractService {
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
     const answer: number = await contract.getShare(ownerAddress);
-
-    return answer;
-  }
-
-  async getTotalPayout(dto: GetLicenseInfoDto) {
-    const { contractAddress } = dto;
-    const { abi } = await hre.artifacts.readArtifact(
-      'StreamingRightsManagement',
-    );
-    const signer = await this.providerService.getSigner();
-
-    const contract = new ethers.Contract(contractAddress, abi, signer);
-
-    const answer: number = await contract.totalPayoutInUSD();
+    console.log('=>(license.service.ts:135) answer', answer);
 
     return answer;
   }

@@ -132,14 +132,6 @@ contract MultiSigWallet {
         if (success) {
             transaction.executed = true;
             emit ExecuteTransaction(msg.sender, _txIndex, transaction.to);
-            if (returnData.length > 0) {
-                address deployedContractAddress;
-                assembly {
-                    deployedContractAddress := mload(add(returnData, 20))
-                }
-                // You can emit an event with the address of the deployed contract
-                emit ContractDeployed(deployedContractAddress);
-            }
             removeTransaction(_txIndex);
         } else {
             // Get the revert reason and emit it
@@ -155,6 +147,39 @@ contract MultiSigWallet {
             }
         }
     }
+
+    function executeDeployTransaction(uint _txIndex, uint256 _salt) public onlyOwner txExists(_txIndex) notExecuted(_txIndex) {
+        Transaction storage transaction = transactions[_txIndex];
+        require(
+            transaction.numConfirmations >= numConfirmationsRequired,
+            "cannot execute tx"
+        );
+
+        address deployedAddress;
+
+        bytes memory bytecode = transaction.data;
+
+        // Assembly to deploy contract using CREATE2
+        assembly {
+            deployedAddress :=
+            create2(
+                callvalue(), // wei sent with current call
+                // Actual code starts after skipping the first 32 bytes
+                add(bytecode, 0x20),
+                mload(bytecode), // Load the size of code contained in the first 32 bytes
+                _salt // Salt from function arguments
+            )
+
+            if iszero(extcodesize(deployedAddress)) { revert(0, 0) }
+        }
+
+        require(deployedAddress != address(0), "Failed to deploy contract");
+        transaction.executed = true;
+        emit ExecuteTransaction(msg.sender, _txIndex, deployedAddress);
+        emit ContractDeployed(deployedAddress);
+        removeTransaction(_txIndex);
+    }
+
 
     function revokeConfirmation(
         uint _txIndex
