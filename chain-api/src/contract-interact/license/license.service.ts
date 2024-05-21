@@ -5,9 +5,10 @@ import { BaseContractService } from '../../base/base-contract.service';
 import {
   DeployLicenseDto,
   GetLicenseInfoDto,
-  GetLicenseResponseDto,
   GetShareLicense,
+  LicensePayoutDto,
   RequestLicenseDto,
+  SetPayoutContractDto,
 } from './license.dto';
 import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
 import { ProviderService } from '../../base/provider/provider.service';
@@ -44,18 +45,16 @@ export class LicenseService extends BaseContractService {
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const answer: bigint = await contract.request();
+    const answer: bigint = await contract.totalPayoutInUSD();
     console.log('=>(license.service.ts:45) answer', answer);
     return answer.toString();
   }
 
   async deploy(dto: DeployLicenseDto) {
-    console.log('=>(license.service.ts:53) dto', dto);
-    const { multiSigWallet, shares, owners, payrollAddress } = dto;
-    const { abi, bytecode } = await hre.artifacts.readArtifact(
+    const { multiSigWallet, shares, owners } = dto;
+    const { bytecode } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
     );
-    const signer = await this.providerService.getSigner();
 
     const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
@@ -68,7 +67,6 @@ export class LicenseService extends BaseContractService {
         'address',
         'address[]',
         'uint[]',
-        'address',
       ],
       [
         CHAINLINK.AMOY.CHAINLINK_TOKEN,
@@ -78,7 +76,6 @@ export class LicenseService extends BaseContractService {
         multiSigWallet,
         owners,
         shares,
-        payrollAddress,
       ],
     );
     const fullBytecode = bytecode + abiEncodedConstructorArguments.substring(2);
@@ -144,5 +141,37 @@ export class LicenseService extends BaseContractService {
     console.log('=>(license.service.ts:135) answer', answer);
 
     return answer;
+  }
+
+  async payout(dto: LicensePayoutDto) {
+    const { multiSigWallet, contractAddress } = dto;
+
+    const ISubmitMultiSig = new ethers.Interface(['function payout()']);
+    const data = ISubmitMultiSig.encodeFunctionData('payout');
+
+    return await this.multiSigService.submitTransaction({
+      contractAddress: multiSigWallet,
+      destination: contractAddress,
+      value: '0',
+      data,
+    });
+  }
+
+  async setPayoutContract(dto: SetPayoutContractDto) {
+    const { multiSigWallet, contractAddress, payoutContract } = dto;
+
+    const ISubmitMultiSig = new ethers.Interface([
+      'function setPayoutContract(address payable)',
+    ]);
+    const data = ISubmitMultiSig.encodeFunctionData('setPayoutContract', [
+      payoutContract,
+    ]);
+
+    return await this.multiSigService.submitTransaction({
+      contractAddress: multiSigWallet,
+      destination: contractAddress,
+      value: '0',
+      data,
+    });
   }
 }

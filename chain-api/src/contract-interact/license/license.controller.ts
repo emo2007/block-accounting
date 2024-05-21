@@ -5,7 +5,9 @@ import {
   DeployLicenseDto,
   GetLicenseInfoDto,
   GetShareLicense,
+  LicensePayoutDto,
   RequestLicenseDto,
+  SetPayoutContractDto,
 } from './license.dto';
 @ApiTags('license')
 @Controller('license')
@@ -37,7 +39,17 @@ export class LicenseController {
   }
 
   @Get('payout-contract')
-  async getPayoutContract(@Body() dto: GetShareLicense) {
+  async getPayoutContract(@Body() dto: GetLicenseInfoDto) {
     return this.licenseService.getPayoutContract(dto);
+  }
+
+  @Post('payout')
+  async payout(@Body() dto: LicensePayoutDto) {
+    return this.licenseService.payout(dto);
+  }
+
+  @Post('set-payout-contract')
+  async setPayoutContract(@Body() dto: SetPayoutContractDto) {
+    return this.licenseService.setPayoutContract(dto);
   }
 }

@@ -4,14 +4,7 @@ pragma solidity ^0.8.17;
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import "./Payroll.sol";
-/**
- * Request testnet LINK and ETH here: https://faucets.chain.link/
- * Find information on LINK Token Contracts and get the latest ETH and LINK faucets here: https://docs.chain.link/docs/link-token-contracts/
- */
 
-/**
- * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
- */
 
 contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
@@ -33,8 +26,7 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
         uint _fee,
         address _multiSigAddress,
         address[] memory _owners,
-        uint[] memory _shares,
-        address payable _payoutAddress
+        uint[] memory _shares
     ) ConfirmedOwner(_multiSigAddress) {
 
         _setChainlinkToken(_chainLinkToken);
@@ -47,7 +39,6 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
 
         multisigWallet = _multiSigAddress;
 
-        payoutContract = Payroll(_payoutAddress);
 
         require(_owners.length == _shares.length, "Owners and shares length mismatch");
 
@@ -68,8 +59,18 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
     //update share
     //change payout address
     //
+    modifier hasValidPayoutContract() {
+        require(address(payoutContract) != address(0), "payoutContract not initialized");
+        _;
+    }
+
     function getShare(address owner) public view returns(uint){
         return ownerShare[owner];
+    }
+
+    function setPayoutContract(address payable _payoutAddress) public onlyOwner {
+        require(_payoutAddress != address(0), "Invalid address: zero address not allowed");
+        payoutContract = Payroll(_payoutAddress);
     }
 
 
@@ -90,6 +91,7 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
 
         // PROCESS THE RESULT (example)
         req._add('path', 'ETH,USD');
+        req._addInt('multiplier', 10 ** 18);
         // Send the request to the Chainlink oracle
         _sendOperatorRequest(req, fee);
     }
@@ -102,15 +104,16 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
     function fulfill(bytes32 requestId, uint256 data) public recordChainlinkFulfillment(requestId) {
         // Process the oracle response
         // emit RequestFulfilled(requestId);    // (optional) emits this event in the on-chain transaction logs, allowing Web3 applications to listen for this transaction
-        totalPayoutInUSD = data / 100;     // example value: 1875870000000000000000 (1875.87 before "multiplier" is applied)
+        totalPayoutInUSD = data / 1e18 / 100;     // example value: 1875870000000000000000 (1875.87 before "multiplier" is applied)
     }
 
-    function payout() external onlyOwner {
-        // using arrays to reduce gas
-        uint[] memory shares;
+    function payout() external onlyOwner hasValidPayoutContract{
 
-        for(uint i=0; i< owners.length; i++){
-          shares[i] = ownerShare[owners[i]];
+        // using arrays to reduce gas
+        uint[] memory shares = new uint[](owners.length);
+
+    for(uint i=0; i< owners.length; i++){
+          shares[i] = ownerShare[owners[i]] * totalPayoutInUSD / 100;
         }
         payoutContract.oneTimePayout(owners, shares);
     }

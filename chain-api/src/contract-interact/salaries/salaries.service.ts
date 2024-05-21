@@ -29,7 +29,7 @@ export class SalariesService extends BaseContractService {
     const salaryContract = new ethers.ContractFactory(abi, bytecode, signer);
 
     const myContract = await salaryContract.deploy(
-      dto.multiSigWallet,
+      dto.authorizedWallet,
       CHAINLINK.AMOY.AGGREGATOR_ADDRESS.USDT_ETH,
     );
     await myContract.waitForDeployment();

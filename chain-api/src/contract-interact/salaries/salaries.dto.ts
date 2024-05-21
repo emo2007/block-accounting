@@ -4,7 +4,7 @@ import { IsNumber, IsString } from 'class-validator';
 export class SalariesDeployDto {
   @ApiProperty()
   @IsString()
-  multiSigWallet: string;
+  authorizedWallet: string;
 }
 
 export class SetSalaryDto {

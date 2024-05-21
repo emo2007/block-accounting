@@ -18,9 +18,6 @@ export class DeployLicenseDto {
   })
   @IsNumber({}, { each: true })
   shares: number[];
-  @ApiProperty()
-  @IsString()
-  payrollAddress: string;
 }
 
 export class RequestLicenseDto extends GetLicenseInfoDto {
@@ -35,4 +32,11 @@ export class GetShareLicense extends GetLicenseInfoDto {
   @IsString()
   @ApiProperty()
   ownerAddress: string;
+}
+
+export class LicensePayoutDto extends RequestLicenseDto {}
+export class SetPayoutContractDto extends RequestLicenseDto {
+  @IsString()
+  @ApiProperty()
+  payoutContract: string;
 }
