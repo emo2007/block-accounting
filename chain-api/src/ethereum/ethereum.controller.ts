@@ -1,17 +1,20 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param } from '@nestjs/common';
 import { EthereumService } from './ethereum.service';
 import { ApiTags } from '@nestjs/swagger';
+import { GetSeedPhraseDto } from './ethereum.dto';
+
 @ApiTags('Ethereum')
 @Controller()
 export class EthereumController {
   constructor(private readonly ethereumService: EthereumService) {}
+
   @Get('/address/:privateKey')
   async getAddressFromPrivateKey(@Param('privateKey') privateKey: string) {
     return this.ethereumService.getAddressFromPrivateKey(privateKey);
   }
 
   @Get('/address-from-seed/:seedPhrase')
-  async getAddressFromSeedPhrase(@Param('seedPhrase') seedPhrase: string) {
-    return this.ethereumService.getAddressFromSeedPhrase(seedPhrase);
+  async getAddressFromSeedPhrase(@Body() body: GetSeedPhraseDto) {
+    return this.ethereumService.getAddressFromSeedPhrase(body.seedPhrase);
   }
 }
