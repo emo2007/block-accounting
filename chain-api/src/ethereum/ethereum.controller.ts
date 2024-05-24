@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { EthereumService } from './ethereum.service';
 import { ApiTags } from '@nestjs/swagger';
 import { GetSeedPhraseDto } from './ethereum.dto';
@@ -13,7 +13,7 @@ export class EthereumController {
     return this.ethereumService.getAddressFromPrivateKey(privateKey);
   }
 
-  @Get('/address-from-seed/:seedPhrase')
+  @Post('/address-from-seed/:seedPhrase')
   async getAddressFromSeedPhrase(@Body() body: GetSeedPhraseDto) {
     return this.ethereumService.getAddressFromSeedPhrase(body.seedPhrase);
   }
