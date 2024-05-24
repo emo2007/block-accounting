@@ -103,9 +103,7 @@ func (s *Server) buildRouter() {
 		r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
-			// r.Put("/", s.handle(s.controllers.Organizations.NewOrganization, "update_organization"))
-			// r.Delete("/", s.handle(s.controllers.Organizations.NewOrganization, "delete_organization"))
-
+			// Deprecated??
 			r.Route("/transactions", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Transactions.List, "tx_list"))
 				r.Post("/", s.handle(s.controllers.Transactions.New, "new_tx"))
@@ -115,8 +113,19 @@ func (s *Server) buildRouter() {
 				)
 			})
 
-			r.Route("/payout", func(r chi.Router) {
-				r.Post("/", nil)
+			r.Route("/payrolls", func(r chi.Router) {
+				r.Get("/", nil)  // list payrolls
+				r.Post("/", nil) // deploy contract
+			})
+
+			r.Route("/multisig", func(r chi.Router) {
+				r.Post("/", nil) // new multisig (deploy)
+				r.Get("/", nil)  // list
+			})
+
+			r.Route("/license", func(r chi.Router) {
+				r.Get("/", nil)  // list license
+				r.Post("/", nil) // deploy contract
 			})
 
 			// join via invite link
@@ -124,19 +133,21 @@ func (s *Server) buildRouter() {
 
 			r.Route("/participants", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Participants.List, "participants_list"))
+				r.Post("/", nil)
 
-				r.Put("/{participant_id}", nil)    // update user / employee
-				r.Delete("/{participant_id}", nil) // remove user / employee
+				// generate new invite link
+				r.Post("/invite", s.handle(s.controllers.Auth.Invite, "invite"))
 
-				r.Post("/", nil) // add {employee}
+				r.Route("/{participant_id}", func(r chi.Router) {
+					r.Put("/", nil)    // update user / employee
+					r.Delete("/", nil) // remove user / employee
 
-				r.Post("/invite", s.handle(s.controllers.Auth.Invite, "invite")) // generate new invite link
-			})
-
-			r.Route("/multisig", func(r chi.Router) {
-				r.Post("/", nil) // new multisig
-				r.Get("/", nil)  // list
-
+					r.Route("/payroll", func(r chi.Router) {
+						r.Post("/", nil) // set salary
+						r.Put("/", nil)  // edit
+						r.Get("/", nil)
+					})
+				})
 			})
 		})
 	})

@@ -61,6 +61,7 @@ type Repository interface {
 	Participants(ctx context.Context, params ParticipantsParams) ([]models.OrganizationParticipant, error)
 	CreateAndAdd(ctx context.Context, org models.Organization, user *models.User) error
 	DeleteParticipant(ctx context.Context, params DeleteParticipantParams) error
+	AddEmployee(ctx context.Context, employee models.Employee) error
 }
 
 type repositorySQL struct {
@@ -649,4 +650,42 @@ func (r *repositorySQL) fetchEmployees(
 	}
 
 	return employees, nil
+}
+
+func (r *repositorySQL) AddEmployee(ctx context.Context, employee models.Employee) error {
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Insert("employees").Columns(
+			"id",
+			"user_id",
+			"organization_id",
+			"wallet_address",
+			"created_at",
+			"updated_at",
+		).Values(
+			employee.ID,
+			employee.UserID,
+			employee.OrganizationId,
+			employee.WalletAddress,
+			employee.CreatedAt,
+			employee.UpdatedAt,
+		)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add employee. %w", err)
+		}
+
+		if err := r.AddParticipant(ctx, AddParticipantParams{
+			OrganizationId: employee.OrganizationId,
+			UserId:         employee.UserID,
+			EmployeeId:     employee.ID,
+		}); err != nil {
+			return fmt.Errorf("error add employee to organization. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -17,6 +17,7 @@ import (
 
 type ParticipantsController interface {
 	List(w http.ResponseWriter, r *http.Request) ([]byte, error)
+	New(w http.ResponseWriter, r *http.Request) ([]byte, error)
 }
 
 type participantsController struct {
@@ -91,4 +92,31 @@ func (c *participantsController) List(w http.ResponseWriter, r *http.Request) ([
 	}
 
 	return c.presenter.ResponseListParticipants(ctx, participants)
+}
+
+func (c *participantsController) New(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	req, err := presenters.CreateRequest[domain.AddEmployeeRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error build list participants request. %w", err)
+	}
+
+	organizationID, err := ctxmeta.OrganizationId(r.Context())
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
+	participant, err := c.orgInteractor.AddParticipant(ctx, organizations.AddParticipantParams{
+		OrganizationID: organizationID,
+		Name:           req.Name,
+		Position:       req.Position,
+		WalletAddress:  req.WalletAddress,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error create new participant. %w", err)
+	}
+
+	return c.presenter.ResponseParticipant(ctx, participant)
 }

@@ -16,6 +16,10 @@ type ParticipantsPresenter interface {
 		ctx context.Context,
 		participants []models.OrganizationParticipant,
 	) ([]byte, error)
+	ResponseParticipant(
+		ctx context.Context,
+		participant models.OrganizationParticipant,
+	) ([]byte, error)
 }
 
 type participantsPresenter struct{}
@@ -107,6 +111,23 @@ func (p *participantsPresenter) ResponseListParticipants(
 	r, err := p.responseParticipants(ctx, participants)
 	if err != nil {
 		return nil, fmt.Errorf("error map participants to hal. %w", err)
+	}
+
+	out, err := json.Marshal(r)
+	if err != nil {
+		return nil, fmt.Errorf("error marshal organization create response. %w", err)
+	}
+
+	return out, nil
+}
+
+func (p *participantsPresenter) ResponseParticipant(
+	ctx context.Context,
+	participant models.OrganizationParticipant,
+) ([]byte, error) {
+	r, err := p.responseParticipant(ctx, participant)
+	if err != nil {
+		return nil, fmt.Errorf("error map participant to hal resource. %w", err)
 	}
 
 	out, err := json.Marshal(r)

@@ -1,10 +1,10 @@
 package config
 
 type Config struct {
-	Common CommonConfig
-	Rest   RestConfig
-	DB     DBConfig
-	Eth    EthConfig
+	Common   CommonConfig
+	Rest     RestConfig
+	DB       DBConfig
+	ChainAPI ChainAPIConfig
 }
 
 type CommonConfig struct {
@@ -35,6 +35,6 @@ type DBConfig struct {
 	CacheSecret string
 }
 
-type EthConfig struct {
-	// todo
+type ChainAPIConfig struct {
+	Host string
 }

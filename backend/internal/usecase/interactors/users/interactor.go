@@ -87,6 +87,10 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 		Telegram: params.Tg,
 	}
 
+	// TODO fetch user PK from chain-api
+
+	user.PK = []byte{0x01}
+
 	if err = i.usersRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("error create new user. %w", err)
 	}

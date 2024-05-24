@@ -158,7 +158,7 @@ create table multisigs (
 
 create table multisig_owners (
         multisig_id uuid references multisigs(id), 
-        owner_id uuid references organizations_users(user_id), 
+        owner_id uuid references users(id), 
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp,
         primary key (multisig_id, owner_id)
@@ -166,7 +166,7 @@ create table multisig_owners (
 
 create table multisig_confirmations (
         multisig_id uuid references multisigs(id), 
-        owner_id uuid references organizations_users(user_id), 
+        owner_id uuid references users(id), 
         created_at timestamp default current_timestamp,
         primary key (multisig_id, owner_id)
 );

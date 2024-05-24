@@ -15,6 +15,7 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/cache"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 )
 
@@ -55,22 +56,12 @@ type ParticipantsParams struct {
 }
 
 type OrganizationsInteractor interface {
-	Create(
-		ctx context.Context,
-		params CreateParams,
-	) (*models.Organization, error)
-	List(
-		ctx context.Context,
-		params ListParams,
-	) (*ListResponse, error)
-	Participant(
-		ctx context.Context,
-		params ParticipantParams,
-	) (models.OrganizationParticipant, error)
-	Participants(
-		ctx context.Context,
-		params ParticipantsParams,
-	) ([]models.OrganizationParticipant, error)
+	Create(ctx context.Context, params CreateParams) (*models.Organization, error)
+	List(ctx context.Context, params ListParams) (*ListResponse, error)
+
+	Participant(ctx context.Context, params ParticipantParams) (models.OrganizationParticipant, error)
+	Participants(ctx context.Context, params ParticipantsParams) ([]models.OrganizationParticipant, error)
+	AddParticipant(ctx context.Context, params AddParticipantParams) (models.OrganizationParticipant, error)
 }
 
 type organizationsInteractor struct {
@@ -307,4 +298,58 @@ func (i *organizationsInteractor) Participants(
 	}
 
 	return participants, nil
+}
+
+type AddParticipantParams struct {
+	OrganizationID uuid.UUID
+	EmployeeUserID uuid.UUID
+	Name           string
+	Position       string
+	WalletAddress  string
+}
+
+func (i *organizationsInteractor) AddParticipant(
+	ctx context.Context,
+	params AddParticipantParams,
+) (models.OrganizationParticipant, error) {
+	user, err := ctxmeta.User(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	actor, err := i.Participant(ctx, ParticipantParams{
+		ID:             user.Id(),
+		OrganizationID: params.OrganizationID,
+		ActiveOnly:     true,
+		UsersOnly:      true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch actor. %w", err)
+	}
+
+	if !actor.IsOwner() {
+		return nil, fmt.Errorf("error actor not an owner")
+	}
+
+	if !common.IsHexAddress(params.WalletAddress) {
+		return nil, fmt.Errorf("error invalid address")
+	}
+
+	participantID := uuid.Must(uuid.NewV7())
+
+	empl := models.Employee{
+		ID:             participantID,
+		EmployeeName:   params.Name,
+		UserID:         params.EmployeeUserID,
+		OrganizationId: params.OrganizationID,
+		WalletAddress:  common.FromHex(params.WalletAddress),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	if err = i.orgRepository.AddEmployee(ctx, empl); err != nil {
+		return nil, fmt.Errorf("error add new employee. %w", err)
+	}
+
+	return &empl, nil
 }

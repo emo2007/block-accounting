@@ -50,7 +50,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 	var users []*models.User = make([]*models.User, 0, len(params.Ids))
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
-		query := sq.Select("u.id, u.name, u.email, u.phone, u.tg, u.seed, u.created_at, u.activated_at").
+		query := sq.Select("u.id, u.name, u.email, u.phone, u.tg, u.seed, u.created_at, u.activated_at, u.public_key").
 			From("users as u").
 			PlaceholderFormat(sq.Dollar)
 
@@ -95,6 +95,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 				tg    string
 
 				seed []byte
+				pk   []byte
 				//isAdmin     bool
 				createdAt   time.Time
 				activatedAt sql.NullTime
@@ -109,6 +110,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 				&seed,
 				&createdAt,
 				&activatedAt,
+				&pk,
 			); err != nil {
 				return fmt.Errorf("error scan row. %w", err)
 			}
@@ -122,6 +124,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 					Telegram: tg,
 				},
 				Bip39Seed: seed,
+				PK:        pk,
 				//Admin:     isAdmin,
 				CreatedAt: createdAt,
 				Activated: activatedAt.Valid,
@@ -138,7 +141,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 
 func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
-		columns := []string{"id", "name", "email", "phone", "tg", "seed", "created_at"}
+		columns := []string{"id", "name", "email", "phone", "tg", "seed", "public_key", "created_at"}
 
 		values := []any{
 			user.ID,
@@ -147,6 +150,7 @@ func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 			user.Credentails.Phone,
 			user.Credentails.Telegram,
 			user.Bip39Seed,
+			user.PK,
 			user.CreatedAt,
 		}
 
