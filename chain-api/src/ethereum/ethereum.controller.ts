@@ -13,7 +13,7 @@ export class EthereumController {
     return this.ethereumService.getAddressFromPrivateKey(privateKey);
   }
 
-  @Post('/address-from-seed/:seedPhrase')
+  @Post('/address-from-seed')
   async getAddressFromSeedPhrase(@Body() body: GetSeedPhraseDto) {
     return this.ethereumService.getAddressFromSeedPhrase(body.seedPhrase);
   }
