@@ -7,4 +7,8 @@ export class EthereumService {
     const wallet = new ethers.Wallet(privateKey);
     return wallet.address;
   }
+  async getAddressFromSeedPhrase(seedPhrase: string) {
+    const wallet = ethers.Wallet.fromPhrase(seedPhrase);
+    return wallet.address;
+  }
 }

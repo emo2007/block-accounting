@@ -9,4 +9,9 @@ export class EthereumController {
   async getAddressFromPrivateKey(@Param('privateKey') privateKey: string) {
     return this.ethereumService.getAddressFromPrivateKey(privateKey);
   }
+
+  @Get('/address-from-seed/:seedPhrase')
+  async getAddressFromSeedPhrase(@Param('seedPhrase') seedPhrase: string) {
+    return this.ethereumService.getAddressFromSeedPhrase(seedPhrase);
+  }
 }
