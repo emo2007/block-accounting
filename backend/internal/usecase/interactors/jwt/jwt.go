@@ -21,7 +21,7 @@ var (
 )
 
 type JWTInteractor interface {
-	NewToken(user models.UserIdentity, duration time.Duration) (AccessToken, error)
+	NewToken(user models.UserIdentity, duration time.Duration, remoteAddr string) (AccessToken, error)
 	User(token string) (*models.User, error)
 	RefreshToken(ctx context.Context, token string, rToken string) (AccessToken, error)
 }
@@ -53,7 +53,7 @@ type AccessToken struct {
 }
 
 // NewToken creates new JWT token for given user
-func (w *jwtInteractor) NewToken(user models.UserIdentity, duration time.Duration) (AccessToken, error) {
+func (w *jwtInteractor) NewToken(user models.UserIdentity, duration time.Duration, remoteAddr string) (AccessToken, error) {
 	tokens, err := w.newTokens(user.Id(), duration)
 	if err != nil {
 		return AccessToken{}, fmt.Errorf("error create new tokens. %w", err)

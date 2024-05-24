@@ -22,6 +22,8 @@ type AddTokenParams struct {
 	RefreshTokenExpiredAt time.Time
 
 	CreatedAt time.Time
+
+	RemoteAddr string
 }
 
 type GetTokenParams struct {
@@ -73,6 +75,7 @@ func (r *repositorySQL) AddToken(ctx context.Context, params AddTokenParams) err
 				"refresh_token",
 				"token_expired_at",
 				"refresh_token_expired_at",
+				"remote_addr",
 			).
 			Values(
 				params.UserId,
@@ -80,6 +83,7 @@ func (r *repositorySQL) AddToken(ctx context.Context, params AddTokenParams) err
 				params.RefreshToken,
 				params.TokenExpiredAt,
 				params.RefreshTokenExpiredAt,
+				params.RemoteAddr,
 			).PlaceholderFormat(sq.Dollar)
 
 		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
