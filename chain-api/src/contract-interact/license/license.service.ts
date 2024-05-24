@@ -10,23 +10,25 @@ import {
   RequestLicenseDto,
   SetPayoutContractDto,
 } from './license.dto';
-import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
-import { ProviderService } from '../../base/provider/provider.service';
 import { CHAINLINK } from '../../config/chainlink.config';
+import { ProviderService } from '../../base/provider/provider.service';
+import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
 
 @Injectable()
 export class LicenseService extends BaseContractService {
   constructor(
-    private readonly multiSigService: MultiSigWalletService,
     public readonly providerService: ProviderService,
+    public readonly multiSigService: MultiSigWalletService,
   ) {
     super(providerService);
   }
   async request(dto: RequestLicenseDto) {
-    const { multiSigWallet, contractAddress } = dto;
+    const { multiSigWallet, contractAddress, url } = dto;
 
-    const ISubmitMultiSig = new ethers.Interface(['function request()']);
-    const data = ISubmitMultiSig.encodeFunctionData('request');
+    const ISubmitMultiSig = new ethers.Interface([
+      'function request(string memory url)',
+    ]);
+    const data = ISubmitMultiSig.encodeFunctionData('request', [url]);
 
     return await this.multiSigService.submitTransaction({
       contractAddress: multiSigWallet,
@@ -46,7 +48,6 @@ export class LicenseService extends BaseContractService {
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
     const answer: bigint = await contract.totalPayoutInUSD();
-    console.log('=>(license.service.ts:45) answer', answer);
     return answer.toString();
   }
 

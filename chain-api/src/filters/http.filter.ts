@@ -23,7 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const responseBody = {
       statusCode: httpStatus,
-      error: exception?.info?.error.message || exception.toString(),
+      error: exception?.info?.error?.message || exception.toString(),
       timestamp: new Date().toISOString(),
     };
 

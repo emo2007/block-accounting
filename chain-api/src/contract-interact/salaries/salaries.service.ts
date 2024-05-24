@@ -7,17 +7,17 @@ import {
   SetSalaryDto,
 } from './salaries.dto';
 import * as hre from 'hardhat';
-import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
 import { BaseContractService } from '../../base/base-contract.service';
-import { ProviderService } from '../../base/provider/provider.service';
 import { DepositContractDto } from '../multi-sig.dto';
 import { CHAINLINK } from '../../config/chainlink.config';
+import { ProviderService } from '../../base/provider/provider.service';
+import { MultiSigWalletService } from '../multi-sig/multi-sig.service';
 
 @Injectable()
 export class SalariesService extends BaseContractService {
   constructor(
-    private readonly multiSigWalletService: MultiSigWalletService,
     public readonly providerService: ProviderService,
+    public readonly multiSigService: MultiSigWalletService,
   ) {
     super(providerService);
   }
@@ -57,7 +57,7 @@ export class SalariesService extends BaseContractService {
       salary,
     ]);
 
-    return await this.multiSigWalletService.submitTransaction({
+    return await this.multiSigService.submitTransaction({
       contractAddress: multiSigWallet,
       destination: contractAddress,
       value: '0',
@@ -87,7 +87,7 @@ export class SalariesService extends BaseContractService {
       employeeAddress,
     ]);
 
-    return await this.multiSigWalletService.submitTransaction({
+    return await this.multiSigService.submitTransaction({
       contractAddress: multiSigWallet,
       destination: contractAddress,
       value: '0',

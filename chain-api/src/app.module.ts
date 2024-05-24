@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 
 import { ContractInteractModule } from './contract-interact/contract-interact.module';
 import { ConfigModule } from '@nestjs/config';
+import { EthereumModule } from './ethereum/ethereum.module';
+import { AgreementModule } from './contract-interact/agreement/agreement.module';
 
 @Module({
   imports: [
@@ -11,6 +13,8 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
     }),
     ContractInteractModule,
+    EthereumModule,
+    AgreementModule,
   ],
   controllers: [AppController],
   providers: [AppService],

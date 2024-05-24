@@ -55,10 +55,6 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
             owners.push(_owners[i]);
         }
     }
-    //get share
-    //update share
-    //change payout address
-    //
     modifier hasValidPayoutContract() {
         require(address(payoutContract) != address(0), "payoutContract not initialized");
         _;
@@ -73,26 +69,20 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
         payoutContract = Payroll(_payoutAddress);
     }
 
-
     // Send a request to the Chainlink oracle
-    function request() external onlyOwner{
+    function request(string memory url) external onlyOwner{
 
         Chainlink.Request memory req = _buildOperatorRequest(jobId, this.fulfill.selector);
 
-        // DEFINE THE REQUEST PARAMETERS (example)
         req._add('method', 'GET');
-        req._add('url', 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=USD,EUR');
-        req._add('headers', '["content-type", "application/json", "set-cookie", "sid=14A52"]');
-        req._add('body', '');
-        req._add('contact', '');     // PLEASE ENTER YOUR CONTACT INFO. this allows us to notify you in the event of any emergencies related to your request (ie, bugs, downtime, etc.). example values: 'derek_linkwellnodes.io' (Discord handle) OR 'derek@linkwellnodes.io' OR '+1-617-545-4721'
+        req._add('url', url);
 
-        // The following curl command simulates the above request parameters:
-        // curl 'https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH&tsyms=USD,EUR' --request 'GET' --header 'content-type: application/json' --header 'set-cookie: sid=14A52'
-
-        // PROCESS THE RESULT (example)
-        req._add('path', 'ETH,USD');
+        //if returns just int - then empty path
+        req._add('path', '');
         req._addInt('multiplier', 10 ** 18);
-        // Send the request to the Chainlink oracle
+        req._add('headers', '["content-type", "application/json"]');
+        req._add('body', '');
+        req._add('contact', '');
         _sendOperatorRequest(req, fee);
     }
 
@@ -102,9 +92,7 @@ contract StreamingRightsManagement is ChainlinkClient, ConfirmedOwner {
     event RequestFulfilled(bytes32 indexed requestId);
 
     function fulfill(bytes32 requestId, uint256 data) public recordChainlinkFulfillment(requestId) {
-        // Process the oracle response
-        // emit RequestFulfilled(requestId);    // (optional) emits this event in the on-chain transaction logs, allowing Web3 applications to listen for this transaction
-        totalPayoutInUSD = data / 1e18 / 100;     // example value: 1875870000000000000000 (1875.87 before "multiplier" is applied)
+        totalPayoutInUSD = data / 1e18;
     }
 
     function payout() external onlyOwner hasValidPayoutContract{

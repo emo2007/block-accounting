@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsString, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 export class GetLicenseInfoDto {
   @ApiProperty()
@@ -24,6 +24,9 @@ export class RequestLicenseDto extends GetLicenseInfoDto {
   @ApiProperty()
   @IsString()
   multiSigWallet: string;
+  @ApiProperty()
+  @IsUrl()
+  url: string;
 }
 
 export class GetLicenseResponseDto extends GetLicenseInfoDto {}

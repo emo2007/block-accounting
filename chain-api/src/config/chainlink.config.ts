@@ -7,6 +7,7 @@ export const CHAINLINK = {
     },
     JOB_IDS: {
       UINT: 'a8356f48569c434eaa4ac5fcb4db5cc0',
+      BOOL: '43309009a154495cb2ed794233e6ff56',
     },
   },
 };

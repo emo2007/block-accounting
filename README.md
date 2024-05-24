@@ -1,11 +1,14 @@
-![LOGIN FLOW](./login-flow.png "Login")
+### CHAIN-API 
 
-[//]: # (![Example architecture]&#40;./arch.png "Arch"&#41;)
-![License](./license.png "Arch")
-![Salaries](./salaries.png "Arch")
+- ### Multi-Sig Deploy
+![Alt Text](./excalidraw/multisig.png)
 
-# Registration Flow
-
-- On First Login - Owner inputs his SEED_KEY (mnemonic), creates an organization, we save its seed hash for future login and signing internal txs.
-- When inviting an employee to organization- we generate an invitation link, then after clicking on this link - the user is asked for seed, if he's already registered or able to generate a seed for new account.
--
+- ### Payroll Deploy
+![Alt Text](./excalidraw/payroll-deploy.png)
+- ### Payroll 
+![set-salary.png](excalidraw%2Fset-salary.png)
+![payroll.png](excalidraw%2Fpayroll.png)
+- ### License
+![license-deploy.png](excalidraw%2Flicense-deploy.png)
+![data-request-license.png](excalidraw%2Fdata-request-license.png)
+![license-payout-2of3steps.png](excalidraw%2Flicense-payout-2of3steps.png)![3step-license-payout.png](excalidraw%2F3step-license-payout.png)

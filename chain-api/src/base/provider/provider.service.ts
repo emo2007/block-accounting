@@ -18,11 +18,7 @@ export class ProviderService {
     if (this.provider) {
       return this.provider;
     }
-    const polygonProvider = new ethers.JsonRpcProvider(
-      this.nodeUrl,
-      this.networkId,
-    );
-    this.provider = polygonProvider;
+    this.provider = new ethers.JsonRpcProvider(this.nodeUrl, this.networkId);
     return this.provider;
   }
 
