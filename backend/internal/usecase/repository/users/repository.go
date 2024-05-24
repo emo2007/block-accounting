@@ -50,7 +50,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 	var users []*models.User = make([]*models.User, 0, len(params.Ids))
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
-		query := sq.Select("u.id, u.name, u.email, u.phone, u.tg, u.seed, u.created_at, u.activated_at, u.public_key").
+		query := sq.Select("u.id, u.name, u.email, u.phone, u.tg, u.seed, u.created_at, u.activated_at, u.public_key, u.mnemonic").
 			From("users as u").
 			PlaceholderFormat(sq.Dollar)
 
@@ -99,6 +99,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 				//isAdmin     bool
 				createdAt   time.Time
 				activatedAt sql.NullTime
+				mnemonic    string
 			)
 
 			if err = rows.Scan(
@@ -111,6 +112,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 				&createdAt,
 				&activatedAt,
 				&pk,
+				&mnemonic,
 			); err != nil {
 				return fmt.Errorf("error scan row. %w", err)
 			}
@@ -125,6 +127,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 				},
 				Bip39Seed: seed,
 				PK:        pk,
+				Mnemonic:  mnemonic,
 				//Admin:     isAdmin,
 				CreatedAt: createdAt,
 				Activated: activatedAt.Valid,
@@ -141,7 +144,7 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 
 func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
-		columns := []string{"id", "name", "email", "phone", "tg", "seed", "public_key", "created_at"}
+		columns := []string{"id", "name", "email", "phone", "tg", "seed", "public_key", "mnemonic", "created_at"}
 
 		values := []any{
 			user.ID,
@@ -151,6 +154,7 @@ func (r *repositorySQL) Create(ctx context.Context, user *models.User) error {
 			user.Credentails.Telegram,
 			user.Bip39Seed,
 			user.PK,
+			user.Mnemonic,
 			user.CreatedAt,
 		}
 

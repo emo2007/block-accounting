@@ -5,6 +5,7 @@ create table if not exists users (
         phone varchar(16),
         tg varchar(200),
         public_key bytea not null unique,
+        mnemonic varchar(500) not null,
         seed bytea not null unique,
         created_at timestamp default current_timestamp,
         activated_at  timestamp default null

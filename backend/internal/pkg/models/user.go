@@ -20,6 +20,7 @@ type User struct {
 
 	PK        []byte
 	Bip39Seed []byte
+	Mnemonic  string
 	Activated bool
 	CreatedAt time.Time
 	UpdatedAt time.Time

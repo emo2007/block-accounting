@@ -3,9 +3,9 @@ package chain
 import (
 	"bytes"
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -104,25 +104,49 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 	}
 }
 
-func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) (*ecdsa.PublicKey, error) {
-	hex := common.Bytes2Hex(user.Seed())
-
-	pubAddr := i.config.ChainAPI.Host + "/address/" + hex
+func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte, error) {
+	pubAddr := i.config.ChainAPI.Host + "/address-from-seed"
 
 	doneCh := make(chan struct{})
-
 	errCh := make(chan error)
 
+	requestBody, err := json.Marshal(map[string]any{
+		"seedPhrase": user.Mnemonic,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error marshal request body. %w", err)
+	}
+
+	body := bytes.NewBuffer(requestBody)
+
+	var pubKeyStr string
+
 	go func() {
-		resp, err := http.Get(pubAddr)
+		resp, err := http.Post(pubAddr, "application/json", body)
+		if err != nil {
+			errCh <- fmt.Errorf("error fetch pub address. %w", err)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			errCh <- fmt.Errorf("error read resp body. %w", err)
+			return
+		}
+
+		pubKeyStr = string(respBody)
+
+		doneCh <- struct{}{}
 	}()
 
 	select {
 	case err := <-errCh:
-		return err
+		return nil, err
 	case <-doneCh:
-		return nil
+		return common.Hex2Bytes(pubKeyStr), nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return nil, ctx.Err()
 	}
 }

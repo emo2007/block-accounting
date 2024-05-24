@@ -1,7 +1,9 @@
-version: '3'
 networks:
   blockd-net:
     name: blockd-net
+    driver: bridge
+  syslog:
+    name: syslog
     driver: bridge
 
 volumes:
@@ -11,14 +13,19 @@ volumes:
 services:
   blockd:
     container_name: blockd
-    image: blockd:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
     ports:
       - 8080:8080
     networks:
       - blockd-net
+      - syslog
     depends_on:
       blockd-db:
         condition: service_healthy
+      syslog:
+        condition: service_started
     profiles: [blockd]
 
   blockd-db:
@@ -54,32 +61,52 @@ services:
       - 6379:6379
     profiles: [blockd, database, noback]
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    ports:
-      - 9091:9090
-    restart: unless-stopped
-    networks:
-      - blockd-net
-    volumes:
-      - ./prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    profiles: [blockd, metrics, noback]
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #   ports:
+  #     - 9091:9090
+  #   restart: unless-stopped
+  #   networks:
+  #     - blockd-net
+  #   volumes:
+  #     - ./prometheus:/etc/prometheus
+  #     - prometheus_data:/prometheus
+  #   profiles: [blockd, metrics, noback]
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - 3112:3000
-    restart: unless-stopped
-    networks:
-      - blockd-net
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=grafana
-    volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
-    profiles: [blockd, metrics, noback]
+  # grafana:
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   ports:
+  #     - 3112:3000
+  #   restart: unless-stopped
+  #   networks:
+  #     - blockd-net
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=grafana
+  #   volumes:
+  #     - ./grafana:/etc/grafana/provisioning/datasources
+  #   profiles: [blockd, metrics, noback]
+
+  # syslog:
+  #   image: linuxserver/syslog-ng:3.36.1 
+  #   container_name: syslog-ng
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=UTC
+  #   volumes:
+  #     - /srv/syslog/config:/config
+  #     - /srv/syslog/logs:/var/log
+  #   ports:
+  #     - 514:5514/udp
+  #     - 601:6601/tcp
+  #     - 6514:6514/tcp
+  #   restart: unless-stopped
+  #   networks:
+  #     - syslog
+  #   logging:
+  #     driver: "json-file"

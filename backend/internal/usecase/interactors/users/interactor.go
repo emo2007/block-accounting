@@ -80,6 +80,7 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 	)
 
 	user.Name = params.Name
+	user.Mnemonic = params.Mnemonic
 
 	user.Credentails = &models.UserCredentials{
 		Email:    params.Email,
@@ -89,7 +90,7 @@ func (i *usersInteractor) Create(ctx context.Context, params CreateParams) (*mod
 
 	// TODO fetch user PK from chain-api
 
-	user.PK = []byte{0x01}
+	user.PK = []byte{0x01} // todo remove
 
 	if err = i.usersRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("error create new user. %w", err)
