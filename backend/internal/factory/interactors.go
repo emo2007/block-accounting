@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
@@ -18,8 +19,9 @@ import (
 func provideUsersInteractor(
 	log *slog.Logger,
 	usersRepo urepo.Repository,
+	chainInteractor chain.ChainInteractor,
 ) users.UsersInteractor {
-	return users.NewUsersInteractor(log.WithGroup("users-interactor"), usersRepo)
+	return users.NewUsersInteractor(log.WithGroup("users-interactor"), usersRepo, chainInteractor)
 }
 
 func provideJWTInteractor(
@@ -48,4 +50,12 @@ func provideTxInteractor(
 		txRepo,
 		orgInteractor,
 	)
+}
+
+func provideChainInteractor(
+	log *slog.Logger,
+	config config.Config,
+	txRepository txRepo.Repository,
+) chain.ChainInteractor {
+	return chain.NewChainInteractor(log, config, txRepository)
 }

@@ -38,6 +38,10 @@ func main() {
 			&cli.StringFlag{
 				Name: "jwt-secret",
 			},
+			&cli.StringFlag{
+				Name:  "chain-api-url",
+				Value: "http://localhost:3000",
+			},
 
 			// rest
 			&cli.StringFlag{
@@ -107,6 +111,9 @@ func main() {
 					CacheHost:   c.String("cache-host"),
 					CacheUser:   c.String("cache-user"),
 					CacheSecret: c.String("cache-secret"),
+				},
+				ChainAPI: config.ChainAPIConfig{
+					Host: c.String("chain-api-url"),
 				},
 			}
 
