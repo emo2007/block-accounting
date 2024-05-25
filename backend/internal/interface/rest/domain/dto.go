@@ -112,6 +112,7 @@ type NewMultisigRequest struct {
 	Owners []struct {
 		PublicKey string `json:"public_key"`
 	} `json:"owners"`
+	Confirmations int `json:confirmations`
 }
 
 func BuildRequest[T any](data []byte) (*T, error) {

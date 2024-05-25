@@ -56,6 +56,7 @@ func (p *participantsPresenter) responseParticipant(
 		domainParticipant.IsUser = true
 		domainParticipant.IsAdmin = user.IsAdmin()
 		domainParticipant.IsOwner = user.IsOwner()
+		domainParticipant.IsActive = user.Activated
 
 	}
 

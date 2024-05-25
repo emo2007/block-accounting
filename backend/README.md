@@ -226,6 +226,60 @@ Response:
 }
 ```
 
+## GET **/{organization_id}/participants**
+### Request body:
+```json
+{
+  "limit":1
+}
+```
+
+### Example
+Request:
+```bash
+curl --request GET \
+  --url http://localhost:8081/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants \
+  --header 'Authorization: Bearer TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+  "limit":1
+}'
+```
+Response: 
+```json
+{
+  "_type": "participants",
+  "_links": {
+    "self": {
+      "href": "/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants"
+    }
+  },
+  "participants": [
+    {
+      "_type": "participant",
+      "_links": {
+        "self": {
+          "href": "/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants018faff4-25fb-7973-860a-59eb69b766a4"
+        }
+      },
+      "id": "018faff4-25fb-7973-860a-59eb69b766a4",
+      "name": "Bladee The Grand Drainer",
+      "credentials": {
+        "email": "bladeee@gmail.com",
+        "phone": "+79999999999",
+        "telegram": "@thebladee"
+      },
+      "created_at": 1716654773151,
+      "updated_at": 1716654773151,
+      "is_user": true,
+      "is_admin": true,
+      "is_owner": true,
+      "is_active": true
+    }
+  ]
+}
+```
+
 ## GET **/{organization_id}/transactions**  
 ### Request body:  
 

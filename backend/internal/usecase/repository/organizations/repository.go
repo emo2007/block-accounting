@@ -358,12 +358,93 @@ func (r *repositorySQL) Participants(
 	participants := make([]models.OrganizationParticipant, 0, len(params.Ids))
 
 	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) (err error) {
-		orgUsersModels, err := r.fetchOrganizationUsers(ctx, params)
-		if err != nil {
-			return fmt.Errorf("error fetch organization users raw models. %w", err)
+		orgUsersModels := make([]fetchOrganizationUsersModel, 0, len(params.Ids))
+
+		ouQuery := sq.Select(
+			"ou.organization_id",
+			"ou.user_id",
+			"ou.employee_id",
+			"ou.position",
+			"ou.added_at",
+			"ou.updated_at",
+			"ou.deleted_at",
+			"ou.is_admin",
+			"ou.is_owner",
+		).Where(sq.Eq{
+			"ou.organization_id": params.OrganizationId,
+		}).From("organizations_users as ou").
+			PlaceholderFormat(sq.Dollar)
+
+		if len(params.Ids) > 0 {
+			ouQuery = ouQuery.Where(sq.Eq{
+				"ou.user_id": params.Ids,
+			})
 		}
 
-		eg, egCtx := errgroup.WithContext(ctx)
+		rows, err := ouQuery.RunWith(r.Conn(ctx)).QueryContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error fetch organization participants. %w", err)
+		}
+
+		defer func() {
+			if closeErr := rows.Close(); closeErr != nil {
+				err = errors.Join(fmt.Errorf("error close rows. %w", closeErr), err)
+			}
+		}()
+
+		for rows.Next() {
+			var (
+				organizationID uuid.UUID
+				userID         uuid.UUID
+				employeeID     uuid.UUID
+				position       sql.NullString
+				addedAt        time.Time
+				updatedAt      time.Time
+				deletedAt      sql.NullTime
+				isAdmin        bool
+				isOwner        bool
+			)
+
+			if err = rows.Scan(
+				&organizationID,
+				&userID,
+				&employeeID,
+				&position,
+				&addedAt,
+				&updatedAt,
+				&deletedAt,
+				&isAdmin,
+				&isOwner,
+			); err != nil {
+				return fmt.Errorf("error scan row. %w", err)
+			}
+
+			if params.EmployeesOnly && employeeID == uuid.Nil {
+				continue
+			}
+
+			if params.UsersOnly && userID == uuid.Nil {
+				continue
+			}
+
+			if params.ActiveOnly && deletedAt.Valid {
+				continue
+			}
+
+			orgUsersModels = append(orgUsersModels, fetchOrganizationUsersModel{
+				organizationID: organizationID,
+				userID:         userID,
+				employeeID:     employeeID,
+				position:       position.String,
+				addedAt:        addedAt,
+				updatedAt:      updatedAt,
+				deletedAt:      deletedAt.Time,
+				isAdmin:        isAdmin,
+				isOwner:        isOwner,
+			})
+		}
+
+		eg, _ := errgroup.WithContext(ctx)
 
 		var employees []*models.Employee = make([]*models.Employee, 0, len(orgUsersModels))
 		if !params.UsersOnly {
@@ -376,12 +457,66 @@ func (r *repositorySQL) Participants(
 					}
 				}
 
-				employees, err = r.fetchEmployees(egCtx, fetchEmployeesParams{
-					IDs:            ids,
-					OrganizationId: params.OrganizationId,
-				})
+				query := sq.Select(
+					"e.id",
+					"e.user_id",
+					"e.organization_id",
+					"e.wallet_address",
+					"e.created_at",
+					"e.updated_at",
+				).Where(sq.Eq{
+					"e.organization_id": params.OrganizationId,
+				}).From("employees as e").
+					PlaceholderFormat(sq.Dollar)
+
+				if len(ids) > 0 {
+					query = query.Where(sq.Eq{
+						"e.id": ids,
+					})
+				}
+
+				fmt.Println(query.ToSql())
+
+				rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 				if err != nil {
-					return fmt.Errorf("error fetch employees. %w", err)
+					return fmt.Errorf("error fetch employees from database. %w", err)
+				}
+
+				defer func() {
+					if closeErr := rows.Close(); closeErr != nil {
+						err = errors.Join(fmt.Errorf("error close rows. %w", closeErr), err)
+					}
+				}()
+
+				for rows.Next() {
+					var (
+						id         uuid.UUID
+						userID     uuid.UUID
+						orgID      uuid.UUID
+						walletAddr []byte
+						createdAt  time.Time
+						updatedAt  time.Time
+					)
+
+					if err = rows.Scan(
+						&id,
+						&userID,
+						&orgID,
+						&walletAddr,
+						&createdAt,
+						&updatedAt,
+					); err != nil {
+						return fmt.Errorf("error scan row. %w", err)
+					}
+
+					employees = append(employees, &models.Employee{
+						ID:             id,
+						UserID:         userID,
+						OrganizationId: orgID,
+						WalletAddress:  walletAddr,
+						CreatedAt:      createdAt,
+						UpdatedAt:      updatedAt,
+					})
 				}
 
 				return nil
@@ -399,7 +534,10 @@ func (r *repositorySQL) Participants(
 					}
 				}
 
-				usrs, err = r.usersRepository.Get(egCtx, users.GetParams{
+				usersCtx, cancel := context.WithTimeout(context.TODO(), 3*time.Second)
+				defer cancel()
+
+				usrs, err = r.usersRepository.Get(usersCtx, users.GetParams{
 					Ids: ids,
 				})
 				if err != nil {
@@ -437,7 +575,11 @@ func (r *repositorySQL) Participants(
 						User:        *u,
 						OrgPosition: ou.position,
 						Admin:       ou.isAdmin,
+						Owner:       ou.isOwner,
 						Employee:    employee,
+						CreatedAt:   ou.addedAt,
+						UpdatedAt:   ou.updatedAt,
+						DeletedAt:   ou.deletedAt,
 					})
 
 					break
@@ -496,8 +638,6 @@ func (r *repositorySQL) fetchOrganizationUsers(
 				"ou.user_id": params.Ids,
 			})
 		}
-
-		fmt.Println(ouQuery.ToSql())
 
 		rows, err := ouQuery.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {

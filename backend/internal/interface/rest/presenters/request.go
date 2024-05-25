@@ -23,3 +23,11 @@ func CreateRequest[T any](r *http.Request) (*T, error) {
 
 	return &request, nil
 }
+
+type ok struct {
+	Ok bool
+}
+
+func ResponseOK() ([]byte, error) {
+	return json.Marshal(&ok{Ok: true})
+}

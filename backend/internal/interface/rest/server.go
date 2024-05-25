@@ -114,18 +114,21 @@ func (s *Server) buildRouter() {
 			})
 
 			r.Route("/payrolls", func(r chi.Router) {
-				r.Get("/", nil)  // list payrolls
-				r.Post("/", nil) // deploy contract
+				r.Get("/", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
+				r.Post("/", s.handle(s.controllers.Transactions.NewPayroll, "new_payroll"))
+				r.Put("/", nil) // todo
 			})
 
 			r.Route("/multisig", func(r chi.Router) {
-				r.Post("/", nil) // new multisig (deploy)
-				r.Get("/", nil)  // list
+				r.Post("/", s.handle(s.controllers.Transactions.NewMultisig, "new_multisig"))
+				r.Get("/", s.handle(s.controllers.Transactions.ListMultisigs, "list_multisig"))
+				r.Put("/", nil) // todo
 			})
 
 			r.Route("/license", func(r chi.Router) {
 				r.Get("/", nil)  // list license
 				r.Post("/", nil) // deploy contract
+				r.Put("/", nil)  // todo
 			})
 
 			// join via invite link
@@ -133,20 +136,20 @@ func (s *Server) buildRouter() {
 
 			r.Route("/participants", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Participants.List, "participants_list"))
-				r.Post("/", nil)
+				r.Post("/", s.handle(s.controllers.Participants.New, "new_participant"))
 
 				// generate new invite link
 				r.Post("/invite", s.handle(s.controllers.Auth.Invite, "invite"))
 
 				r.Route("/{participant_id}", func(r chi.Router) {
-					r.Put("/", nil)    // update user / employee
-					r.Delete("/", nil) // remove user / employee
+					r.Get("/", nil)
+					// r.Put("/", nil)    // update user / employee
+					// r.Delete("/", nil) // remove user / employee
 
-					r.Route("/payroll", func(r chi.Router) {
-						r.Post("/", nil) // set salary
-						r.Put("/", nil)  // edit
-						r.Get("/", nil)
-					})
+					// r.Route("/payroll", func(r chi.Router) {
+					// 	r.Put("/", nil) // edit
+					// 	r.Get("/", nil)
+					// })
 				})
 			})
 		})

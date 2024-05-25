@@ -14,31 +14,45 @@ import (
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// TODO по хорошему это уебищу надо разносить, но ни времени ни сил пока нет
+// в рамках рефакторинка не забыть
+// TransactionsController | ChainController
 type TransactionsController interface {
 	New(w http.ResponseWriter, r *http.Request) ([]byte, error)
 	List(w http.ResponseWriter, r *http.Request) ([]byte, error)
 	UpdateStatus(w http.ResponseWriter, r *http.Request) ([]byte, error)
+
+	NewPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error)
+	ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error)
+	ListPayrolls(w http.ResponseWriter, r *http.Request) ([]byte, error)
+
+	NewMultisig(w http.ResponseWriter, r *http.Request) ([]byte, error)
+	ListMultisigs(w http.ResponseWriter, r *http.Request) ([]byte, error)
 }
 
 type transactionsController struct {
-	log          *slog.Logger
-	txInteractor transactions.TransactionsInteractor
-	txPresenter  presenters.TransactionsPresenter
+	log             *slog.Logger
+	txInteractor    transactions.TransactionsInteractor
+	txPresenter     presenters.TransactionsPresenter
+	chainInteractor chain.ChainInteractor
 }
 
 func NewTransactionsController(
 	log *slog.Logger,
 	txInteractor transactions.TransactionsInteractor,
 	txPresenter presenters.TransactionsPresenter,
+	chainInteractor chain.ChainInteractor,
 ) TransactionsController {
 	return &transactionsController{
-		log:          log,
-		txInteractor: txInteractor,
-		txPresenter:  txPresenter,
+		log:             log,
+		txInteractor:    txInteractor,
+		txPresenter:     txPresenter,
+		chainInteractor: chainInteractor,
 	}
 }
 
@@ -187,7 +201,59 @@ func (c *transactionsController) UpdateStatus(w http.ResponseWriter, r *http.Req
 	return c.txPresenter.ResponseNewTransaction(ctx, tx)
 }
 
+func (c *transactionsController) NewMultisig(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	req, err := presenters.CreateRequest[domain.NewMultisigRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error build new transaction request. %w", err)
+	}
+
+	organizationID, err := ctxmeta.OrganizationId(r.Context())
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization ID from context. %w", err)
+	}
+
+	c.log.Debug(
+		"new multisig request",
+		slog.String("org id", organizationID.String()),
+		slog.Any("req", req),
+	)
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	ownersPKs := make([]string, len(req.Owners))
+
+	for i, pk := range req.Owners {
+		ownersPKs[i] = pk.PublicKey
+	}
+
+	if req.Confirmations <= 0 {
+		req.Confirmations = 1
+	}
+
+	if err := c.chainInteractor.NewMultisig(ctx, chain.NewMultisigParams{
+		OwnersPKs:     ownersPKs,
+		Confirmations: req.Confirmations,
+	}); err != nil {
+		return nil, fmt.Errorf("error deploy multisig. %w", err)
+	}
+
+	return presenters.ResponseOK()
+}
+
+func (s *transactionsController) ListMultisigs(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	return nil, nil
+}
+
 // todo creates a new payout
-func (c *transactionsController) NewPayout(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func (c *transactionsController) NewPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	return nil, nil
+}
+
+func (c *transactionsController) ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	return nil, nil
+}
+
+func (c *transactionsController) ListPayrolls(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	return nil, nil
 }

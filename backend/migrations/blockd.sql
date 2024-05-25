@@ -8,6 +8,7 @@ create table if not exists users (
         mnemonic varchar(500) not null,
         seed bytea not null unique,
         created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp,
         activated_at  timestamp default null
 );
 

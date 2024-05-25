@@ -11,6 +11,7 @@ import (
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
@@ -90,11 +91,13 @@ func provideOrganizationsController(
 func provideTxController(
 	log *slog.Logger,
 	txInteractor transactions.TransactionsInteractor,
+	chainInteractor chain.ChainInteractor,
 ) controllers.TransactionsController {
 	return controllers.NewTransactionsController(
 		log.WithGroup("transactions-controller"),
 		txInteractor,
 		presenters.NewTransactionsPresenter(),
+		chainInteractor,
 	)
 }
 
