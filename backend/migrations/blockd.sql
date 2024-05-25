@@ -138,23 +138,26 @@ create table contracts (
         id uuid primary key, 
         title varchar(250) default 'New Contract', 
         description text not null, 
-
         address bytea not null, 
-
         payload bytea not null,
-
         created_by uuid not null references users(id), 
         organization_id uuid not null references organizations(id), 
-
         status smallint default 0,
         tx_index bytea default null,
-
+        multisig bytea default null,
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
 );
 
+create intex if not exists  idx_contracts_organization_id_multisig
+        on contracts (organization_id, multisig);
+
+create intex if not exists  idx_contracts_organization_id_created_by
+        on contracts (organization_id, created_by);
+
 create table multisigs (
         id uuid primary key, 
+        organization_id uuid not null references organizations(id), 
         title varchar(350) default 'New Multi-Sig'
 );
 
@@ -166,9 +169,29 @@ create table multisig_owners (
         primary key (multisig_id, owner_id)
 );
 
+create intex if not exists  idx_multisig_owners_multisig_id
+        on multisig_owners (multisig_id);
+
+create intex if not exists  idx_multisig_owners_owner_id
+        on multisig_owners (owner_id);
+
 create table multisig_confirmations (
         multisig_id uuid references multisigs(id), 
         owner_id uuid references users(id), 
         created_at timestamp default current_timestamp,
         primary key (multisig_id, owner_id)
+);
+
+create intex if not exists  idx_multisig_confirmations_owners_multisig_id
+        on multisig_confirmations (multisig_id);
+
+create intex if not exists  idx_multisig_confirmations_owners_owner_id
+        on multisig_confirmations (owner_id);
+
+create table invites (
+        link_hash bytea primary key, 
+        created_by uuid not null references users(id),
+        created_at timestamp default current_timestamp,
+        expired_at timestamp default null,
+        used_at timestamp default null
 );

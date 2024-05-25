@@ -131,8 +131,10 @@ func (s *Server) buildRouter() {
 				r.Put("/", nil)  // todo
 			})
 
+			// open invite link
+			r.Get("/invite/{hash}", s.handle(nil, "invite_open"))
 			// join via invite link
-			r.Post("/invite/{hash}", s.handle(s.controllers.Auth.JoinWithInvite, "invite_join"))
+			r.Post("/invite/{hash}/join", s.handle(s.controllers.Auth.JoinWithInvite, "invite_join"))
 
 			r.Route("/participants", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Participants.List, "participants_list"))
