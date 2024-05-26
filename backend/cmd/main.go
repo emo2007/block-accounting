@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -116,8 +115,6 @@ func main() {
 					Host: c.String("chain-api-url"),
 				},
 			}
-
-			fmt.Println(config)
 
 			service, cleanup, err := factory.ProvideService(config)
 			if err != nil {

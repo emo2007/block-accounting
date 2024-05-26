@@ -72,8 +72,6 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 			query = query.Where("u.seed = ?", params.Seed)
 		}
 
-		fmt.Println(query.ToSql())
-
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
 			return fmt.Errorf("error fetch data from database. %w", err)

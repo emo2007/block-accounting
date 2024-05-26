@@ -2,18 +2,23 @@ package controllers
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip39"
+	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
+	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
 )
 
 var (
@@ -34,6 +39,7 @@ type authController struct {
 	presenter       presenters.AuthPresenter
 	usersInteractor users.UsersInteractor
 	jwtInteractor   jwt.JWTInteractor
+	repo            auth.Repository
 }
 
 func NewAuthController(
@@ -41,12 +47,14 @@ func NewAuthController(
 	presenter presenters.AuthPresenter,
 	usersInteractor users.UsersInteractor,
 	jwtInteractor jwt.JWTInteractor,
+	repo auth.Repository,
 ) AuthController {
 	return &authController{
 		log:             log,
 		presenter:       presenter,
 		usersInteractor: usersInteractor,
 		jwtInteractor:   jwtInteractor,
+		repo:            repo,
 	}
 }
 
@@ -140,9 +148,64 @@ func (c *authController) Refresh(w http.ResponseWriter, req *http.Request) ([]by
 
 // const mnemonicEntropyBitSize int = 256
 
-func (c *authController) Invite(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+func (c *authController) Invite(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	request, err := presenters.CreateRequest[domain.NewInviteLinkRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error create refresh request. %w", err)
+	}
 
-	return nil, nil
+	organizationID, err := ctxmeta.OrganizationId(r.Context())
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	user, err := ctxmeta.User(r.Context())
+	if err != nil {
+		return nil, fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	c.log.Debug(
+		"invite request",
+		slog.Int("exp at", request.ExpirationDate),
+		slog.String("org id", organizationID.String()),
+		slog.String("inviter id", user.Id().String()),
+	)
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
+	linkHash := sha256.New()
+
+	linkHash.Write([]byte(
+		user.Id().String() + organizationID.String() + time.Now().String(),
+	))
+
+	linkHashString := strings.ReplaceAll(
+		strings.ReplaceAll(
+			strings.ReplaceAll(
+				base64.StdEncoding.EncodeToString(linkHash.Sum(nil)),
+				"/", "%",
+			),
+			"?", "@",
+		),
+		"&", "#",
+	)
+
+	c.log.Debug(
+		"",
+		slog.String("link", linkHashString),
+	)
+
+	if err := c.repo.AddInvite(ctx, auth.AddInviteParams{
+		LinkHash:  linkHashString,
+		CreatedBy: *user,
+		CreatedAt: time.Now(),
+		ExpiredAt: time.UnixMilli(int64(request.ExpirationDate)),
+	}); err != nil {
+		return nil, fmt.Errorf("error add new invite link. %w", err)
+	}
+
+	return c.presenter.ResponseNewInvite(ctx, organizationID, linkHashString)
 }
 
 func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error) {

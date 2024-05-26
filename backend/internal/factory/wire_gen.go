@@ -27,7 +27,7 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	authRepository := provideAuthRepository(db)
 	jwtInteractor := provideJWTInteractor(c, usersInteractor, authRepository)
 	authPresenter := provideAuthPresenter(jwtInteractor)
-	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor)
+	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor, authRepository)
 	organizationsRepository := provideOrganizationsRepository(db, usersRepository)
 	client, cleanup2 := provideRedisConnection(c)
 	cache := provideRedisCache(client, logger)

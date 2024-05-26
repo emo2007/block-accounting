@@ -112,7 +112,11 @@ type NewMultisigRequest struct {
 	Owners []struct {
 		PublicKey string `json:"public_key"`
 	} `json:"owners"`
-	Confirmations int `json:confirmations`
+	Confirmations int `json:"confirmations"`
+}
+
+type NewInviteLinkRequest struct {
+	ExpirationDate int `json:"expiration_date"`
 }
 
 func BuildRequest[T any](data []byte) (*T, error) {

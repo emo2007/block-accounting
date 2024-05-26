@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	sqltools "github.com/emochka2007/block-accounting/internal/pkg/sqlutils"
 	"github.com/google/uuid"
 )
@@ -60,6 +61,9 @@ type Repository interface {
 	AddToken(ctx context.Context, params AddTokenParams) error
 	GetTokens(ctx context.Context, params GetTokenParams) (*AccessToken, error)
 	RefreshToken(ctx context.Context, params RefreshTokenParams) error
+
+	AddInvite(ctx context.Context, params AddInviteParams) error
+	MarkAsUsedLink(ctx context.Context, linkHash string, usedAt time.Time) error
 }
 
 type repositorySQL struct {
@@ -178,6 +182,70 @@ func (r *repositorySQL) GetTokens(ctx context.Context, params GetTokenParams) (*
 	}
 
 	return token, nil
+}
+
+type AddInviteParams struct {
+	LinkHash  string
+	CreatedBy models.User
+	CreatedAt time.Time
+	ExpiredAt time.Time
+}
+
+func (r *repositorySQL) AddInvite(
+	ctx context.Context,
+	params AddInviteParams,
+) error {
+	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Insert("invites").Columns(
+			"link_hash",
+			"created_by",
+			"created_at",
+			"expired_at",
+		).Values(
+			params.LinkHash,
+			params.CreatedBy.Id(),
+			params.CreatedAt,
+			params.ExpiredAt,
+		).PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add invite link. %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (r *repositorySQL) MarkAsUsedLink(
+	ctx context.Context,
+	linkHash string,
+	usedAt time.Time,
+) error {
+	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Select("expired_at").From("invites").Where(sq.Eq{
+			"link_hash": linkHash,
+		}).Limit(1).PlaceholderFormat(sq.Dollar)
+
+		var expAt time.Time
+
+		if err := query.RunWith(r.Conn(ctx)).QueryRowContext(ctx).Scan(&expAt); err != nil {
+			return fmt.Errorf("error fetch expiration date from database. %w", err)
+		}
+
+		if expAt.After(time.Now()) {
+			return ErrorInviteLinkExpired
+		}
+
+		updateQuery := sq.Update("invites").SetMap(sq.Eq{
+			"used_at": usedAt,
+		})
+
+		if _, err := updateQuery.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add invite link. %w", err)
+		}
+
+		return nil
+	})
 }
 
 func NewRepository(db *sql.DB) Repository {

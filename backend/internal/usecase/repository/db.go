@@ -20,8 +20,6 @@ func ProvideDatabaseConnection(c config.Config) (*sql.DB, func(), error) {
 		c.DB.User, c.DB.Secret, c.DB.Host, c.DB.Database, sslmode,
 	)
 
-	fmt.Println(connStr)
-
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, func() {}, fmt.Errorf("error connecting to database: %w", err)

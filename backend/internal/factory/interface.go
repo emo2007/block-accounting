@@ -16,6 +16,7 @@ import (
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
+	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
 )
 
 var interfaceSet wire.ProviderSet = wire.NewSet(
@@ -67,12 +68,14 @@ func provideAuthController(
 	usersInteractor users.UsersInteractor,
 	authPresenter presenters.AuthPresenter,
 	jwtInteractor jwt.JWTInteractor,
+	repo auth.Repository,
 ) controllers.AuthController {
 	return controllers.NewAuthController(
 		log.WithGroup("auth-controller"),
 		authPresenter,
 		usersInteractor,
 		jwtInteractor,
+		repo,
 	)
 }
 

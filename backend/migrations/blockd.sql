@@ -149,16 +149,18 @@ create table contracts (
         updated_at timestamp default current_timestamp
 );
 
-create intex if not exists  idx_contracts_organization_id_multisig
+create index if not exists  idx_contracts_organization_id_multisig
         on contracts (organization_id, multisig);
 
-create intex if not exists  idx_contracts_organization_id_created_by
+create index if not exists  idx_contracts_organization_id_created_by
         on contracts (organization_id, created_by);
 
 create table multisigs (
         id uuid primary key, 
         organization_id uuid not null references organizations(id), 
-        title varchar(350) default 'New Multi-Sig'
+        title varchar(350) default 'New Multi-Sig',
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp
 );
 
 create table multisig_owners (
@@ -169,10 +171,10 @@ create table multisig_owners (
         primary key (multisig_id, owner_id)
 );
 
-create intex if not exists  idx_multisig_owners_multisig_id
+create index if not exists  idx_multisig_owners_multisig_id
         on multisig_owners (multisig_id);
 
-create intex if not exists  idx_multisig_owners_owner_id
+create index if not exists  idx_multisig_owners_owner_id
         on multisig_owners (owner_id);
 
 create table multisig_confirmations (
@@ -182,14 +184,14 @@ create table multisig_confirmations (
         primary key (multisig_id, owner_id)
 );
 
-create intex if not exists  idx_multisig_confirmations_owners_multisig_id
+create index if not exists  idx_multisig_confirmations_owners_multisig_id
         on multisig_confirmations (multisig_id);
 
-create intex if not exists  idx_multisig_confirmations_owners_owner_id
+create index if not exists  idx_multisig_confirmations_owners_owner_id
         on multisig_confirmations (owner_id);
 
 create table invites (
-        link_hash bytea primary key, 
+        link_hash varchar(64) primary key, 
         created_by uuid not null references users(id),
         created_at timestamp default current_timestamp,
         expired_at timestamp default null,

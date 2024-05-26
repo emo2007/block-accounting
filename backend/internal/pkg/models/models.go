@@ -12,6 +12,8 @@ type Multisig struct {
 	OrganizationID        uuid.UUID
 	Owners                []OrganizationParticipant
 	ConfirmationsRequired int
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 type MultisigConfirmation struct {

@@ -50,6 +50,8 @@ type Repository interface {
 
 	ConfirmTransaction(ctx context.Context, params ConfirmTransactionParams) error
 	CancelTransaction(ctx context.Context, params CancelTransactionParams) error
+
+	AddMultisig(ctx context.Context, multisig models.Multisig) error
 }
 
 type repositorySQL struct {
@@ -88,8 +90,6 @@ func (r *repositorySQL) GetTransactions(
 				err = errors.Join(fmt.Errorf("error close database rows. %w", cErr), err)
 			}
 		}()
-
-		fmt.Println(query.ToSql())
 
 		for rows.Next() {
 			var (
@@ -399,4 +399,49 @@ func buildGetTransactionsQuery(params GetTransactionsParams) sq.SelectBuilder {
 	query = query.Limit(uint64(params.Limit))
 
 	return query
+}
+
+func (r *repositorySQL) AddMultisig(
+	ctx context.Context,
+	multisig models.Multisig,
+) error {
+	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Insert("multisigs").Columns(
+			"id",
+			"organization_id",
+			"title",
+			"created_at",
+			"updated_at",
+		).Values(
+			multisig.ID,
+			multisig.OrganizationID,
+			multisig.Title,
+			multisig.CreatedAt,
+			multisig.UpdatedAt,
+		).PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error insert multisig data. %w", err)
+		}
+
+		for _, owner := range multisig.Owners {
+			addOwnerQuery := sq.Insert("multisig_owners").Columns(
+				"multisig_id",
+				"owner_id",
+				"created_at",
+				"updated_at",
+			).Values(
+				multisig.ID,
+				owner.Id(),
+				multisig.CreatedAt,
+				multisig.UpdatedAt,
+			)
+
+			if _, err := addOwnerQuery.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+				return fmt.Errorf("error insert multisig owner data. %w", err)
+			}
+		}
+
+		return nil
+	})
 }

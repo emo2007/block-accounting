@@ -475,8 +475,6 @@ func (r *repositorySQL) Participants(
 					})
 				}
 
-				fmt.Println(query.ToSql())
-
 				rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 				if err != nil {
 					return fmt.Errorf("error fetch employees from database. %w", err)
@@ -740,8 +738,6 @@ func (r *repositorySQL) fetchEmployees(
 			})
 		}
 
-		fmt.Println(query.ToSql())
-
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
 			return fmt.Errorf("error fetch employees from database. %w", err)
@@ -808,7 +804,7 @@ func (r *repositorySQL) AddEmployee(ctx context.Context, employee models.Employe
 			employee.WalletAddress,
 			employee.CreatedAt,
 			employee.UpdatedAt,
-		)
+		).PlaceholderFormat(sq.Dollar)
 
 		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
 			return fmt.Errorf("error add employee. %w", err)
