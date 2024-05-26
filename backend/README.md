@@ -57,6 +57,7 @@ Request content type: application/json
 Response content type: application/json  
 
 ## POST **/join**  
+Register
 ### Request body:  
 * name (string, optional)  
 * credentals (object, optional)  
@@ -92,6 +93,7 @@ Response:
 ```
 
 ## POST **/login**  
+Login
 ### Request body:  
 * mnemonic (string, **required**)   
 
@@ -116,6 +118,7 @@ Response:
 ```
 
 ## POST **/refresh**  
+Get new token
 ### Request body:  
 * token (string, **required**)   
 * refresh_token (string, **required**)   
@@ -142,6 +145,7 @@ Response:
 ```
 
 ## POST **/organizations**  
+Create new organization
 ### Request body:  
 * name (string, **required**)  
 * address (string, optional)
@@ -167,6 +171,7 @@ Response:
 ```
 
 ## GET **/organizations**  
+Fets list of organizations
 ### Request body:  
 * cursor (string, optional)  
 * limit (uint8, optional. Max:50, Default:50)
@@ -226,61 +231,8 @@ Response:
 }
 ```
 
-## GET **/{organization_id}/participants**
-### Request body:
-```json
-{
-  "limit":1
-}
-```
-
-### Example
-Request:
-```bash
-curl --request GET \
-  --url http://localhost:8081/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants \
-  --header 'Authorization: Bearer TOKEN' \
-  --header 'content-type: application/json' \
-  --data '{
-  "limit":1
-}'
-```
-Response: 
-```json
-{
-  "_type": "participants",
-  "_links": {
-    "self": {
-      "href": "/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants"
-    }
-  },
-  "participants": [
-    {
-      "_type": "participant",
-      "_links": {
-        "self": {
-          "href": "/organizations/018faff4-481f-73ec-a4b8-27ef07b4029b/participants018faff4-25fb-7973-860a-59eb69b766a4"
-        }
-      },
-      "id": "018faff4-25fb-7973-860a-59eb69b766a4",
-      "name": "Bladee The Grand Drainer",
-      "credentials": {
-        "email": "bladeee@gmail.com",
-        "phone": "+79999999999",
-        "telegram": "@thebladee"
-      },
-      "created_at": 1716654773151,
-      "updated_at": 1716654773151,
-      "is_user": true,
-      "is_admin": true,
-      "is_owner": true,
-      "is_active": true
-    }
-  ]
-}
-```
-
 ## GET **/{organization_id}/transactions**  
+Feth txs
 ### Request body:  
 
 
@@ -321,6 +273,7 @@ Response:
 ```
 
 ## POST **/{organization_id}/transactions**  
+Add new tx
 ### Request body:  
 * ids ([]uuid)  
 * created_by (uuid)  
@@ -380,6 +333,7 @@ Response:
 }
 ```
 ## POST **/organizations/{organization_id}/participants**  
+Add new employee
 ### Request body:  
 * name (string)
 * position (string)
@@ -419,6 +373,7 @@ Response:
 }
 ```
 ## GET **/organizations/{organization_id}/participants**  
+Get organization participants
 ### Request body:  
 * ids (string array)
 
@@ -504,7 +459,8 @@ Response:
   ]
 }
 ```
-## POST **/organizations/{organization_id}/participants**  
+## POST **/organizations/{organization_id}/multisig**  
+Multisig deployment
 ### Request body:  
 * title (string)
 * owners (array of object { "public_key":"string" })
@@ -533,3 +489,45 @@ Response:
 }
 ```
 
+## GET **/organizations/{organization_id}/multisig**  
+Multisig deployment
+### Request body:  
+
+### Example
+Request: 
+``` bash
+curl --request GET \
+  --url http://localhost:8081/organizations/018fb246-1616-7f1b-9fe2-1a3202224695/multisig \
+  --header 'Authorization: Bearer token' \
+  --header 'content-type: application/json' \
+  --data '{
+}'
+```
+
+Response: 
+``` json 
+{
+  // todo
+}
+```
+
+## GET **/organizations/{organization_id}/payrolls** 
+Fetch payrolls
+
+## POST **/organizations/{organization_id}/payrolls** 
+New payroll
+
+## GET **/organizations/{organization_id}/license** 
+Fetch licenses
+
+## POST **/organizations/{organization_id}/license** 
+New licese
+
+## GET **/organizations/{organization_id}/invite/{hash}**
+Open invite link
+
+## POST **/organizations/{organization_id}/invite/{hash}/join**
+Join with invite link
+
+## POST **/organizations/{organization_id}/participants/invite**
+Create new invite link
