@@ -431,7 +431,7 @@ Join with invite link
 ## POST **/organizations/{organization_id}/participants/invite**
 Create new invite link
 
-### Deprecated
+# Deprecated
 ## GET **/{organization_id}/transactions**  
 Feth txs
 ### Request body:  
