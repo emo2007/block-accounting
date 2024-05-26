@@ -231,107 +231,6 @@ Response:
 }
 ```
 
-## GET **/{organization_id}/transactions**  
-Feth txs
-### Request body:  
-
-
-### Example
-Request: 
-``` bash
-curl --location --request GET 'http://localhost:8081/organizations/018f9078-af60-7589-af64-9312b97aa7be/transactions' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer TOKEN' \
---data '{
-    "description":"New test tx!",
-    "amount": 100,  
-    "to":"0x323b5d4c32345ced77393b3530b1eed0f346429d",
-    "limit":1
-}'
-```
-
-Response: 
-``` json 
-{
-    "_type": "transaction",
-    "_links": {
-        "self": {
-            "href": "/organizations/{organization_id}/transactions"
-        }
-    },
-    "id": "018f8ce2-dada-75fb-9745-8560e5736bec",
-    "description": "New test tx!",
-    "organization_id": "018f8ccd-2431-7d21-a0c2-a2735c852764",
-    "created_by": "018f8ccc-e4fc-7a46-9628-15f9c3301f5b",
-    "amount": 100,
-    "to": "MjtdTDI0XO13OTs1MLHu0PNGQp0=",
-    "max_fee_allowed": 5,
-    "deadline": 123456767,
-    "created_at": 1716055628507,
-    "updated_at": 1716055628507
-}
-```
-
-## POST **/{organization_id}/transactions**  
-Add new tx
-### Request body:  
-* ids ([]uuid)  
-* created_by (uuid)  
-* to (string)  
-* cancelled (bool)  
-* confirmed (bool)  
-* commited (bool)  
-* expired (bool)  
-* pending (bool)   
-* cursor (string)  
-* limit (int)  
-* offset_date (unix milli time)  
-
-### Example
-Request: 
-``` bash
-curl --location --request GET 'http://localhost:8081/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer TOKEN' \
---data '{
-    "to": "0xD53990543641Ee27E2FC670ad2cf3cA65ccDc8BD",
-    "pending":true,
-    "limit":1,
-    "created_by":"018f9111-f0fb-708a-aec1-55295f5496d6"
-}'
-```
-
-Response: 
-``` json 
-{
-    "_type": "organizations",
-    "_links": {
-        "self": {
-            "href": "/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions"
-        }
-    },
-    "next_cursor": "eyJpZCI6IjAxOGY5MTE1LWU5NmItN2IxMi04Y2JiLWQxNTY5NDNkYjk5NCJ9",
-    "transactions": [
-        {
-            "_type": "transaction",
-            "_links": {
-                "self": {
-                    "href": "/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions/018f9115-e96b-7b12-8cbb-d156943db994"
-                }
-            },
-            "id": "018f9115-e96b-7b12-8cbb-d156943db994",
-            "description": "Test filter by TO!!!!!",
-            "organization_id": "018f9112-1805-7b5e-ae30-7fc2151810f3",
-            "created_by": "018f9111-f0fb-708a-aec1-55295f5496d6",
-            "amount": 1234,
-            "to": "0xD53990543641Ee27E2FC670ad2cf3cA65ccDc8BD",
-            "max_fee_allowed": 2.5,
-            "created_at": 1716136883437,
-            "updated_at": 1716136883437
-        }
-    ]
-}
-```
 ## POST **/organizations/{organization_id}/participants**  
 Add new employee
 ### Request body:  
@@ -531,3 +430,105 @@ Join with invite link
 
 ## POST **/organizations/{organization_id}/participants/invite**
 Create new invite link
+
+## GET **/{organization_id}/transactions**  
+Feth txs
+### Request body:  
+
+
+### Example
+Request: 
+``` bash
+curl --location --request GET 'http://localhost:8081/organizations/018f9078-af60-7589-af64-9312b97aa7be/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TOKEN' \
+--data '{
+    "description":"New test tx!",
+    "amount": 100,  
+    "to":"0x323b5d4c32345ced77393b3530b1eed0f346429d",
+    "limit":1
+}'
+```
+
+Response: 
+``` json 
+{
+    "_type": "transaction",
+    "_links": {
+        "self": {
+            "href": "/organizations/{organization_id}/transactions"
+        }
+    },
+    "id": "018f8ce2-dada-75fb-9745-8560e5736bec",
+    "description": "New test tx!",
+    "organization_id": "018f8ccd-2431-7d21-a0c2-a2735c852764",
+    "created_by": "018f8ccc-e4fc-7a46-9628-15f9c3301f5b",
+    "amount": 100,
+    "to": "MjtdTDI0XO13OTs1MLHu0PNGQp0=",
+    "max_fee_allowed": 5,
+    "deadline": 123456767,
+    "created_at": 1716055628507,
+    "updated_at": 1716055628507
+}
+```
+
+## POST **/{organization_id}/transactions**  
+Add new tx
+### Request body:  
+* ids ([]uuid)  
+* created_by (uuid)  
+* to (string)  
+* cancelled (bool)  
+* confirmed (bool)  
+* commited (bool)  
+* expired (bool)  
+* pending (bool)   
+* cursor (string)  
+* limit (int)  
+* offset_date (unix milli time)  
+
+### Example
+Request: 
+``` bash
+curl --location --request GET 'http://localhost:8081/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer TOKEN' \
+--data '{
+    "to": "0xD53990543641Ee27E2FC670ad2cf3cA65ccDc8BD",
+    "pending":true,
+    "limit":1,
+    "created_by":"018f9111-f0fb-708a-aec1-55295f5496d6"
+}'
+```
+
+Response: 
+``` json 
+{
+    "_type": "organizations",
+    "_links": {
+        "self": {
+            "href": "/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions"
+        }
+    },
+    "next_cursor": "eyJpZCI6IjAxOGY5MTE1LWU5NmItN2IxMi04Y2JiLWQxNTY5NDNkYjk5NCJ9",
+    "transactions": [
+        {
+            "_type": "transaction",
+            "_links": {
+                "self": {
+                    "href": "/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions/018f9115-e96b-7b12-8cbb-d156943db994"
+                }
+            },
+            "id": "018f9115-e96b-7b12-8cbb-d156943db994",
+            "description": "Test filter by TO!!!!!",
+            "organization_id": "018f9112-1805-7b5e-ae30-7fc2151810f3",
+            "created_by": "018f9111-f0fb-708a-aec1-55295f5496d6",
+            "amount": 1234,
+            "to": "0xD53990543641Ee27E2FC670ad2cf3cA65ccDc8BD",
+            "max_fee_allowed": 2.5,
+            "created_at": 1716136883437,
+            "updated_at": 1716136883437
+        }
+    ]
+}
+```
