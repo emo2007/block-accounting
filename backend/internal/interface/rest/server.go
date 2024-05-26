@@ -144,7 +144,7 @@ func (s *Server) buildRouter() {
 				r.Post("/invite", s.handle(s.controllers.Auth.Invite, "invite"))
 
 				r.Route("/{participant_id}", func(r chi.Router) {
-					r.Get("/", nil)
+					r.Get("/", nil) // todo если успею
 				})
 			})
 		})

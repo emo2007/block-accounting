@@ -8,12 +8,14 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 )
 
 type ChainInteractor interface {
@@ -41,8 +43,13 @@ func NewChainInteractor(
 }
 
 type NewMultisigParams struct {
-	OwnersPKs     []string
+	Title         string
+	Owners        []models.OrganizationParticipant
 	Confirmations int
+}
+
+type newMultisigChainResponse struct {
+	Address string `json:"address"`
 }
 
 func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigParams) error {
@@ -54,8 +61,18 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		slog.Any("params", params),
 	)
 
+	pks := make([]string, len(params.Owners))
+
+	for i, owner := range params.Owners {
+		if owner.GetUser() == nil {
+			return fmt.Errorf("error invalis owners set")
+		}
+
+		pks[i] = "0x" + common.Bytes2Hex(owner.GetUser().PublicKey())
+	}
+
 	requestBody, err := json.Marshal(map[string]any{
-		"owners":        params.OwnersPKs,
+		"owners":        pks,
 		"confirmations": params.Confirmations,
 	})
 	if err != nil {
@@ -65,6 +82,11 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 	user, err := ctxmeta.User(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
 	body := bytes.NewBuffer(requestBody)
@@ -89,6 +111,34 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 	}
 
 	defer resp.Body.Close()
+
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error read body. %w", err)
+	}
+
+	respObject := new(newMultisigChainResponse)
+
+	if err := json.Unmarshal(raw, &respObject); err != nil {
+		return fmt.Errorf("error parse chain-api response body. %w", err)
+	}
+
+	multisigAddress := common.Hex2Bytes(respObject.Address)
+
+	createdAt := time.Now()
+
+	if err := i.txRepository.AddMultisig(ctx, models.Multisig{
+		ID:                    uuid.Must(uuid.NewV7()),
+		Title:                 params.Title,
+		Address:               multisigAddress,
+		OrganizationID:        organizationID,
+		Owners:                params.Owners,
+		ConfirmationsRequired: params.Confirmations,
+		CreatedAt:             createdAt,
+		UpdatedAt:             createdAt,
+	}); err != nil {
+		return fmt.Errorf("error add new multisig. %w", err)
+	}
 
 	i.log.Debug(
 		"deploy multisig response",

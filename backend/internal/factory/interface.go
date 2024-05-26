@@ -95,12 +95,14 @@ func provideTxController(
 	log *slog.Logger,
 	txInteractor transactions.TransactionsInteractor,
 	chainInteractor chain.ChainInteractor,
+	organizationsInteractor organizations.OrganizationsInteractor,
 ) controllers.TransactionsController {
 	return controllers.NewTransactionsController(
 		log.WithGroup("transactions-controller"),
 		txInteractor,
 		presenters.NewTransactionsPresenter(),
 		chainInteractor,
+		organizationsInteractor,
 	)
 }
 

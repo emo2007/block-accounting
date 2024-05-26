@@ -15,6 +15,7 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -36,10 +37,11 @@ type TransactionsController interface {
 }
 
 type transactionsController struct {
-	log             *slog.Logger
-	txInteractor    transactions.TransactionsInteractor
-	txPresenter     presenters.TransactionsPresenter
-	chainInteractor chain.ChainInteractor
+	log                     *slog.Logger
+	txInteractor            transactions.TransactionsInteractor
+	txPresenter             presenters.TransactionsPresenter
+	chainInteractor         chain.ChainInteractor
+	organizationsInteractor organizations.OrganizationsInteractor
 }
 
 func NewTransactionsController(
@@ -47,12 +49,14 @@ func NewTransactionsController(
 	txInteractor transactions.TransactionsInteractor,
 	txPresenter presenters.TransactionsPresenter,
 	chainInteractor chain.ChainInteractor,
+	organizationsInteractor organizations.OrganizationsInteractor,
 ) TransactionsController {
 	return &transactionsController{
-		log:             log,
-		txInteractor:    txInteractor,
-		txPresenter:     txPresenter,
-		chainInteractor: chainInteractor,
+		log:                     log,
+		txInteractor:            txInteractor,
+		txPresenter:             txPresenter,
+		chainInteractor:         chainInteractor,
+		organizationsInteractor: organizationsInteractor,
 	}
 }
 
@@ -221,18 +225,28 @@ func (c *transactionsController) NewMultisig(w http.ResponseWriter, r *http.Requ
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	ownersPKs := make([]string, len(req.Owners))
+	ownersPKs := make([][]byte, len(req.Owners))
 
 	for i, pk := range req.Owners {
-		ownersPKs[i] = pk.PublicKey
+		ownersPKs[i] = common.Hex2Bytes(pk.PublicKey[2:])
 	}
 
 	if req.Confirmations <= 0 {
 		req.Confirmations = 1
 	}
 
+	participants, err := c.organizationsInteractor.Participants(ctx, organizations.ParticipantsParams{
+		PKs:            ownersPKs,
+		OrganizationID: organizationID,
+		UsersOnly:      true,
+		ActiveOnly:     true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch participants by pks. %w", err)
+	}
+
 	if err := c.chainInteractor.NewMultisig(ctx, chain.NewMultisigParams{
-		OwnersPKs:     ownersPKs,
+		Owners:        participants,
 		Confirmations: req.Confirmations,
 	}); err != nil {
 		return nil, fmt.Errorf("error deploy multisig. %w", err)

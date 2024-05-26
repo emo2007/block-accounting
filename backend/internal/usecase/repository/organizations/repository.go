@@ -31,6 +31,7 @@ type GetParams struct {
 type ParticipantsParams struct {
 	OrganizationId uuid.UUID
 	Ids            uuid.UUIDs
+	PKs            [][]byte
 
 	// Filters
 	UsersOnly     bool
@@ -388,6 +389,12 @@ func (r *repositorySQL) Participants(
 			)
 		}
 
+		if len(params.PKs) > 0 {
+			ouQuery = ouQuery.InnerJoin("users as u on u.id = ou.user_id").Where(sq.Eq{
+				"u.public_key": params.PKs,
+			})
+		}
+
 		rows, err := ouQuery.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
 			return fmt.Errorf("error fetch organization participants. %w", err)
@@ -548,6 +555,7 @@ func (r *repositorySQL) Participants(
 
 				usrs, err = r.usersRepository.Get(usersCtx, users.GetParams{
 					Ids: ids,
+					PKs: params.PKs,
 				})
 				if err != nil {
 					return fmt.Errorf("error fetch users by ids. %w", err)

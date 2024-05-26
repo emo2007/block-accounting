@@ -508,16 +508,28 @@ Response:
 ### Request body:  
 * title (string)
 * owners (array of object { "public_key":"string" })
-* confirmations (int) 
+* confirmations (uint) 
 
 ### Example
 Request: 
 ``` bash
-
+curl --request POST \
+  --url http://localhost:8081/organizations/018fb246-1616-7f1b-9fe2-1a3202224695/multisig \
+  --header 'Authorization: Bearer token' \
+  --header 'content-type: application/json' \
+  --data '{
+  "title":"new sig",
+  "owners":[
+    "0x5810f45ac87c0be03b4d8174132e2bc81ba1a928"
+  ],
+  "confirmations":1
+}'
 ```
 
 Response: 
 ``` json 
-
+{
+  "Ok": true
+}
 ```
 

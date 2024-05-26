@@ -9,6 +9,7 @@ import (
 type Multisig struct {
 	ID                    uuid.UUID
 	Title                 string
+	Address               []byte
 	OrganizationID        uuid.UUID
 	Owners                []OrganizationParticipant
 	ConfirmationsRequired int

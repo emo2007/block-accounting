@@ -49,6 +49,7 @@ type ParticipantParams struct {
 type ParticipantsParams struct {
 	IDs            uuid.UUIDs
 	OrganizationID uuid.UUID
+	PKs            [][]byte
 
 	UsersOnly     bool
 	ActiveOnly    bool
@@ -289,6 +290,7 @@ func (i *organizationsInteractor) Participants(
 	participants, err := i.orgRepository.Participants(ctx, organizations.ParticipantsParams{
 		Ids:            params.IDs,
 		OrganizationId: params.OrganizationID,
+		PKs:            params.PKs,
 		UsersOnly:      params.UsersOnly,
 		EmployeesOnly:  params.EmployeesOnly,
 		ActiveOnly:     params.ActiveOnly,

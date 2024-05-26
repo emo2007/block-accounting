@@ -435,7 +435,7 @@ func (r *repositorySQL) AddMultisig(
 				owner.Id(),
 				multisig.CreatedAt,
 				multisig.UpdatedAt,
-			)
+			).PlaceholderFormat(sq.Dollar)
 
 			if _, err := addOwnerQuery.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
 				return fmt.Errorf("error insert multisig owner data. %w", err)

@@ -55,6 +55,10 @@ func (u *User) Seed() []byte {
 	return u.Bip39Seed
 }
 
+func (u *User) PublicKey() []byte {
+	return u.PK
+}
+
 type OrganizationParticipantType int
 
 const (

@@ -15,6 +15,7 @@ import (
 
 type GetParams struct {
 	Ids            uuid.UUIDs
+	PKs            [][]byte
 	OrganizationId uuid.UUID
 	Seed           []byte
 }
@@ -60,6 +61,12 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 			})
 		}
 
+		if len(params.PKs) > 0 {
+			query = query.Where(sq.Eq{
+				"u.public_key": params.PKs,
+			})
+		}
+
 		if params.OrganizationId != uuid.Nil {
 			query = query.InnerJoin(
 				"organizations_users as ou on ou.user_id = u.id",
@@ -70,6 +77,10 @@ func (r *repositorySQL) Get(ctx context.Context, params GetParams) ([]*models.Us
 
 		if params.Seed != nil {
 			query = query.Where("u.seed = ?", params.Seed)
+		}
+
+		if params.PKs != nil {
+			fmt.Println(query.ToSql())
 		}
 
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
