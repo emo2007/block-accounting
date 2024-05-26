@@ -379,3 +379,145 @@ Response:
     ]
 }
 ```
+## POST **/organizations/{organization_id}/participants**  
+### Request body:  
+* name (string)
+* position (string)
+* wallet_address (string)
+
+### Example
+Request: 
+``` bash
+curl --request POST \
+  --url http://localhost:8081/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants \
+  --header 'Authorization: Bearer token' \
+  --header 'content-type: application/json' \
+  --data '{
+  "name":"dodik",
+  "position":"employee", 
+  "wallet_address":"0x8b1bc2590A3C9A1FEb349f1BacAfbc92CBC50156"
+}'
+```
+
+Response: 
+``` json 
+{
+  "_type": "participant",
+  "_links": {
+    "self": {
+      "href": "/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants/018fb42c-81dc-77f8-9eac-9d0540b34441"
+    }
+  },
+  "id": "018fb42c-81dc-77f8-9eac-9d0540b34441",
+  "name": "dodik2",
+  "created_at": 1716714766812,
+  "updated_at": 1716714766812,
+  "is_user": false,
+  "is_admin": false,
+  "is_owner": false,
+  "is_active": false
+}
+```
+## GET **/organizations/{organization_id}/participants**  
+### Request body:  
+* ids (string array)
+
+### Example
+Request: 
+``` bash
+curl --request GET \
+  --url http://localhost:8081/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY3OTk5MjgzMzIsInVpZCI6IjAxOGZiNDE5LTliZjctN2QwOS05MzViLTNiOTAyNDc3ZDJkYiJ9.V_d3b8MvuOp01xDGX0g5Ab2nOvdyGL84WO01xPodTro' \
+  --header 'content-type: application/json' \
+  --data '{
+	"ids":[
+      "018fb419-9bf7-7d09-935b-3b902477d2db",
+      "018fb42c-1a60-7dd3-841a-fccce8575091",
+      "018fb42c-20b7-7c06-acb6-03b3ccb8b7e5"
+    ]
+}'
+```
+
+Response: 
+``` json 
+{
+  "_type": "participants",
+  "_links": {
+    "self": {
+      "href": "/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants"
+    }
+  },
+  "participants": [
+    {
+      "_type": "participant",
+      "_links": {
+        "self": {
+          "href": "/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants/018fb419-9bf7-7d09-935b-3b902477d2db"
+        }
+      },
+      "id": "018fb419-9bf7-7d09-935b-3b902477d2db",
+      "name": "Bladee The Grand Drainer",
+      "credentials": {
+        "email": "bladeee@gmail.com",
+        "phone": "+79999999999",
+        "telegram": "@thebladee"
+      },
+      "created_at": 1716724338478,
+      "updated_at": 1716724338478,
+      "is_user": true,
+      "is_admin": true,
+      "is_owner": true,
+      "is_active": true
+    },
+    {
+      "_type": "participant",
+      "_links": {
+        "self": {
+          "href": "/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants/018fb42c-1a60-7dd3-841a-fccce8575091"
+        }
+      },
+      "id": "018fb42c-1a60-7dd3-841a-fccce8575091",
+      "name": "New Employee",
+      "created_at": 1716725540320,
+      "updated_at": 1716725540320,
+      "is_user": false,
+      "is_admin": false,
+      "is_owner": false,
+      "is_active": false
+    },
+    {
+      "_type": "participant",
+      "_links": {
+        "self": {
+          "href": "/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants/018fb42c-20b7-7c06-acb6-03b3ccb8b7e5"
+        }
+      },
+      "id": "018fb42c-20b7-7c06-acb6-03b3ccb8b7e5",
+      "name": "New Employee",
+      "created_at": 1716725541943,
+      "updated_at": 1716725541943,
+      "is_user": false,
+      "is_admin": false,
+      "is_owner": false,
+      "is_active": false
+    }
+  ]
+}
+```
+## POST **/organizations/{organization_id}/participants**  
+### Request body:  
+* title (string)
+* owners (array of object { "public_key":"string" })
+* confirmations (int) 
+
+### Example
+Request: 
+``` bash
+
+```
+
+Response: 
+``` json 
+
+```
+

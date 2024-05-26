@@ -376,9 +376,16 @@ func (r *repositorySQL) Participants(
 			PlaceholderFormat(sq.Dollar)
 
 		if len(params.Ids) > 0 {
-			ouQuery = ouQuery.Where(sq.Eq{
-				"ou.user_id": params.Ids,
-			})
+			ouQuery = ouQuery.Where(
+				sq.Or{
+					sq.Eq{
+						"ou.user_id": params.Ids,
+					},
+					sq.Eq{
+						"ou.employee_id": params.Ids,
+					},
+				},
+			)
 		}
 
 		rows, err := ouQuery.RunWith(r.Conn(ctx)).QueryContext(ctx)
@@ -459,6 +466,7 @@ func (r *repositorySQL) Participants(
 
 				query := sq.Select(
 					"e.id",
+					"e.name",
 					"e.user_id",
 					"e.organization_id",
 					"e.wallet_address",
@@ -489,6 +497,7 @@ func (r *repositorySQL) Participants(
 				for rows.Next() {
 					var (
 						id         uuid.UUID
+						name       string
 						userID     uuid.UUID
 						orgID      uuid.UUID
 						walletAddr []byte
@@ -498,6 +507,7 @@ func (r *repositorySQL) Participants(
 
 					if err = rows.Scan(
 						&id,
+						&name,
 						&userID,
 						&orgID,
 						&walletAddr,
@@ -509,6 +519,7 @@ func (r *repositorySQL) Participants(
 
 					employees = append(employees, &models.Employee{
 						ID:             id,
+						EmployeeName:   name,
 						UserID:         userID,
 						OrganizationId: orgID,
 						WalletAddress:  walletAddr,

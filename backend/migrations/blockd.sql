@@ -54,9 +54,10 @@ create index if not exists index_organizations_id
 
 create table employees (
         id uuid primary key, 
+        name varchar(250) default 'Employee',
         user_id uuid, 
         organization_id uuid not null references organizations(id),
-        wallet_address text not null, 
+        wallet_address bytea not null, 
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
 );
@@ -69,7 +70,7 @@ create index if not exists index_user_id_organization_id
 
 create table organizations_users (
         organization_id uuid not null references organizations(id), 
-        user_id uuid not null references users(id), 
+        user_id uuid default null, 
         employee_id uuid default null,
         position varchar(300),
         added_at timestamp default current_timestamp,
@@ -77,7 +78,7 @@ create table organizations_users (
         deleted_at timestamp default null,
         is_admin bool default false,
         is_owner bool default false,
-        primary key(organization_id, user_id)
+        primary key(organization_id, user_id, employee_id)
 );
 
 create index if not exists index_organizations_users_organization_id_user_id_is_admin

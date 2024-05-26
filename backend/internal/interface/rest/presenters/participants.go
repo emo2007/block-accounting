@@ -53,11 +53,15 @@ func (p *participantsPresenter) responseParticipant(
 			}
 		}
 
+		domainParticipant.Position = user.Position()
 		domainParticipant.IsUser = true
 		domainParticipant.IsAdmin = user.IsAdmin()
 		domainParticipant.IsOwner = user.IsOwner()
 		domainParticipant.IsActive = user.Activated
 
+	} else if employee := participant.GetEmployee(); employee != nil {
+		domainParticipant.Name = employee.EmployeeName
+		domainParticipant.Position = employee.Position()
 	}
 
 	organizationID, err := ctxmeta.OrganizationId(ctx)
@@ -67,7 +71,7 @@ func (p *participantsPresenter) responseParticipant(
 
 	r := hal.NewResource(
 		domainParticipant,
-		"/organizations/"+organizationID.String()+"/participants"+domainParticipant.ID,
+		"/organizations/"+organizationID.String()+"/participants/"+domainParticipant.ID,
 		hal.WithType("participant"),
 	)
 

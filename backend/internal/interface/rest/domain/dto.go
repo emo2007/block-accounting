@@ -1,10 +1,5 @@
 package domain
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 // Generic
 
 type Collection[T any] struct {
@@ -97,8 +92,8 @@ type UpdateTransactionStatusRequest struct {
 
 type ListParticipantsRequest struct {
 	IDs    []string `json:"ids,omitempty"`
-	Cursor string   `json:"cursor,omitempty"`
-	Limit  uint8    `json:"limit,omitempty"`
+	Cursor string   `json:"cursor,omitempty"` // not implemented
+	Limit  uint8    `json:"limit,omitempty"`  // not implemented
 }
 
 type AddEmployeeRequest struct {
@@ -117,14 +112,4 @@ type NewMultisigRequest struct {
 
 type NewInviteLinkRequest struct {
 	ExpirationDate int `json:"expiration_date"`
-}
-
-func BuildRequest[T any](data []byte) (*T, error) {
-	var req T
-
-	if err := json.Unmarshal(data, &req); err != nil {
-		return nil, fmt.Errorf("error unmarshal request. %w", err)
-	}
-
-	return &req, nil
 }

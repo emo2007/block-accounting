@@ -145,13 +145,6 @@ func (s *Server) buildRouter() {
 
 				r.Route("/{participant_id}", func(r chi.Router) {
 					r.Get("/", nil)
-					// r.Put("/", nil)    // update user / employee
-					// r.Delete("/", nil) // remove user / employee
-
-					// r.Route("/payroll", func(r chi.Router) {
-					// 	r.Put("/", nil) // edit
-					// 	r.Get("/", nil)
-					// })
 				})
 			})
 		})
