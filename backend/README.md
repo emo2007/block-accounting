@@ -406,15 +406,57 @@ curl --request GET \
 Response: 
 ``` json 
 {
-  // todo
+  "_type": "multisigs",
+  "_links": {
+    "self": {
+      "href": "/organizations/018fb61b-9f79-705a-bd92-59233ed15ac7/multisig"
+    }
+  },
+  "multisigs": [
+    {
+      "id": "018fb61e-6c64-7a70-b677-992353389731",
+      "title": "new sig",
+      "owners": {
+        "_type": "participants",
+        "_links": {
+          "self": {
+            "href": "/organizations/018fb61b-9f79-705a-bd92-59233ed15ac7/participants"
+          }
+        },
+        "participants": [
+          {
+            "_type": "participant",
+            "_links": {
+              "self": {
+                "href": "/organizations/018fb61b-9f79-705a-bd92-59233ed15ac7/participants/018fb61b-76cb-71c1-8306-cea167411ac8"
+              }
+            },
+            "id": "018fb61b-76cb-71c1-8306-cea167411ac8",
+            "name": "Bladee The Grand Drainer",
+            "credentials": {
+              "email": "bladeee@gmail.com",
+              "phone": "+79999999999",
+              "telegram": "@thebladee"
+            },
+            "created_at": 1716758014713,
+            "updated_at": 1716758014713,
+            "is_user": true,
+            "is_admin": true,
+            "is_owner": true,
+            "is_active": true
+          }
+        ]
+      }
+    }
+  ]
 }
 ```
 
-## GET **/organizations/{organization_id}/payrolls** 
-Fetch payrolls
-
 ## POST **/organizations/{organization_id}/payrolls** 
 New payroll
+
+## GET **/organizations/{organization_id}/payrolls** 
+Fetch payrolls
 
 ## GET **/organizations/{organization_id}/license** 
 Fetch licenses

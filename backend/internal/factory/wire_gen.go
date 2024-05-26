@@ -21,14 +21,14 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 		return nil, nil, err
 	}
 	usersRepository := provideUsersRepository(db)
-	transactionsRepository := provideTxRepository(db)
+	organizationsRepository := provideOrganizationsRepository(db, usersRepository)
+	transactionsRepository := provideTxRepository(db, organizationsRepository)
 	chainInteractor := provideChainInteractor(logger, c, transactionsRepository)
 	usersInteractor := provideUsersInteractor(logger, usersRepository, chainInteractor)
 	authRepository := provideAuthRepository(db)
 	jwtInteractor := provideJWTInteractor(c, usersInteractor, authRepository)
 	authPresenter := provideAuthPresenter(jwtInteractor)
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor, authRepository)
-	organizationsRepository := provideOrganizationsRepository(db, usersRepository)
 	client, cleanup2 := provideRedisConnection(c)
 	cache := provideRedisCache(client, logger)
 	organizationsInteractor := provideOrganizationsInteractor(logger, organizationsRepository, cache)

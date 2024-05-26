@@ -222,7 +222,7 @@ func (c *transactionsController) NewMultisig(w http.ResponseWriter, r *http.Requ
 		slog.Any("req", req),
 	)
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	ownersPKs := make([][]byte, len(req.Owners))
@@ -246,6 +246,7 @@ func (c *transactionsController) NewMultisig(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := c.chainInteractor.NewMultisig(ctx, chain.NewMultisigParams{
+		Title:         req.Title,
 		Owners:        participants,
 		Confirmations: req.Confirmations,
 	}); err != nil {
@@ -256,7 +257,19 @@ func (c *transactionsController) NewMultisig(w http.ResponseWriter, r *http.Requ
 }
 
 func (s *transactionsController) ListMultisigs(w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	return nil, nil
+	organizationID, err := ctxmeta.OrganizationId(r.Context())
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization ID from context. %w", err)
+	}
+
+	msgs, err := s.chainInteractor.ListMultisigs(r.Context(), chain.ListMultisigsParams{
+		OrganizationID: organizationID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.txPresenter.ResponseMultisigs(r.Context(), msgs)
 }
 
 // todo creates a new payout

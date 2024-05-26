@@ -159,6 +159,8 @@ create index if not exists  idx_contracts_organization_id_created_by
 create table multisigs (
         id uuid primary key, 
         organization_id uuid not null references organizations(id), 
+        address bytea not null,
+        confirmations smallint default 0,
         title varchar(350) default 'New Multi-Sig',
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp

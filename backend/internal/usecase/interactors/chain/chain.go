@@ -20,6 +20,7 @@ import (
 
 type ChainInteractor interface {
 	NewMultisig(ctx context.Context, params NewMultisigParams) error
+	ListMultisigs(ctx context.Context, params ListMultisigsParams) ([]models.Multisig, error)
 	PubKey(ctx context.Context, user *models.User) ([]byte, error)
 	SalaryDeploy(ctx context.Context, firtsAdmin models.OrganizationParticipant) error
 }
@@ -223,4 +224,20 @@ func (i *chainInteractor) SalaryDeploy(ctx context.Context, firtsAdmin models.Or
 	return nil
 }
 
-// func (i *chainInteractor)
+type ListMultisigsParams struct {
+	OrganizationID uuid.UUID
+}
+
+func (i *chainInteractor) ListMultisigs(
+	ctx context.Context,
+	params ListMultisigsParams,
+) ([]models.Multisig, error) {
+	multisigs, err := i.txRepository.ListMultisig(ctx, transactions.ListMultisigsParams{
+		OrganizationID: params.OrganizationID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch multisigs. %w", err)
+	}
+
+	return multisigs, nil
+}

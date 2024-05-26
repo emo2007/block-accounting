@@ -24,8 +24,8 @@ func provideOrganizationsRepository(
 	return organizations.NewRepository(db, uRepo)
 }
 
-func provideTxRepository(db *sql.DB) transactions.Repository {
-	return transactions.NewRepository(db)
+func provideTxRepository(db *sql.DB, or organizations.Repository) transactions.Repository {
+	return transactions.NewRepository(db, or)
 }
 
 func provideAuthRepository(db *sql.DB) auth.Repository {

@@ -24,13 +24,18 @@ type TransactionsPresenter interface {
 	ResponseNewTransaction(ctx context.Context, tx *models.Transaction) ([]byte, error)
 	ResponseTransactionsArray(ctx context.Context, txs []*models.Transaction) ([]*hal.Resource, error)
 	ResponseListTransactions(ctx context.Context, txs []*models.Transaction, cursor string) ([]byte, error)
+
+	ResponseMultisigs(ctx context.Context, msgs []models.Multisig) ([]byte, error)
 }
 
 type transactionsPresenter struct {
+	participantsPresenter ParticipantsPresenter
 }
 
 func NewTransactionsPresenter() TransactionsPresenter {
-	return &transactionsPresenter{}
+	return &transactionsPresenter{
+		participantsPresenter: NewParticipantsPresenter(),
+	}
 }
 
 // RequestTransaction returns a Transaction model WITHOUT CreatedBy user set. CreatedAt set as time.Now()
@@ -150,7 +155,7 @@ func (p *transactionsPresenter) ResponseListTransactions(
 	r := hal.NewResource(
 		txsResource,
 		"/organizations/"+organizationID.String()+"/transactions",
-		hal.WithType("organizations"),
+		hal.WithType("transactions"),
 	)
 
 	out, err := json.Marshal(r)
@@ -171,6 +176,52 @@ func (c *transactionsPresenter) ResponseNewTransaction(
 	}
 
 	out, err := json.Marshal(dtoTx)
+	if err != nil {
+		return nil, fmt.Errorf("error marshal tx to hal resource. %w", err)
+	}
+
+	return out, nil
+}
+
+type Multisig struct {
+	ID     string        `json:"id"`
+	Title  string        `json:"title"`
+	Owners *hal.Resource `json:"owners"`
+}
+
+func (c *transactionsPresenter) ResponseMultisigs(ctx context.Context, msgs []models.Multisig) ([]byte, error) {
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	outArray := make([]Multisig, len(msgs))
+
+	for i, m := range msgs {
+		mout := Multisig{
+			ID:    m.ID.String(),
+			Title: m.Title,
+		}
+
+		partOut, err := c.participantsPresenter.ResponseParticipantsHal(ctx, m.Owners)
+		if err != nil {
+			return nil, err
+		}
+
+		mout.Owners = partOut
+
+		outArray[i] = mout
+	}
+
+	txsResource := map[string]any{"multisigs": outArray}
+
+	r := hal.NewResource(
+		txsResource,
+		"/organizations/"+organizationID.String()+"/multisig",
+		hal.WithType("multisigs"),
+	)
+
+	out, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf("error marshal tx to hal resource. %w", err)
 	}

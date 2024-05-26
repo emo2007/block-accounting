@@ -10,6 +10,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	sqltools "github.com/emochka2007/block-accounting/internal/pkg/sqlutils"
+	"github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
 	"github.com/google/uuid"
 )
 
@@ -52,15 +53,18 @@ type Repository interface {
 	CancelTransaction(ctx context.Context, params CancelTransactionParams) error
 
 	AddMultisig(ctx context.Context, multisig models.Multisig) error
+	ListMultisig(ctx context.Context, params ListMultisigsParams) ([]models.Multisig, error)
 }
 
 type repositorySQL struct {
-	db *sql.DB
+	db      *sql.DB
+	orgRepo organizations.Repository
 }
 
-func NewRepository(db *sql.DB) Repository {
+func NewRepository(db *sql.DB, orgRepo organizations.Repository) Repository {
 	return &repositorySQL{
-		db: db,
+		db:      db,
+		orgRepo: orgRepo,
 	}
 }
 
@@ -410,12 +414,16 @@ func (r *repositorySQL) AddMultisig(
 			"id",
 			"organization_id",
 			"title",
+			"address",
+			"confirmations",
 			"created_at",
 			"updated_at",
 		).Values(
 			multisig.ID,
 			multisig.OrganizationID,
 			multisig.Title,
+			multisig.Address,
+			multisig.ConfirmationsRequired,
 			multisig.CreatedAt,
 			multisig.UpdatedAt,
 		).PlaceholderFormat(sq.Dollar)
@@ -444,4 +452,142 @@ func (r *repositorySQL) AddMultisig(
 
 		return nil
 	})
+}
+
+type ListMultisigsParams struct {
+	IDs            uuid.UUIDs
+	OrganizationID uuid.UUID
+}
+
+func (r *repositorySQL) ListMultisig(
+	ctx context.Context,
+	params ListMultisigsParams,
+) ([]models.Multisig, error) {
+	msgs := make([]models.Multisig, 0)
+
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Select(
+			"id",
+			"organization_id",
+			"title",
+			"address",
+			"confirmations",
+			"created_at",
+			"updated_at",
+		).From("multisigs").Where(sq.Eq{
+			"organization_id": params.OrganizationID,
+		}).PlaceholderFormat(sq.Dollar)
+
+		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error fetch multisigs from database. %w", err)
+		}
+
+		defer rows.Close()
+
+		msgsTmp := make([]*models.Multisig, 0)
+
+		for rows.Next() {
+			var (
+				id             uuid.UUID
+				organizationID uuid.UUID
+				address        []byte
+				title          string
+				confirmations  int
+				createdAt      time.Time
+				updatedAt      time.Time
+			)
+
+			if err = rows.Scan(
+				&id,
+				&organizationID,
+				&title,
+				&address,
+				&confirmations,
+				&createdAt,
+				&updatedAt,
+			); err != nil {
+				return fmt.Errorf("error scan row. %w", err)
+			}
+
+			msgsTmp = append(msgsTmp, &models.Multisig{
+				ID:                    id,
+				Title:                 title,
+				Address:               address,
+				OrganizationID:        organizationID,
+				ConfirmationsRequired: confirmations,
+				CreatedAt:             createdAt,
+				UpdatedAt:             updatedAt,
+			})
+		}
+
+		for _, m := range msgsTmp {
+			owners, err := r.fetchOwners(ctx, fetchOwnersParams{
+				OrganizationID: params.OrganizationID,
+				MultisigID:     m.ID,
+			})
+			if err != nil {
+				return err
+			}
+
+			m.Owners = owners
+
+			msgs = append(msgs, *m)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return msgs, nil
+}
+
+type fetchOwnersParams struct {
+	MultisigID     uuid.UUID
+	OrganizationID uuid.UUID
+}
+
+func (r *repositorySQL) fetchOwners(ctx context.Context, params fetchOwnersParams) ([]models.OrganizationParticipant, error) {
+	owners := make([]models.OrganizationParticipant, 0)
+
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Select("owner_id").From("multisig_owners").Where(sq.Eq{
+			"multisig_id": params.MultisigID,
+		}).PlaceholderFormat(sq.Dollar)
+
+		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error fetch multisigs owners from database. %w", err)
+		}
+
+		defer rows.Close()
+
+		ids := make(uuid.UUIDs, 0)
+
+		for rows.Next() {
+			var ownerId uuid.UUID
+
+			if err = rows.Scan(&ownerId); err != nil {
+				return err
+			}
+
+			ids = append(ids, ownerId)
+		}
+
+		owners, err = r.orgRepo.Participants(ctx, organizations.ParticipantsParams{
+			OrganizationId: params.OrganizationID,
+			Ids:            ids,
+			UsersOnly:      true,
+		})
+		if err != nil {
+			return fmt.Errorf("error fetch owners as participants. %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return owners, nil
 }

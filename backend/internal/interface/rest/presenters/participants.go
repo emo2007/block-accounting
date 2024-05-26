@@ -20,6 +20,14 @@ type ParticipantsPresenter interface {
 		ctx context.Context,
 		participant models.OrganizationParticipant,
 	) ([]byte, error)
+	ResponseParticipantsHal(
+		ctx context.Context,
+		participants []models.OrganizationParticipant,
+	) (*hal.Resource, error)
+	ResponseParticipantHal(
+		ctx context.Context,
+		participant models.OrganizationParticipant,
+	) (*hal.Resource, error)
 }
 
 type participantsPresenter struct{}
@@ -28,7 +36,7 @@ func NewParticipantsPresenter() ParticipantsPresenter {
 	return new(participantsPresenter)
 }
 
-func (p *participantsPresenter) responseParticipant(
+func (p *participantsPresenter) ResponseParticipantHal(
 	ctx context.Context,
 	participant models.OrganizationParticipant,
 ) (*hal.Resource, error) {
@@ -78,14 +86,14 @@ func (p *participantsPresenter) responseParticipant(
 	return r, nil
 }
 
-func (p *participantsPresenter) responseParticipants(
+func (p *participantsPresenter) ResponseParticipantsHal(
 	ctx context.Context,
 	participants []models.OrganizationParticipant,
 ) (*hal.Resource, error) {
 	resources := make([]*hal.Resource, len(participants))
 
 	for i, pt := range participants {
-		r, err := p.responseParticipant(ctx, pt)
+		r, err := p.ResponseParticipantHal(ctx, pt)
 		if err != nil {
 			return nil, fmt.Errorf("error map participant to hal resource. %w", err)
 		}
@@ -113,7 +121,7 @@ func (p *participantsPresenter) ResponseListParticipants(
 	ctx context.Context,
 	participants []models.OrganizationParticipant,
 ) ([]byte, error) {
-	r, err := p.responseParticipants(ctx, participants)
+	r, err := p.ResponseParticipantsHal(ctx, participants)
 	if err != nil {
 		return nil, fmt.Errorf("error map participants to hal. %w", err)
 	}
@@ -130,7 +138,7 @@ func (p *participantsPresenter) ResponseParticipant(
 	ctx context.Context,
 	participant models.OrganizationParticipant,
 ) ([]byte, error) {
-	r, err := p.responseParticipant(ctx, participant)
+	r, err := p.ResponseParticipantHal(ctx, participant)
 	if err != nil {
 		return nil, fmt.Errorf("error map participant to hal resource. %w", err)
 	}
