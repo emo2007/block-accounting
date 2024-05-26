@@ -464,14 +464,48 @@ Fetch licenses
 ## POST **/organizations/{organization_id}/license** 
 New licese
 
-## GET **/organizations/{organization_id}/invite/{hash}**
+## GET **/invite/{hash}**
 Open invite link
+### Request body
+{}
+### Example
+Request:
+```bash
+curl --request GET \
+  --url http://localhost:8081/invite/YR9vO4ZXYTgtIyi4aScsi6UZr0vNS74x9b8Y8SKF84g=
+```
+Response:
+```bash
+{
+  "Ok": true
+}
+```
 
-## POST **/organizations/{organization_id}/invite/{hash}/join**
+## POST **/invite/{hash}/join**
 Join with invite link
+// todo
 
 ## POST **/organizations/{organization_id}/participants/invite**
 Create new invite link
+### Request body
+{} empty json
+### Example
+Request: 
+```bash
+curl --request POST \
+  --url http://localhost:8081/organizations/018fb246-1616-7f1b-9fe2-1a3202224695/participants/invite \
+  --header 'Authorization: Bearer token' \
+  --header 'X-Seed: a b c 1 2 3' \
+  --header 'accept: application/json' \
+  --header 'content-type: application/json' \
+  --data '{}'
+```
+Response: 
+```json
+{
+  "link": "/018fb246-1616-7f1b-9fe2-1a3202224695/invite/%2nIYC4E6ipLjUpjH0ctbqGFkneMJoF3JW41I4tThgM="
+}
+```
 
 # Deprecated
 ## GET **/{organization_id}/transactions**  

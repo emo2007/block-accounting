@@ -96,6 +96,11 @@ func (s *Server) buildRouter() {
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
 	router.Get("/refresh", s.handle(s.controllers.Auth.Refresh, "refresh"))
 
+	// open invite link
+	router.Get("/invite/{hash}", s.handle(s.controllers.Auth.InviteGet, "invite_open"))
+	// join via invite link
+	router.Post("/invite/{hash}/join", s.handle(s.controllers.Auth.JoinWithInvite, "invite_join"))
+
 	router.Route("/organizations", func(r chi.Router) {
 		r = r.With(s.withAuthorization)
 
@@ -116,25 +121,17 @@ func (s *Server) buildRouter() {
 			r.Route("/payrolls", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
 				r.Post("/", s.handle(s.controllers.Transactions.NewPayroll, "new_payroll"))
-				r.Put("/", nil) // todo
 			})
 
 			r.Route("/multisig", func(r chi.Router) {
 				r.Post("/", s.handle(s.controllers.Transactions.NewMultisig, "new_multisig"))
 				r.Get("/", s.handle(s.controllers.Transactions.ListMultisigs, "list_multisig"))
-				r.Put("/", nil) // todo
 			})
 
 			r.Route("/license", func(r chi.Router) {
 				r.Get("/", nil)  // list license
 				r.Post("/", nil) // deploy contract
-				r.Put("/", nil)  // todo
 			})
-
-			// open invite link
-			r.Get("/invite/{hash}", s.handle(nil, "invite_open"))
-			// join via invite link
-			r.Post("/invite/{hash}/join", s.handle(s.controllers.Auth.JoinWithInvite, "invite_join"))
 
 			r.Route("/participants", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Participants.List, "participants_list"))

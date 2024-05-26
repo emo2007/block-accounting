@@ -195,6 +195,7 @@ create index if not exists  idx_multisig_confirmations_owners_owner_id
 
 create table invites (
         link_hash varchar(64) primary key, 
+        organization_id uuid, 
         created_by uuid not null references users(id),
         created_at timestamp default current_timestamp,
         expired_at timestamp default null,

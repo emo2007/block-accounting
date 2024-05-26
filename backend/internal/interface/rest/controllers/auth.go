@@ -32,6 +32,7 @@ type AuthController interface {
 	Login(w http.ResponseWriter, req *http.Request) ([]byte, error)
 	Invite(w http.ResponseWriter, req *http.Request) ([]byte, error)
 	Refresh(w http.ResponseWriter, req *http.Request) ([]byte, error)
+	InviteGet(w http.ResponseWriter, req *http.Request) ([]byte, error)
 }
 
 type authController struct {
@@ -191,16 +192,24 @@ func (c *authController) Invite(w http.ResponseWriter, r *http.Request) ([]byte,
 		"&", "#",
 	)
 
+	createdAt := time.Now()
+	expDate := createdAt.Add(time.Hour * 24 * 7)
+
+	if request.ExpirationDate > 0 {
+		expDate = time.UnixMilli(int64(request.ExpirationDate))
+	}
+
 	c.log.Debug(
 		"",
 		slog.String("link", linkHashString),
 	)
 
 	if err := c.repo.AddInvite(ctx, auth.AddInviteParams{
-		LinkHash:  linkHashString,
-		CreatedBy: *user,
-		CreatedAt: time.Now(),
-		ExpiredAt: time.UnixMilli(int64(request.ExpirationDate)),
+		LinkHash:       linkHashString,
+		OrganizationID: organizationID,
+		CreatedBy:      *user,
+		CreatedAt:      createdAt,
+		ExpiredAt:      expDate,
 	}); err != nil {
 		return nil, fmt.Errorf("error add new invite link. %w", err)
 	}
@@ -209,5 +218,10 @@ func (c *authController) Invite(w http.ResponseWriter, r *http.Request) ([]byte,
 }
 
 func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+
 	return nil, nil // implement
+}
+
+func (c *authController) InviteGet(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+	return presenters.ResponseOK()
 }

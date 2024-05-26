@@ -185,10 +185,11 @@ func (r *repositorySQL) GetTokens(ctx context.Context, params GetTokenParams) (*
 }
 
 type AddInviteParams struct {
-	LinkHash  string
-	CreatedBy models.User
-	CreatedAt time.Time
-	ExpiredAt time.Time
+	LinkHash       string
+	OrganizationID uuid.UUID
+	CreatedBy      models.User
+	CreatedAt      time.Time
+	ExpiredAt      time.Time
 }
 
 func (r *repositorySQL) AddInvite(
@@ -198,11 +199,13 @@ func (r *repositorySQL) AddInvite(
 	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
 		query := sq.Insert("invites").Columns(
 			"link_hash",
+			"organization_id",
 			"created_by",
 			"created_at",
 			"expired_at",
 		).Values(
 			params.LinkHash,
+			params.OrganizationID,
 			params.CreatedBy.Id(),
 			params.CreatedAt,
 			params.ExpiredAt,
