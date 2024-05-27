@@ -44,11 +44,13 @@ func provideTxInteractor(
 	log *slog.Logger,
 	txRepo txRepo.Repository,
 	orgInteractor organizations.OrganizationsInteractor,
+	chainInteractor chain.ChainInteractor,
 ) transactions.TransactionsInteractor {
 	return transactions.NewTransactionsInteractor(
 		log.WithGroup("transaction-interactor"),
 		txRepo,
 		orgInteractor,
+		chainInteractor,
 	)
 }
 

@@ -45,6 +45,10 @@ type LoginResponse struct {
 	RTExpiredAt  int64  `json:"refresh_token_expired_at"`
 }
 
+type NewInviteLinkRequest struct {
+	ExpirationDate int `json:"expiration_date"`
+}
+
 // Organizations
 
 type NewOrganizationRequest struct {
@@ -102,6 +106,8 @@ type AddEmployeeRequest struct {
 	WalletAddress string `json:"wallet_address"`
 }
 
+// Chain
+
 type NewMultisigRequest struct {
 	Title  string `json:"title"`
 	Owners []struct {
@@ -110,6 +116,7 @@ type NewMultisigRequest struct {
 	Confirmations int `json:"confirmations"`
 }
 
-type NewInviteLinkRequest struct {
-	ExpirationDate int `json:"expiration_date"`
+type NewPayrollRequest struct {
+	MultisigID string `json:"multisig_id"`
+	Title      string `json:"title"`
 }

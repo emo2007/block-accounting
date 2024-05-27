@@ -54,6 +54,9 @@ type Repository interface {
 
 	AddMultisig(ctx context.Context, multisig models.Multisig) error
 	ListMultisig(ctx context.Context, params ListMultisigsParams) ([]models.Multisig, error)
+	ConfirmMultisig(ctx context.Context, params ConfirmMultisigParams) error
+
+	AddPayrollContract(ctx context.Context, params AddPayrollContract) error
 }
 
 type repositorySQL struct {
@@ -478,6 +481,12 @@ func (r *repositorySQL) ListMultisig(
 			"organization_id": params.OrganizationID,
 		}).PlaceholderFormat(sq.Dollar)
 
+		if len(params.IDs) > 0 {
+			query = query.Where(sq.Eq{
+				"id": params.IDs,
+			})
+		}
+
 		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
 		if err != nil {
 			return fmt.Errorf("error fetch multisigs from database. %w", err)
@@ -541,6 +550,94 @@ func (r *repositorySQL) ListMultisig(
 	}
 
 	return msgs, nil
+}
+
+type ConfirmMultisigParams struct {
+	MultisigID      uuid.UUID
+	OrganizationsID uuid.UUID
+	CinfirmedBy     *models.OrganizationUser
+	ConfirmedAt     time.Time
+}
+
+func (r *repositorySQL) ConfirmMultisig(ctx context.Context, params ConfirmMultisigParams) error {
+	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		deleteOldQuery := sq.Delete("multisig_confirmations").
+			Where(sq.Eq{
+				"multisig_id": params.MultisigID,
+				"owner_id":    params.CinfirmedBy.Id(),
+			}).
+			PlaceholderFormat(sq.Dollar)
+
+		if _, err := deleteOldQuery.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error delete old multisig confirmation. %w", err)
+		}
+
+		query := sq.Insert("multisig_confirmations").
+			Columns(
+				"multisig_id",
+				"owner_id",
+				"created_at",
+			).
+			Values(
+				params.MultisigID,
+				params.CinfirmedBy.Id(),
+				params.ConfirmedAt,
+			).
+			PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add multisig confirmation. %w", err)
+		}
+
+		return nil
+	})
+}
+
+type AddPayrollContract struct {
+	ID             uuid.UUID
+	Title          string
+	Description    string
+	Address        []byte
+	Payload        []byte
+	OrganizationID uuid.UUID
+	MultisigID     uuid.UUID
+	CreatedAt      time.Time
+}
+
+func (r *repositorySQL) AddPayrollContract(
+	ctx context.Context,
+	params AddPayrollContract,
+) error {
+	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Insert("payrolls").
+			Columns(
+				"id",
+				"title",
+				"description",
+				"address",
+				"payload",
+				"organization_id",
+				"multisig_id",
+				"created_at",
+			).
+			Values(
+				params.ID,
+				params.Title,
+				params.Description,
+				params.Address,
+				params.Payload,
+				params.OrganizationID,
+				params.MultisigID,
+				params.CreatedAt,
+			).
+			PlaceholderFormat(sq.Dollar)
+
+		if _, err := query.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
+			return fmt.Errorf("error add new payroll contract. %w", err)
+		}
+
+		return nil
+	})
 }
 
 type fetchOwnersParams struct {

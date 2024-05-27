@@ -272,9 +272,72 @@ func (s *transactionsController) ListMultisigs(w http.ResponseWriter, r *http.Re
 	return s.txPresenter.ResponseMultisigs(r.Context(), msgs)
 }
 
-// todo creates a new payout
 func (c *transactionsController) NewPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	return nil, nil
+	req, err := presenters.CreateRequest[domain.NewPayrollRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error build request. %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	defer cancel()
+
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("erropr fetch organization id from context. %w", err)
+	}
+
+	c.log.Debug(
+		"NewPayrollRequest",
+		slog.Any("req", req),
+		slog.String("org id", organizationID.String()),
+	)
+
+	multisigID, err := uuid.Parse(req.MultisigID)
+	if err != nil {
+		return nil, fmt.Errorf("error invalid ")
+	}
+
+	user, err := ctxmeta.User(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	userParticipant, err := c.organizationsInteractor.Participant(ctx, organizations.ParticipantParams{
+		ID:             user.Id(),
+		OrganizationID: organizationID,
+		// TODO fetch REAL first admin
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch user protocpant. %w", err)
+	}
+
+	if !userParticipant.IsOwner() {
+		return nil, fmt.Errorf("only owner can create payrolls")
+	}
+
+	firstAdmin, err := c.organizationsInteractor.Participant(ctx, organizations.ParticipantParams{
+		ID:             user.Id(),
+		OrganizationID: organizationID,
+		// TODO fetch REAL first admin
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch first admin. %w", err)
+	}
+
+	if !firstAdmin.IsOwner() {
+		return nil, fmt.Errorf("invalid first admin. not owner")
+	}
+
+	err = c.chainInteractor.PayrollDeploy(ctx, chain.PayrollDeployParams{
+		MultisigID: multisigID,
+		FirstAdmin: firstAdmin,
+		Title:      req.Title,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error create new payroll contract. %w", err)
+	}
+
+	return presenters.ResponseOK()
 }
 
 func (c *transactionsController) ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {

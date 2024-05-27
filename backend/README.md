@@ -534,7 +534,6 @@ Response:
 }
 ```
 
-# Deprecated
 ## GET **/{organization_id}/transactions**  
 Feth txs
 ### Request body:  

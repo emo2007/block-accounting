@@ -44,6 +44,7 @@ type ParticipantParams struct {
 	UsersOnly     bool
 	ActiveOnly    bool
 	EmployeesOnly bool
+	OwnerOnly     bool
 }
 
 type ParticipantsParams struct {
@@ -54,6 +55,7 @@ type ParticipantsParams struct {
 	UsersOnly     bool
 	ActiveOnly    bool
 	EmployeesOnly bool
+	OwnerOnly     bool
 }
 
 type OrganizationsInteractor interface {

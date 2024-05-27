@@ -90,7 +90,7 @@ func (s *Server) buildRouter() {
 
 	router.Use(render.SetContentType(render.ContentTypeJSON))
 
-	router.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping"))
+	router.Get("/ping", s.handle(s.controllers.Ping.Ping, "ping")) // DEBUG
 
 	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
@@ -108,16 +108,6 @@ func (s *Server) buildRouter() {
 		r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
-			// Deprecated??
-			r.Route("/transactions", func(r chi.Router) {
-				r.Get("/", s.handle(s.controllers.Transactions.List, "tx_list"))
-				r.Post("/", s.handle(s.controllers.Transactions.New, "new_tx"))
-				r.Put(
-					"/{tx_id}",
-					s.handle(s.controllers.Transactions.UpdateStatus, "update_tx_status"),
-				)
-			})
-
 			r.Route("/payrolls", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
 				r.Post("/", s.handle(s.controllers.Transactions.NewPayroll, "new_payroll"))
@@ -143,6 +133,16 @@ func (s *Server) buildRouter() {
 				r.Route("/{participant_id}", func(r chi.Router) {
 					r.Get("/", nil) // todo если успею
 				})
+			})
+
+			// Deprecated??
+			r.Route("/transactions", func(r chi.Router) {
+				r.Get("/", s.handle(s.controllers.Transactions.List, "tx_list"))
+				r.Post("/", s.handle(s.controllers.Transactions.New, "new_tx"))
+				r.Put(
+					"/{tx_id}",
+					s.handle(s.controllers.Transactions.UpdateStatus, "update_tx_status"),
+				)
 			})
 		})
 	})

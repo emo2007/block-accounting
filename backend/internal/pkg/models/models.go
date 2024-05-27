@@ -23,3 +23,11 @@ type MultisigConfirmation struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
+
+type Payroll struct {
+	ID             uuid.UUID
+	Title          string
+	Address        []byte
+	OrganizationID uuid.UUID
+	MultisigID     uuid.UUID
+}

@@ -34,7 +34,7 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor, authRepository, organizationsInteractor)
 	organizationsPresenter := provideOrganizationsPresenter()
 	organizationsController := provideOrganizationsController(logger, organizationsInteractor, organizationsPresenter)
-	transactionsInteractor := provideTxInteractor(logger, transactionsRepository, organizationsInteractor)
+	transactionsInteractor := provideTxInteractor(logger, transactionsRepository, organizationsInteractor, chainInteractor)
 	transactionsController := provideTxController(logger, transactionsInteractor, chainInteractor, organizationsInteractor)
 	participantsController := provideParticipantsController(logger, organizationsInteractor, usersInteractor)
 	rootController := provideControllers(logger, authController, organizationsController, transactionsController, participantsController)

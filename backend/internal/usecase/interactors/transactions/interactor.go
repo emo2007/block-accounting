@@ -10,6 +10,7 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
 	"github.com/google/uuid"
@@ -59,20 +60,23 @@ type TransactionsInteractor interface {
 }
 
 type transactionsInteractor struct {
-	log           *slog.Logger
-	txRepo        transactions.Repository
-	orgInteractor organizations.OrganizationsInteractor
+	log             *slog.Logger
+	txRepo          transactions.Repository
+	orgInteractor   organizations.OrganizationsInteractor
+	chainInteractor chain.ChainInteractor
 }
 
 func NewTransactionsInteractor(
 	log *slog.Logger,
 	txRepo transactions.Repository,
 	orgInteractor organizations.OrganizationsInteractor,
+	chainInteractor chain.ChainInteractor,
 ) TransactionsInteractor {
 	return &transactionsInteractor{
-		log:           log,
-		txRepo:        txRepo,
-		orgInteractor: orgInteractor,
+		log:             log,
+		txRepo:          txRepo,
+		orgInteractor:   orgInteractor,
+		chainInteractor: chainInteractor,
 	}
 }
 
@@ -224,6 +228,8 @@ func (i *transactionsInteractor) Confirm(ctx context.Context, params ConfirmPara
 		return nil, fmt.Errorf("error confirm transaction. %w", err)
 	}
 
+	// TODO confirm tx via chain-api
+
 	tx, err := i.txRepo.GetTransactions(ctx, transactions.GetTransactionsParams{
 		Ids:            uuid.UUIDs{params.TxID},
 		OrganizationId: params.OrganizationID,
@@ -239,6 +245,8 @@ func (i *transactionsInteractor) Confirm(ctx context.Context, params ConfirmPara
 
 	return tx[0], nil
 }
+
+// TODO Execute()
 
 func (i *transactionsInteractor) Cancel(ctx context.Context, params CancelParams) (*models.Transaction, error) {
 	user, err := ctxmeta.User(ctx)

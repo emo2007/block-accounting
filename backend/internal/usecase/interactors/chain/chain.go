@@ -12,6 +12,7 @@ import (
 
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
+	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
 	"github.com/ethereum/go-ethereum/common"
@@ -19,10 +20,12 @@ import (
 )
 
 type ChainInteractor interface {
+	PubKey(ctx context.Context, user *models.User) ([]byte, error)
+
 	NewMultisig(ctx context.Context, params NewMultisigParams) error
 	ListMultisigs(ctx context.Context, params ListMultisigsParams) ([]models.Multisig, error)
-	PubKey(ctx context.Context, user *models.User) ([]byte, error)
-	SalaryDeploy(ctx context.Context, firtsAdmin models.OrganizationParticipant) error
+
+	PayrollDeploy(ctx context.Context, params PayrollDeployParams) error
 }
 
 type chainInteractor struct {
@@ -90,70 +93,138 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		return fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
-	body := bytes.NewBuffer(requestBody)
+	go func() {
+		pid := uuid.Must(uuid.NewV7()).String()
+		startTime := time.Now()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, body)
-	if err != nil {
-		return fmt.Errorf("error build request. %w", err)
-	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		i.log.Error(
-			"error send deploy multisig request",
-			slog.String("endpoint", endpoint),
-			slog.Any("params", params),
+		i.log.Info(
+			"new multisig worker started",
+			slog.String("pid", pid),
 		)
 
-		return fmt.Errorf("error build new multisig request. %w", err)
-	}
+		doneCh := make(chan struct{})
 
-	defer resp.Body.Close()
+		defer func() {
+			if err := recover(); err != nil {
+				i.log.Error("worker paniced!", slog.Any("panic", err))
+			}
 
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error read body. %w", err)
-	}
+			doneCh <- struct{}{}
+			close(doneCh)
+		}()
 
-	respObject := new(newMultisigChainResponse)
+		go func() {
+			warn := time.After(1 * time.Minute)
+			select {
+			case <-doneCh:
+				i.log.Info(
+					"new multisig worker done",
+					slog.String("pid", pid),
+					slog.Time("started at", startTime),
+					slog.Time("done at", time.Now()),
+					slog.Duration("work time", time.Since(startTime)),
+				)
+			case <-warn:
+				i.log.Warn(
+					"new multisig worker seems sleeping",
+					slog.String("pid", pid),
+					slog.Duration("work time", time.Since(startTime)),
+				)
+			}
+		}()
 
-	if err := json.Unmarshal(raw, &respObject); err != nil {
-		return fmt.Errorf("error parse chain-api response body. %w", err)
-	}
+		requestContext, cancel := context.WithTimeout(context.TODO(), time.Minute*15)
+		defer cancel()
 
-	if respObject.Address == "" {
-		return fmt.Errorf("error multisig address is empty")
-	}
+		body := bytes.NewBuffer(requestBody)
 
-	multisigAddress := common.Hex2Bytes(respObject.Address[2:])
+		req, err := http.NewRequestWithContext(requestContext, http.MethodPost, endpoint, body)
+		if err != nil {
+			i.log.Error(
+				"error build request",
+				logger.Err(err),
+			)
 
-	createdAt := time.Now()
+			return
+		}
 
-	msg := models.Multisig{
-		ID:                    uuid.Must(uuid.NewV7()),
-		Title:                 params.Title,
-		Address:               multisigAddress,
-		OrganizationID:        organizationID,
-		Owners:                params.Owners,
-		ConfirmationsRequired: params.Confirmations,
-		CreatedAt:             createdAt,
-		UpdatedAt:             createdAt,
-	}
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
 
-	i.log.Debug(
-		"deploy multisig response",
-		slog.Int("code", resp.StatusCode),
-		slog.String("body", string(raw)),
-		slog.Any("parsed", respObject),
-		slog.Any("multisig object", msg),
-	)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			i.log.Error(
+				"error send deploy multisig request",
+				slog.String("endpoint", endpoint),
+				slog.Any("params", params),
+			)
 
-	if err := i.txRepository.AddMultisig(ctx, msg); err != nil {
-		return fmt.Errorf("error add new multisig. %w", err)
-	}
+			return
+		}
+
+		defer resp.Body.Close()
+
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil {
+			i.log.Error(
+				"error read body",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		respObject := new(newMultisigChainResponse)
+
+		if err := json.Unmarshal(raw, &respObject); err != nil {
+			i.log.Error(
+				"error parse chain-api response body",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		if respObject.Address == "" {
+			i.log.Error(
+				"error multisig address is empty",
+			)
+
+			return
+		}
+
+		multisigAddress := common.Hex2Bytes(respObject.Address[2:])
+
+		createdAt := time.Now()
+
+		msg := models.Multisig{
+			ID:                    uuid.Must(uuid.NewV7()),
+			Title:                 params.Title,
+			Address:               multisigAddress,
+			OrganizationID:        organizationID,
+			Owners:                params.Owners,
+			ConfirmationsRequired: params.Confirmations,
+			CreatedAt:             createdAt,
+			UpdatedAt:             createdAt,
+		}
+
+		i.log.Debug(
+			"deploy multisig response",
+			slog.Int("code", resp.StatusCode),
+			slog.String("body", string(raw)),
+			slog.Any("parsed", respObject),
+			slog.Any("multisig object", msg),
+		)
+
+		if err := i.txRepository.AddMultisig(requestContext, msg); err != nil {
+			i.log.Error(
+				"error add new multisig",
+				logger.Err(err),
+			)
+
+			return
+		}
+	}()
 
 	return nil
 }
@@ -194,46 +265,203 @@ func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte
 	return common.Hex2Bytes(pubKeyStr), nil
 }
 
-func (i *chainInteractor) SalaryDeploy(ctx context.Context, firtsAdmin models.OrganizationParticipant) error {
+type PayrollDeployParams struct {
+	FirstAdmin models.OrganizationParticipant
+	MultisigID uuid.UUID
+	Title      string
+}
+
+type newPayrollContractChainResponse struct {
+	Address string `json:"address"`
+}
+
+func (i *chainInteractor) PayrollDeploy(
+	ctx context.Context,
+	params PayrollDeployParams,
+) error {
 	user, err := ctxmeta.User(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetch user from context. %w", err)
 	}
 
-	if user.Id() != firtsAdmin.Id() || firtsAdmin.GetUser() == nil {
+	if user.Id() != params.FirstAdmin.Id() || params.FirstAdmin.GetUser() == nil {
 		return fmt.Errorf("error unauthorized access")
 	}
 
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	multisigs, err := i.ListMultisigs(ctx, ListMultisigsParams{
+		OrganizationID: organizationID,
+		IDs:            uuid.UUIDs{params.MultisigID},
+	})
+	if err != nil {
+		return fmt.Errorf("error fetch multisigs by id. %w", err)
+	}
+
+	if len(multisigs) == 0 {
+		return fmt.Errorf("error empty multisigs set")
+	}
+
+	i.log.Debug(
+		"PayrollDeploy",
+		slog.String("organization id", organizationID.String()),
+		slog.String("multisig id", params.MultisigID.String()),
+		slog.String("multisig address", common.Bytes2Hex(multisigs[0].Address)),
+		slog.String("X-Seed header data", common.Bytes2Hex(user.Seed())),
+	)
+
+	maddr := common.Bytes2Hex(multisigs[0].Address)
+
+	if maddr == "" {
+		return fmt.Errorf("empty multisig address")
+	}
+
+	if maddr[0] != 0 && maddr[1] != 'x' {
+		maddr = "0x" + maddr
+	}
+
 	requestBody, err := json.Marshal(map[string]any{
-		"authorizedWallet": common.Bytes2Hex(user.Seed()),
+		"authorizedWallet": maddr,
 	})
 	if err != nil {
 		return fmt.Errorf("error marshal request body. %w", err)
 	}
 
-	body := bytes.NewBuffer(requestBody)
+	go func() {
+		pid := uuid.Must(uuid.NewV7()).String()
+		startTime := time.Now()
 
-	endpoint := i.config.ChainAPI.Host + "/salaries/deploy"
+		i.log.Info(
+			"new paroll worker started",
+			slog.String("pid", pid),
+		)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, body)
-	if err != nil {
-		return fmt.Errorf("error build request. %w", err)
-	}
+		doneCh := make(chan struct{})
 
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
+		defer func() {
+			if err := recover(); err != nil {
+				i.log.Error("worker paniced!", slog.Any("panic", err))
+			}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("error fetch deploy salary contract. %w", err)
-	}
+			doneCh <- struct{}{}
+			close(doneCh)
+		}()
 
-	defer resp.Body.Close()
+		go func() {
+			warn := time.After(2 * time.Minute)
+			select {
+			case <-doneCh:
+				i.log.Info(
+					"new paroll worker done",
+					slog.String("pid", pid),
+					slog.Time("started at", startTime),
+					slog.Time("done at", time.Now()),
+					slog.Duration("work time", time.Since(startTime)),
+				)
+			case <-warn:
+				i.log.Warn(
+					"new paroll worker seems sleeping",
+					slog.String("pid", pid),
+					slog.Duration("work time", time.Since(startTime)),
+				)
+			}
+		}()
+
+		requestContext, cancel := context.WithTimeout(context.TODO(), time.Minute*20)
+		defer cancel()
+
+		body := bytes.NewBuffer(requestBody)
+
+		endpoint := i.config.ChainAPI.Host + "/salaries/deploy"
+
+		i.log.Debug(
+			"request",
+			slog.String("body", string(requestBody)),
+			slog.String("endpoint", endpoint),
+		)
+
+		req, err := http.NewRequestWithContext(requestContext, http.MethodPost, endpoint, body)
+		if err != nil {
+			i.log.Error(
+				"error build request",
+				logger.Err(fmt.Errorf("error build request. %w", err)),
+			)
+			return
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			i.log.Error(
+				"error fetch deploy salary contract",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		defer resp.Body.Close()
+
+		raw, err := io.ReadAll(resp.Body)
+		if err != nil {
+			i.log.Error(
+				"error read body",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		respObject := new(newPayrollContractChainResponse)
+
+		if err := json.Unmarshal(raw, &respObject); err != nil {
+			i.log.Error(
+				"error parse chain-api response body",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		if respObject.Address == "" {
+			i.log.Error(
+				"error multisig address is empty",
+			)
+
+			return
+		}
+
+		addr := common.Hex2Bytes(respObject.Address[2:])
+
+		createdAt := time.Now()
+
+		if err := i.txRepository.AddPayrollContract(requestContext, transactions.AddPayrollContract{
+			ID:             uuid.Must(uuid.NewV7()),
+			Title:          params.Title,
+			Address:        addr,
+			OrganizationID: organizationID,
+			MultisigID:     params.MultisigID,
+			CreatedAt:      createdAt,
+		}); err != nil {
+			i.log.Error(
+				"error add new payroll contract",
+				logger.Err(err),
+			)
+
+			return
+		}
+	}()
 
 	return nil
 }
 
 type ListMultisigsParams struct {
+	IDs            uuid.UUIDs
 	OrganizationID uuid.UUID
 }
 
@@ -242,6 +470,7 @@ func (i *chainInteractor) ListMultisigs(
 	params ListMultisigsParams,
 ) ([]models.Multisig, error) {
 	multisigs, err := i.txRepository.ListMultisig(ctx, transactions.ListMultisigsParams{
+		IDs:            params.IDs,
 		OrganizationID: params.OrganizationID,
 	})
 	if err != nil {

@@ -99,7 +99,7 @@ create table if not exists transactions (
         amount decimal default 0,
 
         to_addr bytea not null,
-        tx_index bytea default null,
+        tx_index bigint default 0,
 
         max_fee_allowed decimal default 0, 
         deadline timestamp default null,
@@ -193,6 +193,9 @@ create index if not exists  idx_multisig_confirmations_owners_multisig_id
 create index if not exists  idx_multisig_confirmations_owners_owner_id
         on multisig_confirmations (owner_id);
 
+create index if not exists  idx_multisig_confirmations_owners_multisig_id_owner_id
+        on multisig_confirmations (multisig_id, owner_id);
+
 create table invites (
         link_hash varchar(64) primary key, 
         organization_id uuid, 
@@ -201,3 +204,18 @@ create table invites (
         expired_at timestamp default null,
         used_at timestamp default null
 );
+
+create table payrolls (
+        id uuid primary key, 
+        title varchar(250) default 'New Payroll', 
+        description text not null, 
+        address bytea not null, 
+        payload bytea default null,
+        organization_id uuid not null references organizations(id), 
+        tx_index bytea default null,
+        multisig_id uuid references multisigs(id),
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp
+);
+
+create table payrolls
