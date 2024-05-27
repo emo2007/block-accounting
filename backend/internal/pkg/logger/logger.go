@@ -38,6 +38,10 @@ func (b *LoggerBuilder) WithSource() *LoggerBuilder {
 }
 
 func (b *LoggerBuilder) Build() *slog.Logger {
+	if len(b.writers) == 0 {
+		b.writers = append(b.writers, os.Stdout)
+	}
+
 	w := io.MultiWriter(b.writers...)
 
 	if b.local {
@@ -53,17 +57,12 @@ func (b *LoggerBuilder) Build() *slog.Logger {
 		return slog.New(handler)
 	}
 
-	return slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level:     b.lvl,
-			AddSource: b.addSource,
-		}),
-	)
+	return newLogger(b.lvl, w)
 }
 
 func newLogger(lvl slog.Level, w io.Writer) *slog.Logger {
 	return slog.New(
-		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl}),
+		slog.NewJSONHandler(w, &slog.HandlerOptions{Level: lvl}),
 	)
 }
 

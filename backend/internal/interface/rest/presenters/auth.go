@@ -93,7 +93,7 @@ func (p *authPresenter) ResponseNewInvite(
 	link string,
 ) ([]byte, error) {
 	out, err := json.Marshal(map[string]string{
-		"link": "/" + organizationID.String() + "/invite/" + link,
+		"link": "/invite/" + link + "/join",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshal refresh response. %w", err)

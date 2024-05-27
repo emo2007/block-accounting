@@ -69,6 +69,7 @@ func provideAuthController(
 	authPresenter presenters.AuthPresenter,
 	jwtInteractor jwt.JWTInteractor,
 	repo auth.Repository,
+	orgInteractor organizations.OrganizationsInteractor,
 ) controllers.AuthController {
 	return controllers.NewAuthController(
 		log.WithGroup("auth-controller"),
@@ -76,6 +77,7 @@ func provideAuthController(
 		usersInteractor,
 		jwtInteractor,
 		repo,
+		orgInteractor,
 	)
 }
 

@@ -17,8 +17,10 @@ import (
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
 	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
+	"github.com/go-chi/chi/v5"
 )
 
 var (
@@ -41,6 +43,7 @@ type authController struct {
 	usersInteractor users.UsersInteractor
 	jwtInteractor   jwt.JWTInteractor
 	repo            auth.Repository
+	orgInteractor   organizations.OrganizationsInteractor
 }
 
 func NewAuthController(
@@ -49,6 +52,7 @@ func NewAuthController(
 	usersInteractor users.UsersInteractor,
 	jwtInteractor jwt.JWTInteractor,
 	repo auth.Repository,
+	orgInteractor organizations.OrganizationsInteractor,
 ) AuthController {
 	return &authController{
 		log:             log,
@@ -56,6 +60,7 @@ func NewAuthController(
 		usersInteractor: usersInteractor,
 		jwtInteractor:   jwtInteractor,
 		repo:            repo,
+		orgInteractor:   orgInteractor,
 	}
 }
 
@@ -81,6 +86,8 @@ func (c *authController) Join(w http.ResponseWriter, req *http.Request) ([]byte,
 		Tg:       request.Credentals.Telegram,
 		Mnemonic: request.Mnemonic,
 		Activate: true,
+		Owner:    true,
+		Admin:    true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error create new user. %w", err)
@@ -185,7 +192,7 @@ func (c *authController) Invite(w http.ResponseWriter, r *http.Request) ([]byte,
 		strings.ReplaceAll(
 			strings.ReplaceAll(
 				base64.StdEncoding.EncodeToString(linkHash.Sum(nil)),
-				"/", "%",
+				"/", "$",
 			),
 			"?", "@",
 		),
@@ -217,11 +224,66 @@ func (c *authController) Invite(w http.ResponseWriter, r *http.Request) ([]byte,
 	return c.presenter.ResponseNewInvite(ctx, organizationID, linkHashString)
 }
 
-func (c *authController) JoinWithInvite(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+func (c *authController) JoinWithInvite(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	c.log.Debug("join with link request")
 
-	return nil, nil // implement
+	request, err := presenters.CreateRequest[domain.JoinRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error create join request. %w", err)
+	}
+
+	c.log.Debug("join with invite request", slog.Any("request", request))
+
+	if !bip39.IsMnemonicValid(request.Mnemonic) {
+		return nil, fmt.Errorf("error invalid mnemonic. %w", ErrorAuthInvalidMnemonic)
+	}
+
+	hash := chi.URLParam(r, "hash")
+
+	if hash == "" {
+		return nil, fmt.Errorf("error fetch invite hash from request")
+	}
+
+	usedAt := time.Now()
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	organizationID, err := c.repo.MarkAsUsedLink(ctx, hash, usedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error mark invite link as used. %w", err)
+	}
+
+	user, err := c.usersInteractor.Create(ctx, users.CreateParams{
+		Name:     request.Name,
+		Email:    request.Credentals.Email,
+		Phone:    request.Credentals.Phone,
+		Tg:       request.Credentals.Telegram,
+		Mnemonic: request.Mnemonic,
+		Activate: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error create new user with invire link. %w", err)
+	}
+
+	if err = c.orgInteractor.AddUser(ctx, organizations.AddUserParams{
+		User:           user,
+		OrganizationID: organizationID,
+		SkipRights:     true,
+	}); err != nil {
+		c.log.Error(
+			"error add user into organization",
+			slog.String("organization id", organizationID.String()),
+			slog.String("user id", user.Id().String()),
+			slog.String("invire hash", hash),
+		)
+
+		return nil, fmt.Errorf("error add user into organization. %w", err)
+	}
+
+	return c.presenter.ResponseJoin(user)
 }
 
-func (c *authController) InviteGet(w http.ResponseWriter, req *http.Request) ([]byte, error) {
+func (c *authController) InviteGet(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	return presenters.ResponseOK()
 }

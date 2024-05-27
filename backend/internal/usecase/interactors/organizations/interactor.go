@@ -62,7 +62,8 @@ type OrganizationsInteractor interface {
 
 	Participant(ctx context.Context, params ParticipantParams) (models.OrganizationParticipant, error)
 	Participants(ctx context.Context, params ParticipantsParams) ([]models.OrganizationParticipant, error)
-	AddParticipant(ctx context.Context, params AddParticipantParams) (models.OrganizationParticipant, error)
+	AddEmployee(ctx context.Context, params AddParticipantParams) (models.OrganizationParticipant, error)
+	AddUser(ctx context.Context, params AddUserParams) error
 }
 
 type organizationsInteractor struct {
@@ -310,7 +311,7 @@ type AddParticipantParams struct {
 	WalletAddress  string
 }
 
-func (i *organizationsInteractor) AddParticipant(
+func (i *organizationsInteractor) AddEmployee(
 	ctx context.Context,
 	params AddParticipantParams,
 ) (models.OrganizationParticipant, error) {
@@ -329,7 +330,7 @@ func (i *organizationsInteractor) AddParticipant(
 		return nil, fmt.Errorf("error fetch actor. %w", err)
 	}
 
-	if !actor.IsOwner() {
+	if !actor.IsAdmin() || !actor.IsOwner() {
 		return nil, fmt.Errorf("error actor not an owner")
 	}
 
@@ -354,4 +355,51 @@ func (i *organizationsInteractor) AddParticipant(
 	}
 
 	return &empl, nil
+}
+
+type AddUserParams struct {
+	User           *models.User
+	IsAdmin        bool
+	IsOwner        bool
+	OrganizationID uuid.UUID
+	SkipRights     bool
+}
+
+func (i *organizationsInteractor) AddUser(ctx context.Context, params AddUserParams) error {
+	if !params.SkipRights {
+		user, err := ctxmeta.User(ctx)
+		if err != nil {
+			return fmt.Errorf("error fetch user from context. %w", err)
+		}
+
+		actor, err := i.Participant(ctx, ParticipantParams{
+			ID:             user.Id(),
+			OrganizationID: params.OrganizationID,
+			ActiveOnly:     true,
+			UsersOnly:      true,
+		})
+		if err != nil {
+			return fmt.Errorf("error fetch actor. %w", err)
+		}
+
+		if !actor.IsAdmin() || !actor.IsOwner() {
+			return fmt.Errorf("error actor not an owner")
+		}
+	}
+
+	i.log.Debug(
+		"add user",
+		slog.Any("params", params),
+	)
+
+	if err := i.orgRepository.AddParticipant(ctx, organizations.AddParticipantParams{
+		OrganizationId: params.OrganizationID,
+		UserId:         params.User.Id(),
+		IsAdmin:        params.IsAdmin,
+		IsOwner:        params.IsOwner,
+	}); err != nil {
+		return fmt.Errorf("error add user into organization. %w", err)
+	}
+
+	return nil
 }

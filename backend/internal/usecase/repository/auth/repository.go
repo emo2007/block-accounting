@@ -63,7 +63,7 @@ type Repository interface {
 	RefreshToken(ctx context.Context, params RefreshTokenParams) error
 
 	AddInvite(ctx context.Context, params AddInviteParams) error
-	MarkAsUsedLink(ctx context.Context, linkHash string, usedAt time.Time) error
+	MarkAsUsedLink(ctx context.Context, linkHash string, usedAt time.Time) (uuid.UUID, error)
 }
 
 type repositorySQL struct {
@@ -223,32 +223,38 @@ func (r *repositorySQL) MarkAsUsedLink(
 	ctx context.Context,
 	linkHash string,
 	usedAt time.Time,
-) error {
-	return sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
-		query := sq.Select("expired_at").From("invites").Where(sq.Eq{
+) (uuid.UUID, error) {
+	var orgID uuid.UUID
+
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Select("organization_id", "expired_at").From("invites").Where(sq.Eq{
 			"link_hash": linkHash,
 		}).Limit(1).PlaceholderFormat(sq.Dollar)
 
 		var expAt time.Time
 
-		if err := query.RunWith(r.Conn(ctx)).QueryRowContext(ctx).Scan(&expAt); err != nil {
+		if err := query.RunWith(r.Conn(ctx)).QueryRowContext(ctx).Scan(&orgID, &expAt); err != nil {
 			return fmt.Errorf("error fetch expiration date from database. %w", err)
 		}
 
-		if expAt.After(time.Now()) {
+		if expAt.Before(time.Now()) {
 			return ErrorInviteLinkExpired
 		}
 
 		updateQuery := sq.Update("invites").SetMap(sq.Eq{
 			"used_at": usedAt,
-		})
+		}).PlaceholderFormat(sq.Dollar)
 
 		if _, err := updateQuery.RunWith(r.Conn(ctx)).ExecContext(ctx); err != nil {
 			return fmt.Errorf("error add invite link. %w", err)
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return uuid.Nil, err
+	}
+
+	return orgID, nil
 }
 
 func NewRepository(db *sql.DB) Repository {

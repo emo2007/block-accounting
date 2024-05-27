@@ -384,7 +384,7 @@ curl --request POST \
 Response: 
 ``` json 
 {
-  "Ok": true
+  "ok": true
 }
 ```
 
@@ -475,15 +475,43 @@ curl --request GET \
   --url http://localhost:8081/invite/YR9vO4ZXYTgtIyi4aScsi6UZr0vNS74x9b8Y8SKF84g=
 ```
 Response:
-```bash
+```json
 {
-  "Ok": true
+  "ok": true
 }
 ```
 
 ## POST **/invite/{hash}/join**
 Join with invite link
-// todo
+### Request body
+name (string)
+credentials (email, phone, telegram) (optional, string)
+mnemonic (string)
+### Example
+Request: 
+```bash
+curl --request POST \
+  --url 'http://localhost:8081/invite/RYPJ9HZfIM5vlRdaNhiDMsaVDPvQxylGVk$ZOaVFqyM=/join' \
+  --header 'content-type: application/json' \
+  --data '{
+  "name": "ower",
+  "credentals": {
+    "email": "ower@gmail.com",
+    "phone": "+79999999999",
+    "telegram": "@ower"
+  },
+  "mnemonic": "short orient camp maple lend pole balance token pledge fat analyst badge art happy property"
+}'
+```
+Response: 
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY5MTgzMzk5OTEsInVpZCI6IjAxOGZiYjI4LTZkODgtNzg2NC04OWMxLTYzODYxNzU3NmFhNiJ9.zobQ9AAEUEHPz2BoetdtZDm5AfgUPCyCVS0JYNEYj5c",
+  "token_expired_at": 1716918339991,
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTczNTAzMzk5OTEsInJ0X2hhc2giOiJzQStTZW42WDFUOVNVOGl1eVFhTy9sejJLSHNBMkpHcnlURDRHR3JQcTg1QUtLTE9XSWc0VTVEcFpXcjkvR1pqaDBGWGkvdWJYdHpIRzRCcUswV09jZz09IiwidWlkIjoiMDE4ZmJiMjgtNmQ4OC03ODY0LTg5YzEtNjM4NjE3NTc2YWE2In0.D0ZAHcJGH0Ga_nXLZojLBW8cMgTf8kNhcQbFVfKrGWs",
+  "refresh_token_expired_at": 1717350339991
+}
+```
 
 ## POST **/organizations/{organization_id}/participants/invite**
 Create new invite link
@@ -495,7 +523,6 @@ Request:
 curl --request POST \
   --url http://localhost:8081/organizations/018fb246-1616-7f1b-9fe2-1a3202224695/participants/invite \
   --header 'Authorization: Bearer token' \
-  --header 'X-Seed: a b c 1 2 3' \
   --header 'accept: application/json' \
   --header 'content-type: application/json' \
   --data '{}'

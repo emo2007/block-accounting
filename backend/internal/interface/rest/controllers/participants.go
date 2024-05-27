@@ -105,10 +105,10 @@ func (c *participantsController) New(w http.ResponseWriter, r *http.Request) ([]
 		return nil, fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 3000*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	participant, err := c.orgInteractor.AddParticipant(ctx, organizations.AddParticipantParams{
+	participant, err := c.orgInteractor.AddEmployee(ctx, organizations.AddParticipantParams{
 		OrganizationID: organizationID,
 		Name:           req.Name,
 		Position:       req.Position,

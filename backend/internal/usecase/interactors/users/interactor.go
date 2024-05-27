@@ -25,6 +25,8 @@ type CreateParams struct {
 	Tg       string
 	Mnemonic string
 	Activate bool
+	Owner    bool
+	Admin    bool
 }
 
 type GetParams struct {

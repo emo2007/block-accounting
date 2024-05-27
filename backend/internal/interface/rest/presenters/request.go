@@ -25,7 +25,7 @@ func CreateRequest[T any](r *http.Request) (*T, error) {
 }
 
 type ok struct {
-	Ok bool
+	Ok bool `json:"ok"`
 }
 
 func ResponseOK() ([]byte, error) {

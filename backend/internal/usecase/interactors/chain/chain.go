@@ -124,11 +124,15 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		return fmt.Errorf("error parse chain-api response body. %w", err)
 	}
 
-	multisigAddress := common.Hex2Bytes(respObject.Address)
+	if respObject.Address == "" {
+		return fmt.Errorf("error multisig address is empty")
+	}
+
+	multisigAddress := common.Hex2Bytes(respObject.Address[2:])
 
 	createdAt := time.Now()
 
-	if err := i.txRepository.AddMultisig(ctx, models.Multisig{
+	msg := models.Multisig{
 		ID:                    uuid.Must(uuid.NewV7()),
 		Title:                 params.Title,
 		Address:               multisigAddress,
@@ -137,14 +141,19 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		ConfirmationsRequired: params.Confirmations,
 		CreatedAt:             createdAt,
 		UpdatedAt:             createdAt,
-	}); err != nil {
-		return fmt.Errorf("error add new multisig. %w", err)
 	}
 
 	i.log.Debug(
 		"deploy multisig response",
 		slog.Int("code", resp.StatusCode),
+		slog.String("body", string(raw)),
+		slog.Any("parsed", respObject),
+		slog.Any("multisig object", msg),
 	)
+
+	if err := i.txRepository.AddMultisig(ctx, msg); err != nil {
+		return fmt.Errorf("error add new multisig. %w", err)
+	}
 
 	return nil
 }
