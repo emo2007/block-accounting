@@ -26,6 +26,8 @@ type TransactionsPresenter interface {
 	ResponseListTransactions(ctx context.Context, txs []*models.Transaction, cursor string) ([]byte, error)
 
 	ResponseMultisigs(ctx context.Context, msgs []models.Multisig) ([]byte, error)
+
+	ResponsePayrolls(ctx context.Context, payrolls []models.Payroll) ([]byte, error)
 }
 
 type transactionsPresenter struct {
@@ -223,7 +225,50 @@ func (c *transactionsPresenter) ResponseMultisigs(ctx context.Context, msgs []mo
 
 	out, err := json.Marshal(r)
 	if err != nil {
-		return nil, fmt.Errorf("error marshal tx to hal resource. %w", err)
+		return nil, fmt.Errorf("error marshal multisigs to hal resource. %w", err)
+	}
+
+	return out, nil
+}
+
+type Payroll struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	CreatedAt int64  `json:"created_at"`
+	UpdatedAt int64  `json:"updated_at"`
+}
+
+func (c *transactionsPresenter) ResponsePayrolls(
+	ctx context.Context,
+	payrolls []models.Payroll,
+) ([]byte, error) {
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	outArray := make([]Payroll, len(payrolls))
+
+	for i, pr := range payrolls {
+		outArray[i] = Payroll{
+			ID:        pr.ID.String(),
+			Title:     pr.Title,
+			CreatedAt: pr.CreatedAt.UnixMilli(),
+			UpdatedAt: pr.UpdatedAt.UnixMilli(),
+		}
+	}
+
+	txsResource := map[string]any{"payrolls": outArray}
+
+	r := hal.NewResource(
+		txsResource,
+		"/organizations/"+organizationID.String()+"/payrolls",
+		hal.WithType("paurolls"),
+	)
+
+	out, err := json.Marshal(r)
+	if err != nil {
+		return nil, fmt.Errorf("error marshal payrolls to hal resource. %w", err)
 	}
 
 	return out, nil

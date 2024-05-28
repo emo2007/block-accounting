@@ -217,5 +217,3 @@ create table payrolls (
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
 );
-
-create table payrolls

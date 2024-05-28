@@ -340,10 +340,43 @@ func (c *transactionsController) NewPayroll(w http.ResponseWriter, r *http.Reque
 	return presenters.ResponseOK()
 }
 
-func (c *transactionsController) ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	return nil, nil
+func (c *transactionsController) ListPayrolls(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	req, err := presenters.CreateRequest[domain.ListPayrollsRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error build request. %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+	defer cancel()
+
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("erropr fetch organization id from context. %w", err)
+	}
+
+	ids := make(uuid.UUIDs, len(req.IDs))
+	for i, idStr := range req.IDs {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("error parse payroll id. %w", err)
+		}
+
+		ids[i] = id
+	}
+
+	payrolls, err := c.chainInteractor.ListPayrolls(ctx, chain.ListPayrollsParams{
+		OrganizationID: organizationID,
+		IDs:            ids,
+		Limit:          int(req.Limit),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch payrolls. %w", err)
+	}
+
+	return c.txPresenter.ResponsePayrolls(ctx, payrolls)
 }
 
-func (c *transactionsController) ListPayrolls(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func (c *transactionsController) ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+
 	return nil, nil
 }

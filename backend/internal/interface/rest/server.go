@@ -111,6 +111,10 @@ func (s *Server) buildRouter() {
 			r.Route("/payrolls", func(r chi.Router) {
 				r.Get("/", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
 				r.Post("/", s.handle(s.controllers.Transactions.NewPayroll, "new_payroll"))
+				r.Put("/", s.handle(s.controllers.Transactions.ConfirmPayroll, "confirm_payroll"))
+
+				r.Post("/salaries", s.handle(nil, "set_salary"))
+				r.Get("/salaries", s.handle(nil, "get_salaries"))
 			})
 
 			r.Route("/multisig", func(r chi.Router) {

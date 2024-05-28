@@ -30,4 +30,6 @@ type Payroll struct {
 	Address        []byte
 	OrganizationID uuid.UUID
 	MultisigID     uuid.UUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }

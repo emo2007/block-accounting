@@ -57,6 +57,7 @@ type Repository interface {
 	ConfirmMultisig(ctx context.Context, params ConfirmMultisigParams) error
 
 	AddPayrollContract(ctx context.Context, params AddPayrollContract) error
+	ListPayrolls(ctx context.Context, params ListPayrollsParams) ([]models.Payroll, error)
 }
 
 type repositorySQL struct {
@@ -687,4 +688,87 @@ func (r *repositorySQL) fetchOwners(ctx context.Context, params fetchOwnersParam
 	}
 
 	return owners, nil
+}
+
+type ListPayrollsParams struct {
+	IDs            []uuid.UUID
+	Limit          int64
+	OrganizationID uuid.UUID
+}
+
+func (r *repositorySQL) ListPayrolls(ctx context.Context, params ListPayrollsParams) ([]models.Payroll, error) {
+	payrolls := make([]models.Payroll, 0, len(params.IDs))
+
+	if err := sqltools.Transaction(ctx, r.db, func(ctx context.Context) error {
+		query := sq.Select(
+			"id",
+			"title",
+			"address",
+			"organization_id",
+			"multisig_id",
+			"created_at",
+			"updated_at",
+		).Where(sq.Eq{
+			"organization_id": params.OrganizationID,
+		}).PlaceholderFormat(sq.Dollar)
+
+		if params.Limit <= 0 {
+			params.Limit = 100
+		}
+
+		if len(params.IDs) > 0 {
+			query = query.Where(sq.Eq{
+				"id": params.IDs,
+			})
+		}
+
+		query = query.Limit(uint64(params.Limit))
+
+		rows, err := query.RunWith(r.Conn(ctx)).QueryContext(ctx)
+		if err != nil {
+			return fmt.Errorf("error fetch payrolls from database. %w", err)
+		}
+
+		defer rows.Close() // todo check error
+
+		for rows.Next() {
+			var (
+				id             uuid.UUID
+				title          string
+				address        []byte
+				organizationId uuid.UUID
+				multisigId     uuid.UUID
+				createdAt      time.Time
+				updatedAt      time.Time
+			)
+
+			if err = rows.Scan(
+				&id,
+				&title,
+				&address,
+				&organizationId,
+				&multisigId,
+				&createdAt,
+				&updatedAt,
+			); err != nil {
+				return fmt.Errorf("error scan row. %w", err)
+			}
+
+			payrolls = append(payrolls, models.Payroll{
+				ID:             id,
+				Title:          title,
+				Address:        address,
+				OrganizationID: organizationId,
+				MultisigID:     multisigId,
+				CreatedAt:      createdAt,
+				UpdatedAt:      updatedAt,
+			})
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return payrolls, nil
 }

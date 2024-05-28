@@ -26,6 +26,7 @@ type ChainInteractor interface {
 	ListMultisigs(ctx context.Context, params ListMultisigsParams) ([]models.Multisig, error)
 
 	PayrollDeploy(ctx context.Context, params PayrollDeployParams) error
+	ListPayrolls(ctx context.Context, params ListPayrollsParams) ([]models.Payroll, error)
 }
 
 type chainInteractor struct {
@@ -428,6 +429,11 @@ func (i *chainInteractor) PayrollDeploy(
 			return
 		}
 
+		i.log.Debug(
+			"payroll deploy",
+			slog.Any("response", respObject),
+		)
+
 		if respObject.Address == "" {
 			i.log.Error(
 				"error multisig address is empty",
@@ -478,4 +484,48 @@ func (i *chainInteractor) ListMultisigs(
 	}
 
 	return multisigs, nil
+}
+
+type ListPayrollsParams struct {
+	IDs            []uuid.UUID
+	Limit          int
+	OrganizationID uuid.UUID
+}
+
+func (i *chainInteractor) ListPayrolls(
+	ctx context.Context,
+	params ListPayrollsParams,
+) ([]models.Payroll, error) {
+	payrolls, err := i.txRepository.ListPayrolls(ctx, transactions.ListPayrollsParams{
+		IDs:            params.IDs,
+		Limit:          int64(params.Limit),
+		OrganizationID: params.OrganizationID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetch payrolls from repository. %w", err)
+	}
+
+	return payrolls, nil
+}
+
+type NewSalaryParams struct {
+	OrganizationID uuid.UUID
+	EmployeeID     uuid.UUID
+}
+
+func (i *chainInteractor) NewSalary(
+	ctx context.Context,
+	params NewSalaryParams,
+) error {
+	user, err := ctxmeta.User(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetch user from context. %w", err)
+	}
+
+	organizationID, err := ctxmeta.OrganizationId(ctx)
+	if err != nil {
+		return fmt.Errorf("error fetch organization id from context. %w", err)
+	}
+
+	return nil
 }

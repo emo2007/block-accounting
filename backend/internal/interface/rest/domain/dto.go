@@ -120,3 +120,8 @@ type NewPayrollRequest struct {
 	MultisigID string `json:"multisig_id"`
 	Title      string `json:"title"`
 }
+
+type ListPayrollsRequest struct {
+	IDs   []string `json:"ids"`
+	Limit uint8    `json:"limit"`
+}
