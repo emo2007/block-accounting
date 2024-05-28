@@ -264,6 +264,10 @@ func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte
 
 	pubKeyStr := string(respBody)[2:]
 
+	if pubKeyStr == "" {
+		return nil, fmt.Errorf("error empty public key")
+	}
+
 	return common.Hex2Bytes(pubKeyStr), nil
 }
 
