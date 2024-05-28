@@ -39,7 +39,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:  "chain-api-url",
-				Value: "http://localhost:3000/api",
+				Value: "http://localhost:3000",
 			},
 
 			// rest
