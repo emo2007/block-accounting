@@ -527,5 +527,11 @@ func (i *chainInteractor) NewSalary(
 		return fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
+	i.log.Debug(
+		"not implemented",
+		slog.String("org id", organizationID.String()),
+		slog.Any("user", user),
+	)
+
 	return nil
 }
