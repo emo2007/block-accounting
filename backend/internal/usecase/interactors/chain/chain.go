@@ -247,6 +247,7 @@ func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte
 		return nil, fmt.Errorf("error build request. %w", err)
 	}
 
+	req.Header.Add("x-seed", common.Bytes2Hex(user.Seed()))
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -394,7 +395,7 @@ func (i *chainInteractor) PayrollDeploy(
 		}
 
 		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
+		req.Header.Add("x-seed", common.Bytes2Hex(user.Seed()))
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
