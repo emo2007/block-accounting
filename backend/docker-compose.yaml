@@ -24,7 +24,18 @@ services:
     depends_on:
       blockd-db:
         condition: service_healthy
+      chain-api:
+        condition: service_started
     profiles: [blockd]
+
+  chain-api:
+    container_name: chain-api
+    build:
+      context: ../chain-api
+      dockerfile: ../chain-api/Dockerfile
+    networks:
+      - blockd-net
+      - syslog
 
   blockd-db:
     container_name: blockd-db
@@ -109,3 +120,4 @@ services:
     logging:
       driver: "json-file"
     profiles: [metrics]
+
