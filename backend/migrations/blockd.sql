@@ -90,71 +90,8 @@ create index if not exists index_organizations_users_organization_id_user_id
 create index if not exists index_organizations_users_organization_id_employee_id
         on organizations_users (organization_id, employee_id); 
 
-
-create table if not exists transactions (
-        id uuid primary key,
-        description text default 'New Transaction', 
-        organization_id uuid not null, 
-        created_by uuid  not null, 
-        amount decimal default 0,
-
-        to_addr bytea not null,
-        tx_index bigint default 0,
-
-        max_fee_allowed decimal default 0, 
-        deadline timestamp default null,
-        status int default 0,
-
-        created_at timestamp default current_timestamp,
-        updated_at timestamp default current_timestamp,
-
-        confirmed_at timestamp default null,
-        cancelled_at timestamp default null,
-
-        commited_at timestamp default null
-);
-
-create index if not exists index_transactions_id_organization_id
-        on transactions (organization_id); 
-
-create index if not exists index_transactions_id_organization_id_created_by
-        on transactions (organization_id, created_by); 
-
-create index if not exists index_transactions_organization_id_deadline
-        on transactions (organization_id, deadline); 
-
-create table transactions_confirmations (
-        tx_id uuid not null, 
-        user_id uuid not null,
-        organization_id uuid not null, 
-        created_at timestamp default current_timestamp,
-        updated_at timestamp default current_timestamp,
-        confirmed bool
-);
-
 create index if not exists index_transactions_confirmations_tx_id_user_id_organization_id
         on transactions_confirmations (tx_id, user_id, organization_id);
-
-create table contracts (
-        id uuid primary key, 
-        title varchar(250) default 'New Contract', 
-        description text not null, 
-        address bytea not null, 
-        payload bytea not null,
-        created_by uuid not null references users(id), 
-        organization_id uuid not null references organizations(id), 
-        status smallint default 0,
-        tx_index bytea default null,
-        multisig bytea default null,
-        created_at timestamp default current_timestamp,
-        updated_at timestamp default current_timestamp
-);
-
-create index if not exists  idx_contracts_organization_id_multisig
-        on contracts (organization_id, multisig);
-
-create index if not exists  idx_contracts_organization_id_created_by
-        on contracts (organization_id, created_by);
 
 create table multisigs (
         id uuid primary key, 
@@ -216,4 +153,48 @@ create table payrolls (
         multisig_id uuid references multisigs(id),
         created_at timestamp default current_timestamp,
         updated_at timestamp default current_timestamp
+);
+
+create table if not exists transactions (
+        id uuid primary key,
+        description text default 'New Transaction', 
+        organization_id uuid not null, 
+        created_by uuid  not null, 
+        amount decimal default 0,
+
+        to_addr bytea not null,
+        tx_index bigint default 0,
+
+        max_fee_allowed decimal default 0, 
+        deadline timestamp default null,
+        confirmations_required bigint default 1,
+        multisig_id uuid default null,
+
+        status int default 0,
+
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp,
+
+        confirmed_at timestamp default null,
+        cancelled_at timestamp default null,
+
+        commited_at timestamp default null
+);
+
+create index if not exists index_transactions_id_organization_id
+        on transactions (organization_id); 
+
+create index if not exists index_transactions_id_organization_id_created_by
+        on transactions (organization_id, created_by); 
+
+create index if not exists index_transactions_organization_id_deadline
+        on transactions (organization_id, deadline); 
+
+create table transactions_confirmations (
+        tx_id uuid not null, 
+        user_id uuid not null,
+        organization_id uuid not null, 
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp,
+        confirmed bool
 );

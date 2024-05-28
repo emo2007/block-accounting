@@ -36,7 +36,7 @@ func NewAuthPresenter(
 }
 
 func (p *authPresenter) ResponseJoin(user *models.User) ([]byte, error) {
-	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour, "")
+	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour*30, "")
 	if err != nil {
 		return nil, fmt.Errorf("error create access token. %w", err)
 	}
@@ -55,7 +55,7 @@ func (p *authPresenter) ResponseJoin(user *models.User) ([]byte, error) {
 }
 
 func (p *authPresenter) ResponseLogin(user *models.User) ([]byte, error) {
-	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour, "")
+	tokens, err := p.jwtInteractor.NewToken(user, 24*time.Hour*30, "")
 	if err != nil {
 		return nil, fmt.Errorf("error create access token. %w", err)
 	}

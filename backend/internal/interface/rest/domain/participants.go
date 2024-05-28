@@ -12,6 +12,8 @@ type Participant struct {
 	UpdatedAt int64 `json:"updated_at"`
 	DeletedAt int64 `json:"deleted_at,omitempty"`
 
+	PublicKey string `json:"public_key"`
+
 	IsUser   bool `json:"is_user"`
 	IsAdmin  bool `json:"is_admin"`
 	IsOwner  bool `json:"is_owner"`

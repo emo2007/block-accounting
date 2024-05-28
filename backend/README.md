@@ -454,9 +454,59 @@ Response:
 
 ## POST **/organizations/{organization_id}/payrolls** 
 New payroll
+### Request body:  
+* title (string)
+* multisig_id (string)
+
+### Example
+Request: 
+``` bash
+curl --request POST \
+  --url http://localhost:8081/organizations/018fb666-d7b7-740a-92e5-c2e04c7abafc/payrolls \
+  --header 'Authorization: Bearer TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+  "title":"sdjkhfjsdk", 
+  "multisig_id":"018fbb03-d4c5-73be-ab07-6c5f8d3afebc"
+}'
+```
+
+Response: 
+``` json 
+{
+  "ok": true
+}
+```
 
 ## GET **/organizations/{organization_id}/payrolls** 
 Fetch payrolls
+### Request body:  
+* ids ([]string)
+* limit (uint32)
+
+### Example
+Request: 
+``` bash
+curl --request POST \
+  --url http://localhost:8081/organizations/018fb666-d7b7-740a-92e5-c2e04c7abafc/payrolls \
+  --header 'Authorization: Bearer TOKEN' \
+  --header 'content-type: application/json' \
+  --data '{
+  "title":"sdjkhfjsdk", 
+  "multisig_id":"018fbb03-d4c5-73be-ab07-6c5f8d3afebc"
+}'
+```
+
+Response: 
+``` json 
+{
+  "ok": true
+}
+```
+
+## PUT **/organizations/{organization_id}/payrolls** 
+Confirm payroll
+// todo
 
 ## GET **/organizations/{organization_id}/license** 
 Fetch licenses
@@ -506,9 +556,9 @@ curl --request POST \
 Response: 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY5MTgzMzk5OTEsInVpZCI6IjAxOGZiYjI4LTZkODgtNzg2NC04OWMxLTYzODYxNzU3NmFhNiJ9.zobQ9AAEUEHPz2BoetdtZDm5AfgUPCyCVS0JYNEYj5c",
+  "token": "TOKEN",
   "token_expired_at": 1716918339991,
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTczNTAzMzk5OTEsInJ0X2hhc2giOiJzQStTZW42WDFUOVNVOGl1eVFhTy9sejJLSHNBMkpHcnlURDRHR3JQcTg1QUtLTE9XSWc0VTVEcFpXcjkvR1pqaDBGWGkvdWJYdHpIRzRCcUswV09jZz09IiwidWlkIjoiMDE4ZmJiMjgtNmQ4OC03ODY0LTg5YzEtNjM4NjE3NTc2YWE2In0.D0ZAHcJGH0Ga_nXLZojLBW8cMgTf8kNhcQbFVfKrGWs",
+  "refresh_token": "TOKEN",
   "refresh_token_expired_at": 1717350339991
 }
 ```
@@ -535,9 +585,10 @@ Response:
 ```
 
 ## GET **/{organization_id}/transactions**  
-Feth txs
+Fetch txs
 ### Request body:  
-
+ready_to_confirm (optional)
+pending (optional)
 
 ### Example
 Request: 
@@ -546,61 +597,6 @@ curl --location --request GET 'http://localhost:8081/organizations/018f9078-af60
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer TOKEN' \
 --data '{
-    "description":"New test tx!",
-    "amount": 100,  
-    "to":"0x323b5d4c32345ced77393b3530b1eed0f346429d",
-    "limit":1
-}'
-```
-
-Response: 
-``` json 
-{
-    "_type": "transaction",
-    "_links": {
-        "self": {
-            "href": "/organizations/{organization_id}/transactions"
-        }
-    },
-    "id": "018f8ce2-dada-75fb-9745-8560e5736bec",
-    "description": "New test tx!",
-    "organization_id": "018f8ccd-2431-7d21-a0c2-a2735c852764",
-    "created_by": "018f8ccc-e4fc-7a46-9628-15f9c3301f5b",
-    "amount": 100,
-    "to": "MjtdTDI0XO13OTs1MLHu0PNGQp0=",
-    "max_fee_allowed": 5,
-    "deadline": 123456767,
-    "created_at": 1716055628507,
-    "updated_at": 1716055628507
-}
-```
-
-## POST **/{organization_id}/transactions**  
-Add new tx
-### Request body:  
-* ids ([]uuid)  
-* created_by (uuid)  
-* to (string)  
-* cancelled (bool)  
-* confirmed (bool)  
-* commited (bool)  
-* expired (bool)  
-* pending (bool)   
-* cursor (string)  
-* limit (int)  
-* offset_date (unix milli time)  
-
-### Example
-Request: 
-``` bash
-curl --location --request GET 'http://localhost:8081/organizations/018f9112-1805-7b5e-ae30-7fc2151810f3/transactions' \
---header 'Content-Type: application/json' \
---header 'Authorization: Bearer TOKEN' \
---data '{
-    "to": "0xD53990543641Ee27E2FC670ad2cf3cA65ccDc8BD",
-    "pending":true,
-    "limit":1,
-    "created_by":"018f9111-f0fb-708a-aec1-55295f5496d6"
 }'
 ```
 
@@ -633,5 +629,40 @@ Response:
             "updated_at": 1716136883437
         }
     ]
+}
+```
+
+## POST **/{organization_id}/transactions**  
+Add new tx
+### Request body:  
+* description (string, optional)
+* amount (float, required)
+* to (string, required)
+
+### Example
+Request: 
+``` bash
+// todo
+```
+
+Response: 
+``` json 
+{
+    "_type": "transaction",
+    "_links": {
+        "self": {
+            "href": "/organizations/{organization_id}/transactions"
+        }
+    },
+    "id": "018f8ce2-dada-75fb-9745-8560e5736bec",
+    "description": "New test tx!",
+    "organization_id": "018f8ccd-2431-7d21-a0c2-a2735c852764",
+    "created_by": "018f8ccc-e4fc-7a46-9628-15f9c3301f5b",
+    "amount": 100,
+    "to": "MjtdTDI0XO13OTs1MLHu0PNGQp0=",
+    "max_fee_allowed": 5,
+    "deadline": 123456767,
+    "created_at": 1716055628507,
+    "updated_at": 1716055628507
 }
 ```

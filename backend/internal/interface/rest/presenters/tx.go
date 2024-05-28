@@ -61,12 +61,7 @@ func (p *transactionsPresenter) RequestTransaction(
 		Description:    r.Description,
 		Amount:         r.Amount,
 		ToAddr:         toAddress.Bytes(),
-		MaxFeeAllowed:  r.MaxFeeAllowed,
 		CreatedAt:      time.Now(),
-	}
-
-	if r.Deadline > 0 {
-		tx.Deadline = time.UnixMilli(r.Deadline)
 	}
 
 	return tx, nil

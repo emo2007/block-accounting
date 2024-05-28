@@ -19,21 +19,10 @@ import (
 type ListParams struct {
 	IDs            uuid.UUIDs
 	OrganizationID uuid.UUID
-	CreatedBy      uuid.UUID
-
-	To []byte
-
-	Limit  int64
-	Cursor string
-
-	WithPending bool
-
-	WithCancelled bool
-	WithConfirmed bool
-	WithCommited  bool
-	WithExpired   bool
-
-	WithConfirmations bool
+	Pending        bool
+	ReadyToConfirm bool
+	Limit          int64
+	Cursor         string
 }
 
 type CreateParams struct {
@@ -133,17 +122,11 @@ func (i *transactionsInteractor) List(ctx context.Context, params ListParams) (*
 	}
 
 	txs, err := i.txRepo.GetTransactions(ctx, transactions.GetTransactionsParams{
-		Ids:            params.IDs,
 		OrganizationId: params.OrganizationID,
-		CreatedById:    params.CreatedBy,
-		To:             params.To,
 		Limit:          params.Limit,
 		CursorId:       cursor.Id,
-		WithCancelled:  params.WithCancelled,
-		WithConfirmed:  params.WithConfirmed,
-		WithCommited:   params.WithCommited,
-		WithExpired:    params.WithExpired,
-		WithPending:    params.WithPending,
+		Pending:        params.Pending,
+		ReadyToConfirm: params.ReadyToConfirm,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error fetch transaction from repository. %w", err)

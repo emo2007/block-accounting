@@ -17,18 +17,11 @@ import (
 type GetTransactionsParams struct {
 	Ids            uuid.UUIDs
 	OrganizationId uuid.UUID
-	CreatedById    uuid.UUID
-	To             []byte
 	Limit          int64
 	CursorId       uuid.UUID
 
-	WithCancelled bool
-	WithConfirmed bool
-	WithCommited  bool
-	WithExpired   bool
-	WithPending   bool
-
-	WithConfirmations bool
+	Pending        bool
+	ReadyToConfirm bool
 }
 
 type ConfirmTransactionParams struct {
@@ -309,8 +302,10 @@ func buildGetTransactionsQuery(params GetTransactionsParams) sq.SelectBuilder {
 		t.to_addr,
 		t.max_fee_allowed,
 		t.deadline,
+		t.confirmations_required,
 		t.created_at,
 		t.updated_at,
+
 		t.confirmed_at,
 		t.cancelled_at,
 		t.commited_at,
@@ -335,73 +330,16 @@ func buildGetTransactionsQuery(params GetTransactionsParams) sq.SelectBuilder {
 		})
 	}
 
-	if params.CreatedById != uuid.Nil {
-		query = query.Where(sq.Eq{
-			"t.created_by": params.CreatedById,
-		})
-	}
-
 	if params.OrganizationId != uuid.Nil {
 		query = query.Where(sq.Eq{
 			"t.organization_id": params.OrganizationId,
 		})
 	}
 
-	if params.To != nil {
-		query = query.Where(sq.Eq{
-			"t.to_addr": params.To,
-		})
-	}
-
-	if params.WithExpired {
-		query = query.Where(sq.LtOrEq{
-			"t.deadline": time.Now(),
-		})
-	} else {
-		query = query.Where(sq.Or{
-			sq.GtOrEq{
-				"t.deadline": time.Now(),
-			},
-			sq.Eq{
-				"t.deadline": nil,
-			},
-		})
-	}
-
-	if params.WithCancelled {
-		query = query.Where(sq.NotEq{
-			"t.cancelled_at": nil,
-		})
-	}
-
-	if params.WithConfirmed {
-		query = query.Where(sq.NotEq{
-			"t.confirmed_at": nil,
-		})
-	}
-
-	if params.WithCommited {
-		query = query.Where(sq.NotEq{
-			"t.commited_at": nil,
-		})
-	}
-
-	if params.Limit <= 0 || params.Limit > 50 {
-		params.Limit = 50
-	}
-
-	if params.WithPending {
-		query = query.Where(sq.Eq{
-			"t.cancelled_at": nil,
-			"t.commited_at":  nil,
-			"t.confirmed_at": nil,
-		})
-	}
-
-	if params.CursorId != uuid.Nil {
-		query = query.Where(sq.Gt{
-			"t.id": params.CursorId,
-		})
+	if params.Pending {
+		query = query.InnerJoin("multisig_confirmations as mc on mc.multisig_id = t.multisig_id").Where(
+			sq.Lt{},
+		)
 	}
 
 	query = query.Limit(uint64(params.Limit))

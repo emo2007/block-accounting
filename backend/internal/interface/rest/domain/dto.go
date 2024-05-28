@@ -65,23 +65,17 @@ type ListOrganizationsRequest struct {
 // Transactions
 
 type NewTransactionRequest struct {
-	Description   string  `json:"description,omitempty"`
-	Amount        float64 `json:"amount,omitempty"`
-	ToAddr        string  `json:"to,omitempty"`
-	MaxFeeAllowed float64 `json:"max_fee_allowed,omitempty"`
-	Deadline      int64   `json:"deadline,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Amount      float64 `json:"amount,omitempty"`
+	ToAddr      string  `json:"to,omitempty"`
+
+	MultisigID            string `json:"multisig_id"`
+	ConfirmationsRequired int    `json:"confirmations_required"`
 }
 
 type ListTransactionsRequest struct {
-	IDs       []string `json:"ids,omitempty"`
-	CreatedBy string   `json:"created_by,omitempty"`
-	To        string   `json:"to,omitempty"`
-
-	Cancelled bool `json:"cancelled,omitempty"`
-	Confirmed bool `json:"confirmed,omitempty"`
-	Commited  bool `json:"commited,omitempty"`
-	Expired   bool `json:"expired,omitempty"`
-	Pending   bool `json:"pending,omitempty"`
+	ReadyToConfirm bool `json:"ready_to_confirm"`
+	Pending        bool `json:"pending"`
 
 	Cursor string `json:"cursor,omitempty"`
 	Limit  uint8  `json:"limit,omitempty"` // Default: 50, Max: 50
@@ -116,6 +110,15 @@ type NewMultisigRequest struct {
 	Confirmations int `json:"confirmations"`
 }
 
+type ListMultisigsRequest struct{}
+
+type NewMultisigDepositRequest struct {
+	MultisigID string  `json:"multisig_id"`
+	Amount     float64 `json:"amount"`
+}
+
+// Payrolls and salaries
+
 type NewPayrollRequest struct {
 	MultisigID string `json:"multisig_id"`
 	Title      string `json:"title"`
@@ -124,4 +127,24 @@ type NewPayrollRequest struct {
 type ListPayrollsRequest struct {
 	IDs   []string `json:"ids"`
 	Limit uint8    `json:"limit"`
+}
+
+type SetSalaryRequest struct {
+	EmployeeID string  `json:"employee_id"`
+	Salary     float64 `json:"salary"`
+	PayrollID  string  `json:"payroll_id"`
+}
+
+type NewPayoutRequest struct {
+	EmployeeID string `json:"employee_id"`
+	SalaryID   string `json:"salary_id"`
+}
+
+type NewDepositRequest struct {
+	PayrollID string  `json:"payroll_id"`
+	Amount    float64 `json:"amount"`
+}
+
+type ConfirmSalaryRequest struct {
+	SalaryID string `json:"salary_id"`
 }

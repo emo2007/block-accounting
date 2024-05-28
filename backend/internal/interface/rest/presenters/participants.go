@@ -9,6 +9,7 @@ import (
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain/hal"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type ParticipantsPresenter interface {
@@ -62,6 +63,7 @@ func (p *participantsPresenter) ResponseParticipantHal(
 		}
 
 		domainParticipant.Position = user.Position()
+		domainParticipant.PublicKey = common.Bytes2Hex(user.PublicKey())
 		domainParticipant.IsUser = true
 		domainParticipant.IsAdmin = user.IsAdmin()
 		domainParticipant.IsOwner = user.IsOwner()

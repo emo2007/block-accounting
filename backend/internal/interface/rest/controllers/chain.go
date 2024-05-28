@@ -107,49 +107,15 @@ func (c *transactionsController) List(w http.ResponseWriter, r *http.Request) ([
 		return nil, fmt.Errorf("error fetch organization ID from context. %w", err)
 	}
 
-	ids := make(uuid.UUIDs, len(req.IDs))
-
-	for i, id := range req.IDs {
-		txUUID, err := uuid.Parse(id)
-		if err != nil {
-			return nil, fmt.Errorf("error parse tx id. %w", err)
-		}
-
-		ids[i] = txUUID
-	}
-
-	var toAddr []byte
-
-	if req.To != "" {
-		toAddr = common.HexToAddress(req.To).Bytes()
-	}
-
-	var createdBy uuid.UUID
-	if req.CreatedBy != "" {
-		createdBy, err = uuid.Parse(req.CreatedBy)
-		if err != nil {
-			return nil, fmt.Errorf("error parse created by id. %w", err)
-		}
-	}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
 
 	txs, err := c.txInteractor.List(ctx, transactions.ListParams{
-		IDs:            ids,
 		OrganizationID: organizationID,
-		To:             toAddr,
-
-		CreatedBy: createdBy,
-
-		Limit:  int64(req.Limit),
-		Cursor: req.Cursor,
-
-		WithCancelled: req.Cancelled,
-		WithConfirmed: req.Confirmed,
-		WithCommited:  req.Commited,
-		WithExpired:   req.Expired,
-		WithPending:   req.Pending,
+		Limit:          int64(req.Limit),
+		Cursor:         req.Cursor,
+		Pending:        req.Pending,
+		ReadyToConfirm: req.ReadyToConfirm,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error fetch organizations list. %w", err)
@@ -374,6 +340,12 @@ func (c *transactionsController) ListPayrolls(w http.ResponseWriter, r *http.Req
 	}
 
 	return c.txPresenter.ResponsePayrolls(ctx, payrolls)
+}
+
+func (c *transactionsController) SetSalary(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+	// req, err := presenters.CreateRequest[domain.]()
+
+	return presenters.ResponseOK()
 }
 
 func (c *transactionsController) ConfirmPayroll(w http.ResponseWriter, r *http.Request) ([]byte, error) {

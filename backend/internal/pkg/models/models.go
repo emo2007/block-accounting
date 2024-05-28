@@ -33,3 +33,9 @@ type Payroll struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
+
+type Salary struct {
+	ID         uuid.UUID
+	EmployeeID uuid.UUID
+	Amount     float64
+}
