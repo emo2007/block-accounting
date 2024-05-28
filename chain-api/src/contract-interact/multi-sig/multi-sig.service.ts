@@ -14,11 +14,11 @@ import { BaseContractService } from '../../base/base-contract.service';
 import { getContractAddress } from '@ethersproject/address';
 
 export class MultiSigWalletService extends BaseContractService {
-  async deploy(dto: MultiSigWalletDto) {
+  async deploy(dto: MultiSigWalletDto, seed: string) {
     const { abi, bytecode } =
       await hre.artifacts.readArtifact('MultiSigWallet');
 
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const salaryContract = new ethers.ContractFactory(abi, bytecode, signer);
 
@@ -30,20 +30,20 @@ export class MultiSigWalletService extends BaseContractService {
     return myContract.getAddress();
   }
 
-  async getOwners(address: string) {
+  async getOwners(address: string, seed: string) {
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
 
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(address, abi, signer);
 
     return await contract.getOwners();
   }
 
-  async submitTransaction(dto: SubmitTransactionDto) {
+  async submitTransaction(dto: SubmitTransactionDto, seed: string) {
     const { destination, value, data, contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -66,10 +66,10 @@ export class MultiSigWalletService extends BaseContractService {
     };
   }
 
-  async confirmTransaction(dto: ConfirmTransactionDto) {
+  async confirmTransaction(dto: ConfirmTransactionDto, seed: string) {
     const { contractAddress, index } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -86,10 +86,10 @@ export class MultiSigWalletService extends BaseContractService {
     };
   }
 
-  async executeTransaction(dto: ExecuteTransactionDto) {
+  async executeTransaction(dto: ExecuteTransactionDto, seed: string) {
     const { index, contractAddress, isDeploy } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -134,45 +134,39 @@ export class MultiSigWalletService extends BaseContractService {
     });
   }
 
-  async revokeConfirmation(dto: RevokeConfirmationDto) {
+  async revokeConfirmation(dto: RevokeConfirmationDto, seed: string) {
     const { index, contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const tx = await contract.revokeConfirmation(index);
-
-    return tx;
+    return await contract.revokeConfirmation(index);
   }
 
-  async getTransactionCount(contractAddress: string) {
+  async getTransactionCount(contractAddress: string, seed: string) {
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const txCount = await contract.getTransactionCount();
-
-    return txCount;
+    return await contract.getTransactionCount();
   }
 
-  async getTransaction(dto: GetTransactionDto) {
+  async getTransaction(dto: GetTransactionDto, seed: string) {
     const { index, contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
-    const tx = await contract.getTransaction(index);
-
-    return tx;
+    return await contract.getTransaction(index);
   }
 
-  async deposit(dto: DepositContractDto) {
+  async deposit(dto: DepositContractDto, seed: string) {
     const { contractAddress, value } = dto;
     const convertValue = parseEther(value);
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const { abi } = await hre.artifacts.readArtifact('MultiSigWallet');
     const contract = new ethers.Contract(contractAddress, abi, signer);

@@ -9,6 +9,7 @@ import {
 } from './salaries.dto';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { DepositContractDto } from '../multi-sig.dto';
+import { GetHeader } from '../../decorators/getHeader.decorator';
 
 @ApiTags('salaries')
 @Controller('salaries')
@@ -21,35 +22,51 @@ export class SalariesController {
   @Post('deploy')
   async deploy(
     @Body() dto: SalariesDeployDto,
+    @GetHeader('X-Seed') seed: string,
   ): Promise<DeployContractResponseDto> {
-    const address = await this.salariesService.deploy(dto);
+    const address = await this.salariesService.deploy(dto, seed);
     return {
       address,
     };
   }
 
   @Get('usdt-price/:contractAddress')
-  async getUsdtPrice(@Param('contractAddress') contractAddress: string) {
-    return this.salariesService.getLatestUSDTPrice(contractAddress);
+  async getUsdtPrice(
+    @Param('contractAddress') contractAddress: string,
+    @GetHeader('X-Seed') seed: string,
+  ) {
+    return this.salariesService.getLatestUSDTPrice(contractAddress, seed);
   }
 
   @Post('set-salary')
-  async setSalary(@Body() dto: SetSalaryDto) {
-    return this.salariesService.setSalary(dto);
+  async setSalary(
+    @Body() dto: SetSalaryDto,
+    @GetHeader('X-Seed') seed: string,
+  ) {
+    return this.salariesService.setSalary(dto, seed);
   }
 
   @Get('salary')
-  async getSalary(@Body() dto: GetEmployeeSalariesDto) {
-    return this.salariesService.getSalary(dto);
+  async getSalary(
+    @Body() dto: GetEmployeeSalariesDto,
+    @GetHeader('X-Seed') seed: string,
+  ) {
+    return this.salariesService.getSalary(dto, seed);
   }
 
   @Post('payout')
-  async createPayout(@Body() dto: CreatePayoutDto) {
-    return this.salariesService.createPayout(dto);
+  async createPayout(
+    @Body() dto: CreatePayoutDto,
+    @GetHeader('X-Seed') seed: string,
+  ) {
+    return this.salariesService.createPayout(dto, seed);
   }
 
   @Post('deposit')
-  async deposit(@Body() dto: DepositContractDto) {
-    return this.salariesService.deposit(dto);
+  async deposit(
+    @Body() dto: DepositContractDto,
+    @GetHeader('X-Seed') seed: string,
+  ) {
+    return this.salariesService.deposit(dto, seed);
   }
 }

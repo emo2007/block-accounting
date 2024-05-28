@@ -21,10 +21,10 @@ export class SalariesService extends BaseContractService {
   ) {
     super(providerService);
   }
-  async deploy(dto: SalariesDeployDto) {
+  async deploy(dto: SalariesDeployDto, seed: string) {
     const { abi, bytecode } = await hre.artifacts.readArtifact('Payroll');
 
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const salaryContract = new ethers.ContractFactory(abi, bytecode, signer);
 
@@ -36,9 +36,9 @@ export class SalariesService extends BaseContractService {
     return await myContract.getAddress();
   }
 
-  async getLatestUSDTPrice(contractAddress: string) {
+  async getLatestUSDTPrice(contractAddress: string, seed: string) {
     const { abi } = await hre.artifacts.readArtifact('Payroll');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -46,7 +46,7 @@ export class SalariesService extends BaseContractService {
     return parseInt(answer) / 1e8;
   }
 
-  async setSalary(dto: SetSalaryDto) {
+  async setSalary(dto: SetSalaryDto, seed: string) {
     const { employeeAddress, salary, contractAddress, multiSigWallet } = dto;
     const ISubmitMultiSig = new ethers.Interface([
       'function setSalary(address employee, uint salaryInUSDT)',
@@ -57,18 +57,21 @@ export class SalariesService extends BaseContractService {
       salary,
     ]);
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 
-  async getSalary(dto: GetEmployeeSalariesDto) {
+  async getSalary(dto: GetEmployeeSalariesDto, seed: string) {
     const { employeeAddress, contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact('Payroll');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -78,7 +81,7 @@ export class SalariesService extends BaseContractService {
     };
   }
 
-  async createPayout(dto: CreatePayoutDto) {
+  async createPayout(dto: CreatePayoutDto, seed: string) {
     const { employeeAddress, contractAddress, multiSigWallet } = dto;
     const ISubmitMultiSig = new ethers.Interface([
       'function payoutInETH(address employee)',
@@ -87,17 +90,20 @@ export class SalariesService extends BaseContractService {
       employeeAddress,
     ]);
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 
-  async deposit(dto: DepositContractDto) {
+  async deposit(dto: DepositContractDto, seed: string) {
     const { contractAddress, value } = dto;
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const convertValue = parseEther(value);
 

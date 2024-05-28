@@ -22,7 +22,7 @@ export class LicenseService extends BaseContractService {
   ) {
     super(providerService);
   }
-  async request(dto: RequestLicenseDto) {
+  async request(dto: RequestLicenseDto, seed: string) {
     const { multiSigWallet, contractAddress, url } = dto;
 
     const ISubmitMultiSig = new ethers.Interface([
@@ -30,20 +30,23 @@ export class LicenseService extends BaseContractService {
     ]);
     const data = ISubmitMultiSig.encodeFunctionData('request', [url]);
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 
-  async getTotalPayoutInUSD(dto: GetLicenseInfoDto) {
+  async getTotalPayoutInUSD(dto: GetLicenseInfoDto, seed: string) {
     const { contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
     );
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -51,7 +54,7 @@ export class LicenseService extends BaseContractService {
     return answer.toString();
   }
 
-  async deploy(dto: DeployLicenseDto) {
+  async deploy(dto: DeployLicenseDto, seed: string) {
     const { multiSigWallet, shares, owners } = dto;
     const { bytecode } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
@@ -80,22 +83,25 @@ export class LicenseService extends BaseContractService {
       ],
     );
     const fullBytecode = bytecode + abiEncodedConstructorArguments.substring(2);
-    const submitData = await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: null,
-      value: '0',
-      data: fullBytecode,
-    });
+    const submitData = await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: null,
+        value: '0',
+        data: fullBytecode,
+      },
+      seed,
+    );
     delete submitData.data;
     return submitData;
   }
 
-  async getPayoutContract(dto: GetLicenseInfoDto) {
+  async getPayoutContract(dto: GetLicenseInfoDto, seed: string) {
     const { contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
     );
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -104,12 +110,12 @@ export class LicenseService extends BaseContractService {
     return answer;
   }
 
-  async getOwners(dto: GetLicenseInfoDto) {
+  async getOwners(dto: GetLicenseInfoDto, seed: string) {
     const { contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
     );
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -129,12 +135,12 @@ export class LicenseService extends BaseContractService {
     return owners;
   }
 
-  async getShares(dto: GetShareLicense) {
+  async getShares(dto: GetShareLicense, seed: string) {
     const { contractAddress, ownerAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact(
       'StreamingRightsManagement',
     );
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -144,21 +150,24 @@ export class LicenseService extends BaseContractService {
     return answer;
   }
 
-  async payout(dto: LicensePayoutDto) {
+  async payout(dto: LicensePayoutDto, seed: string) {
     const { multiSigWallet, contractAddress } = dto;
 
     const ISubmitMultiSig = new ethers.Interface(['function payout()']);
     const data = ISubmitMultiSig.encodeFunctionData('payout');
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 
-  async setPayoutContract(dto: SetPayoutContractDto) {
+  async setPayoutContract(dto: SetPayoutContractDto, seed: string) {
     const { multiSigWallet, contractAddress, payoutContract } = dto;
 
     const ISubmitMultiSig = new ethers.Interface([
@@ -168,11 +177,14 @@ export class LicenseService extends BaseContractService {
       payoutContract,
     ]);
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 }

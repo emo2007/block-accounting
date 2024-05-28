@@ -19,7 +19,7 @@ export class AgreementService extends BaseContractService {
   ) {
     super(providerService);
   }
-  async deploy(dto: DeployAgreementDto): Promise<any> {
+  async deploy(dto: DeployAgreementDto, seed: string): Promise<any> {
     const { multiSigWallet } = dto;
     const { bytecode } = await hre.artifacts.readArtifact('Agreement');
 
@@ -36,20 +36,23 @@ export class AgreementService extends BaseContractService {
       ],
     );
     const fullBytecode = bytecode + abiEncodedConstructorArguments.substring(2);
-    const submitData = await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: null,
-      value: '0',
-      data: fullBytecode,
-    });
+    const submitData = await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: null,
+        value: '0',
+        data: fullBytecode,
+      },
+      seed,
+    );
     delete submitData.data;
     return submitData;
   }
 
-  async getResponse(dto: GetAgreementInfoDto) {
+  async getResponse(dto: GetAgreementInfoDto, seed: string) {
     const { contractAddress } = dto;
     const { abi } = await hre.artifacts.readArtifact('Agreement');
-    const signer = await this.providerService.getSigner();
+    const signer = await this.providerService.getSigner(seed);
 
     const contract = new ethers.Contract(contractAddress, abi, signer);
 
@@ -57,7 +60,7 @@ export class AgreementService extends BaseContractService {
     return answer.toString();
   }
 
-  async request(dto: RequestAgreementDto) {
+  async request(dto: RequestAgreementDto, seed: string) {
     const { multiSigWallet, contractAddress, url } = dto;
 
     const ISubmitMultiSig = new ethers.Interface([
@@ -65,11 +68,14 @@ export class AgreementService extends BaseContractService {
     ]);
     const data = ISubmitMultiSig.encodeFunctionData('request', [url]);
 
-    return await this.multiSigService.submitTransaction({
-      contractAddress: multiSigWallet,
-      destination: contractAddress,
-      value: '0',
-      data,
-    });
+    return await this.multiSigService.submitTransaction(
+      {
+        contractAddress: multiSigWallet,
+        destination: contractAddress,
+        value: '0',
+        data,
+      },
+      seed,
+    );
   }
 }

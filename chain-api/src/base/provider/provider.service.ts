@@ -22,13 +22,10 @@ export class ProviderService {
     return this.provider;
   }
 
-  async getSigner() {
+  async getSigner(seed: string) {
     if (!this.provider) {
       await this.getProvider();
     }
-    return new ethers.Wallet(
-      this.configService.getOrThrow('POLYGON_PK'),
-      this.provider,
-    );
+    return ethers.Wallet.fromPhrase(seed, this.provider);
   }
 }
