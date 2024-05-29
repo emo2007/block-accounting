@@ -223,6 +223,7 @@ func (s *Server) handleMw(next http.Handler) http.Handler {
 		}
 
 		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		next.ServeHTTP(w, r)
 	}

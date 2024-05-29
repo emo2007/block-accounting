@@ -120,7 +120,9 @@ create index if not exists  idx_multisig_owners_owner_id
 create table multisig_confirmations (
         multisig_id uuid references multisigs(id), 
         owner_id uuid references users(id), 
-        created_at timestamp default current_timestamp,
+        confirmed_entity_id uuid not null, 
+        confirmed_entity_type smallint default 0,
+        created_at timestamp default current_timestamp
         primary key (multisig_id, owner_id)
 );
 
@@ -132,6 +134,18 @@ create index if not exists  idx_multisig_confirmations_owners_owner_id
 
 create index if not exists  idx_multisig_confirmations_owners_multisig_id_owner_id
         on multisig_confirmations (multisig_id, owner_id);
+
+create table multisig_confirmations_counter (
+        multisig_id uuid references multisigs(id), 
+        confirmed_entity_id uuid not null, 
+        confirmed_entity_type smallint default 0,
+        created_at timestamp default current_timestamp,
+        updated_at timestamp default current_timestamp,
+        count bigint default 0
+);
+
+create index if not exists  idx_multisig_confirmations_counter_multisig_id_confirmed_entity_id
+        on multisig_confirmations (multisig_id, confirmed_entity_id);
 
 create table invites (
         link_hash varchar(64) primary key, 
@@ -168,6 +182,7 @@ create table if not exists transactions (
         max_fee_allowed decimal default 0, 
         deadline timestamp default null,
         confirmations_required bigint default 1,
+        multisig_id uuid not null, 
         multisig_id uuid default null,
 
         status int default 0,
@@ -189,12 +204,3 @@ create index if not exists index_transactions_id_organization_id_created_by
 
 create index if not exists index_transactions_organization_id_deadline
         on transactions (organization_id, deadline); 
-
-create table transactions_confirmations (
-        tx_id uuid not null, 
-        user_id uuid not null,
-        organization_id uuid not null, 
-        created_at timestamp default current_timestamp,
-        updated_at timestamp default current_timestamp,
-        confirmed bool
-);
