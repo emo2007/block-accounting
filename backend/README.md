@@ -126,7 +126,7 @@ Get new token
 ### Example
 Request: 
 ``` bash
-curl --location --request GET 'http://localhost:8081/refresh' \
+curl --location --request POST 'http://localhost:8081/refresh' \
 --header 'Content-Type: application/json' \
 --data '{
         "token": "token",
@@ -170,7 +170,7 @@ Response:
 }
 ```
 
-## GET **/organizations**  
+## POST **/organizations/fetch**  
 Fets list of organizations
 ### Request body:  
 * cursor (string, optional)  
@@ -180,7 +180,7 @@ Fets list of organizations
 ### Example
 Request: 
 ``` bash
-curl --location --request GET 'http://localhost:8081/organizations' \
+curl --location --request POST 'http://localhost:8081/organizations' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTU4OTU4MTc3MDYsInVpZCI6IjUyNTNkMzdjLTMxZDQtNDgxMi1iZTcxLWE5ODQwMTVlNGVlMyJ9.YjjHWz7FiMM73e-98pZYHCW9tKDZ_mRWKG3m1PcVTo0' \
 --data '{
@@ -271,7 +271,7 @@ Response:
   "is_active": false
 }
 ```
-## GET **/organizations/{organization_id}/participants**  
+## POST **/organizations/{organization_id}/participants/fetch**  
 Get organization participants
 ### Request body:  
 * ids (string array)
@@ -279,7 +279,7 @@ Get organization participants
 ### Example
 Request: 
 ``` bash
-curl --request GET \
+curl --request POST \
   --url http://localhost:8081/organizations/018fb419-c3ad-7cda-81b8-cad30211b5fb/participants \
   --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTY3OTk5MjgzMzIsInVpZCI6IjAxOGZiNDE5LTliZjctN2QwOS05MzViLTNiOTAyNDc3ZDJkYiJ9.V_d3b8MvuOp01xDGX0g5Ab2nOvdyGL84WO01xPodTro' \
   --header 'content-type: application/json' \
@@ -388,14 +388,14 @@ Response:
 }
 ```
 
-## GET **/organizations/{organization_id}/multisig**  
-Multisig deployment
+## POST **/organizations/{organization_id}/multisig/fetch**  
+fetch multisigs
 ### Request body:  
 
 ### Example
 Request: 
 ``` bash
-curl --request GET \
+curl --request POST \
   --url http://localhost:8081/organizations/018fb246-1616-7f1b-9fe2-1a3202224695/multisig \
   --header 'Authorization: Bearer token' \
   --header 'content-type: application/json' \
@@ -478,7 +478,7 @@ Response:
 }
 ```
 
-## GET **/organizations/{organization_id}/payrolls** 
+## POST **/organizations/{organization_id}/payrolls/fetch** 
 Fetch payrolls
 ### Request body:  
 * ids ([]string)
@@ -492,8 +492,6 @@ curl --request POST \
   --header 'Authorization: Bearer TOKEN' \
   --header 'content-type: application/json' \
   --data '{
-  "title":"sdjkhfjsdk", 
-  "multisig_id":"018fbb03-d4c5-73be-ab07-6c5f8d3afebc"
 }'
 ```
 
@@ -508,7 +506,7 @@ Response:
 Confirm payroll
 // todo
 
-## GET **/organizations/{organization_id}/license** 
+## POST **/organizations/{organization_id}/license/fetch** 
 Fetch licenses
 
 ## POST **/organizations/{organization_id}/license** 
@@ -584,7 +582,7 @@ Response:
 }
 ```
 
-## GET **/{organization_id}/transactions**  
+## POST **/{organization_id}/transactions/fetch**  
 Fetch txs
 ### Request body:  
 ready_to_confirm (optional)
@@ -593,7 +591,7 @@ pending (optional)
 ### Example
 Request: 
 ``` bash
-curl --location --request GET 'http://localhost:8081/organizations/018f9078-af60-7589-af64-9312b97aa7be/transactions' \
+curl --location --request POST 'http://localhost:8081/organizations/018f9078-af60-7589-af64-9312b97aa7be/transactions' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer TOKEN' \
 --data '{

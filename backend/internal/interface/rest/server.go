@@ -106,7 +106,7 @@ func (s *Server) buildRouter() {
 
 	router.Post("/join", s.handle(s.controllers.Auth.Join, "join"))
 	router.Post("/login", s.handle(s.controllers.Auth.Login, "login"))
-	router.Get("/refresh", s.handle(s.controllers.Auth.Refresh, "refresh"))
+	router.Post("/refresh", s.handle(s.controllers.Auth.Refresh, "refresh"))
 
 	// open invite link
 	router.Get("/invite/{hash}", s.handle(s.controllers.Auth.InviteGet, "invite_open"))
@@ -116,31 +116,31 @@ func (s *Server) buildRouter() {
 	router.Route("/organizations", func(r chi.Router) {
 		r = r.With(s.withAuthorization)
 
-		r.Get("/", s.handle(s.controllers.Organizations.ListOrganizations, "list_organizations"))
+		r.Post("/fetch", s.handle(s.controllers.Organizations.ListOrganizations, "list_organizations"))
 		r.Post("/", s.handle(s.controllers.Organizations.NewOrganization, "new_organization"))
 
 		r.Route("/{organization_id}", func(r chi.Router) {
 			r.Route("/payrolls", func(r chi.Router) {
-				r.Get("/", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
+				r.Post("/fetch", s.handle(s.controllers.Transactions.ListPayrolls, "list_payrolls"))
 				r.Post("/", s.handle(s.controllers.Transactions.NewPayroll, "new_payroll"))
 				r.Put("/", s.handle(s.controllers.Transactions.ConfirmPayroll, "confirm_payroll"))
 
 				r.Post("/salaries", s.handle(nil, "set_salary"))
-				r.Get("/salaries", s.handle(nil, "get_salaries"))
+				r.Post("/salaries/fetch", s.handle(nil, "get_salaries"))
 			})
 
 			r.Route("/multisig", func(r chi.Router) {
 				r.Post("/", s.handle(s.controllers.Transactions.NewMultisig, "new_multisig"))
-				r.Get("/", s.handle(s.controllers.Transactions.ListMultisigs, "list_multisig"))
+				r.Post("/fetch", s.handle(s.controllers.Transactions.ListMultisigs, "list_multisig"))
 			})
 
 			r.Route("/license", func(r chi.Router) {
-				r.Get("/", nil)  // list license
-				r.Post("/", nil) // deploy contract
+				r.Post("/fetch", nil) // list license
+				r.Post("/", nil)      // deploy contract
 			})
 
 			r.Route("/participants", func(r chi.Router) {
-				r.Get("/", s.handle(s.controllers.Participants.List, "participants_list"))
+				r.Post("/fetch", s.handle(s.controllers.Participants.List, "participants_list"))
 				r.Post("/", s.handle(s.controllers.Participants.New, "new_participant"))
 
 				// generate new invite link
@@ -151,9 +151,8 @@ func (s *Server) buildRouter() {
 				})
 			})
 
-			// Deprecated??
 			r.Route("/transactions", func(r chi.Router) {
-				r.Get("/", s.handle(s.controllers.Transactions.List, "tx_list"))
+				r.Post("/fetch", s.handle(s.controllers.Transactions.List, "tx_list"))
 				r.Post("/", s.handle(s.controllers.Transactions.New, "new_tx"))
 				r.Put(
 					"/{tx_id}",
