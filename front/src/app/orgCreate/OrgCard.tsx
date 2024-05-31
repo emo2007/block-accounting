@@ -4,33 +4,32 @@ import React from "react";
 import { Card } from "antd";
 import { useState, useEffect, FC } from "react";
 import { useRouter } from "next/navigation";
-type OrgData = {
-  name: string;
-  address: string;
-  phone: number;
-};
+import Link from "next/link";
+import { Organization } from "../axios/api-types";
+
 type OrgItemProps = {
-  element: OrgData;
+  element: Organization;
 };
 
 export const OrganizationCard: FC<OrgItemProps> = ({ element }) => {
   const router = useRouter();
-  const onNextPageHandler = () => {
-    router.push("/organization/dashboard");
-  };
+  const id: any = element.id;
+
   return (
     <>
       <Card
         title={element.name}
         type="inner"
         extra={
-          <a onClick={onNextPageHandler} href="#">
+          <Link
+            href={{ pathname: "/organization/overview/dashboard/", query: id }}
+          >
             More
-          </a>
+          </Link>
         }
       >
         <p>{element.address}</p>
-        <p>{element.phone}</p>
+        <p>{element.name}</p>
       </Card>
     </>
   );

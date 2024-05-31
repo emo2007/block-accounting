@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
-import { OrgCreatePage } from "./OrgCreatePage";
-// вместо этого надо класть большие компоненты
+import { OrgCreatePage } from "../orgCreate/OrgCreatePage";
 
 export default function organization() {
   return (

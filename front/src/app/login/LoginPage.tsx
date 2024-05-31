@@ -1,37 +1,41 @@
-// 1. Страница входа (Login Page)
-// Дизайн: Страница должна быть минималистичной с использованием профессиональной цветовой схемы (синие и серые тона). Должно быть поле для ввода мнемонической фразы (SEED_KEY) и кнопка для входа.
-// Безопасность: Добавить элементы, подчеркивающие безопасность, например, иконку замка и текст, имитирующий шифрование.
-// Валидация: Проверять формат введенного SEED_KEY на клиентской стороне перед отправкой на сервер.
 "use client";
 import React from "react";
 import { SeedItem } from "../seedItem/SeedItem";
-
 import { useRouter } from "next/navigation";
 import { useState, useEffect, FC } from "react";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
-
+import { apiService } from "../axios/global.service";
 import { Input, Space, Button, List, Card, Typography } from "antd";
 import { LockOutlined } from "@ant-design/icons";
 import useLoginHooks from "@/hooks/login";
+import Cookies from "js-cookie";
 
 export function LoginPage() {
-  const { passwordVisible, setPasswordVisible, seed, getSeed } =
-    useLoginHooks();
+  const { passwordVisible, setPasswordVisible } = useLoginHooks();
   const [inp, setInp] = useState("");
+  const [seed, setSeed] = useState<string>();
   const [disabled, setDisabled] = useState(true);
   const router = useRouter();
-  const onNextPageHandler = () => {
-    router.push("/organization");
-  };
+
+  const onNextPageHandler = async () => {};
+  // const getSeed = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   setSeed(inp);
+  // };
+  console.log(inp);
   const { Text } = Typography;
   useEffect(() => {
     setDisabled(!(inp.length >= 4));
   }, [inp]);
 
-  const onSubmitHandler = () => {
+  const onSubmitHandler = async () => {
+    const result = await apiService.login(inp);
+    if (result) {
+      Cookies.set("accessToken", result.data.token);
+      router.push("/organization");
+    }
     setInp("");
-    getSeed(inp);
   };
+
   return (
     <div className="flex relative  overflow-hidden flex-col w-2/3 h-3/4 items-center justify-center gap-10 bg-white border-solid border rounded-md border-neutral-300 text-neutral-500">
       <div className="w-full h-20    bg-[#1677FF] absolute top-0 flex items-center justify-center">
@@ -39,7 +43,9 @@ export function LoginPage() {
       </div>
       <div className="flex flex-col w-6/12  gap-3 items-start mt-20">
         <div>
-          <Text type="secondary">Please enter 12 words always lowercase.</Text>
+          <Text type="secondary">
+            Please enter by spaces 12 words always lowercase.
+          </Text>
         </div>
 
         <Space.Compact style={{ width: "100%" }}>
@@ -59,8 +65,9 @@ export function LoginPage() {
             }
             placeholder="Enter your seed words in order"
             onInput={(event: any) => setInp(event.target.value)}
-            maxLength={8}
+            //maxLength={8}
             minLength={4}
+            //onChange={getSeed}
           />
           <Button
             size="large"
@@ -72,14 +79,14 @@ export function LoginPage() {
           </Button>
         </Space.Compact>
       </div>
-      <div
+      {/* <div
         className="flex flex-row w-[700px] gap-3 content-box flex-wrap
       "
       >
-        {seed.map((element: string, index: number) => (
-          <SeedItem key={index} seed={element} />
-        ))}
-      </div>
+        {/* {seed.map((element: string, index: number) => (
+          // <SeedItem key={index} seed={element} />
+        ))} 
+      </div> */}
       <Button
         onClick={onNextPageHandler}
         style={{ width: "150px" }}

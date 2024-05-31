@@ -6,35 +6,39 @@
 //* <h1>{seed.join("\n")}</h1> */shtuchka kak map
 
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Modal } from "antd";
 import { useState } from "react";
-
+import { apiService } from "../axios/global.service";
 import { OrgForm } from "./OrgForm";
 import { OrganizationCard } from "./OrgCard";
 import { FolderOpenTwoTone } from "@ant-design/icons";
-
-type OrgData = {
-  name: string;
-  address: string;
-  phone: number;
-};
+import {
+  Organization,
+  NewOrgResponse,
+  OrganizationsResponse,
+} from "../axios/api-types";
+import Cookies from "js-cookie";
 export function OrgCreatePage() {
-  const [organizations, setOrganizations] = useState([
-    {
-      name: "My Company",
-      address: "2930 Pearl St Boulder, CO 80301 United States",
-      phone: "+1303-245-0086",
-    },
-  ]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const onFinish = (values: any) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    address: "",
+  });
+  const onFinish = async (values: any) => {
     handleOk();
-    setOrganizations((prev: any[]) => [...prev, formData]);
-    setFormData({});
+    setOrganizations((prev: any) => [...prev, formData]);
+
+    // setFormData({});
+    const result = await apiService.newOrganization(
+      formData.name,
+      formData.address
+    );
+    if (result) {
+      loadOrganizations();
+    }
   };
-  const [formData, setFormData] = useState({});
   const showModal = () => {
     setIsModalOpen(true);
   };
@@ -46,7 +50,15 @@ export function OrgCreatePage() {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-
+  useEffect(() => {
+    loadOrganizations();
+  }, []);
+  const loadOrganizations = async () => {
+    const result: Organization[] = await apiService.getOrganizations();
+    if (result) {
+      setOrganizations(result.data.items);
+    }
+  };
   return (
     <>
       <div className="flex relative  overflow-hidden  flex-col w-2/3 h-3/4 items-center justify-center z-30 gap-5 bg-white border-solid border rounded-md border-neutral-300 text-neutral-500">

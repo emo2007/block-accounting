@@ -6,10 +6,10 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Typography, Space } from "antd";
 import { MailOutlined, CopyOutlined } from "@ant-design/icons";
-export function EmployeePage() {
+export function EmployeeInvitatonPage() {
   const { Text } = Typography;
   return (
-    <div className="flex relative  overflow-hidden flex-col w-2/3 h-3/4 items-center justify-center gap-10 bg-white border-solid border rounded-md border-neutral-300 text-neutral-500">
+    <div className="flex relative  overflow-hidden flex-col w-2/3 h-3/4 items-center justify-center gap-10 bg-white border-solid border rounded-md border-neutral-300 p-10 text-neutral-500">
       <div className="w-full h-20    bg-[#1677FF] absolute top-0 flex items-center justify-center">
         <h1 className="text-white text-xl font-semibold">Invite</h1>
       </div>

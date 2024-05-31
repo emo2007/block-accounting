@@ -1,27 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "antd";
-import {
-  AppstoreOutlined,
-  ContainerOutlined,
-  DesktopOutlined,
-  MailOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  PieChartOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import type { MenuProps } from "antd";
-import {
-  Button,
-  Menu,
-  List,
-  Divider,
-  Typography,
-  Avatar,
-  Skeleton,
-} from "antd";
+import { UserOutlined } from "@ant-design/icons";
+import { Button, List, Divider, Typography, Avatar, Skeleton } from "antd";
+
 interface DataType {
   gender?: string;
   name: {
@@ -41,7 +24,6 @@ interface DataType {
 const count = 3;
 const fakeDataUrl = `https://randomuser.me/api/?results=${count}&inc=name,gender,email,nat,picture&noinfo`;
 
-type MenuItem = Required<MenuProps>["items"][number];
 const data = [
   "Ackee Blockchain is a team of auditors and white hat hackers who perform security audits and assessments for Ethereum and Solana.",
   "Global blockchain services company and Initial Coin Offering solutions provider",
@@ -50,51 +32,23 @@ const data = [
   "Securing the DeFi ecosystem",
 ];
 
-const items: MenuItem[] = [
-  { key: "1", icon: <PieChartOutlined />, label: "Wallet Info" },
-  { key: "2", icon: <DesktopOutlined />, label: "Option 2" },
-  { key: "3", icon: <ContainerOutlined />, label: "Contracts" },
-  {
-    key: "sub1",
-    label: "Navigation One",
-    icon: <MailOutlined />,
-    // children: [
-    //   { key: "5", label: "Option 5" },
-    //   { key: "6", label: "Option 6" },
-    // ],
-  },
-  {
-    key: "sub2",
-    label: "Navigation Two",
-    icon: <AppstoreOutlined />,
-    children: [
-      { key: "9", label: "Option 9" },
-      { key: "10", label: "Option 10" },
-      {
-        key: "sub3",
-        label: "Submenu",
-        children: [
-          { key: "11", label: "Option 11" },
-          { key: "12", label: "Option 12" },
-        ],
-      },
-    ],
-  },
-];
 const { Title } = Typography;
+
 export function OrgProfile() {
-  const [collapsed, setCollapsed] = useState(true);
   const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [dataEmployees, setData] = useState<DataType[]>([]);
   const [list, setList] = useState<DataType[]>([]);
 
   const router = useRouter();
+  const pathname = useSearchParams();
+  console.log(pathname.getAll("query"));
+
   const onNextPageHandler = () => {
-    router.push("/organization/employees");
+    router.push("/organization/overview/employees");
   };
   const onMultisigPageHandler = () => {
-    router.push("/organization/multiSig");
+    router.push("/organization/overview/multiSig");
   };
   useEffect(() => {
     fetch(fakeDataUrl)
@@ -144,25 +98,8 @@ export function OrgProfile() {
     ) : null;
 
   return (
-    <div className="flex flex-row w-full h-full bg-slate-50 gap-5 pb-20 px-30 p-10">
-      <div className="w-24 py-2">
-        <div>
-          <Menu
-            style={{
-              borderRadius: 8,
-              height: "228px",
-              border: "solid 1px #1677FF",
-            }}
-            defaultSelectedKeys={["1"]}
-            defaultOpenKeys={["sub1"]}
-            mode="inline"
-            theme="light"
-            inlineCollapsed={collapsed}
-            items={items}
-          />
-        </div>
-      </div>
-      <div className="flex flex-col w-11/12  pr-10">
+    <div className="flex flex-row w-full h-full bg-slate-50  p-8">
+      <div className="flex flex-col w-11/12 ">
         <Title style={{ color: "#302d43", textIndent: 15 }}>Dashboard</Title>
         <Card
           title="Organization Name"
@@ -188,7 +125,7 @@ export function OrgProfile() {
           orientation="left"
           orientationMargin="0"
         >
-          Recent Activities
+          <a href="#">Contracts</a>
         </Divider>
         <List
           bordered
@@ -214,7 +151,9 @@ export function OrgProfile() {
           orientation="left"
           orientationMargin="0"
         >
-          Employee List
+          <a href="http://localhost:3000/organization/employees/employeeList">
+            Employee List
+          </a>
         </Divider>
         <List
           className="demo-loadmore-list"

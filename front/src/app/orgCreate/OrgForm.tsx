@@ -39,10 +39,10 @@ export function OrgForm({ setFormData }) {
                 <Input
                   name="name"
                   style={{ width: 350 }}
-                  onInput={(e: any) =>
+                  onInput={(element: any) =>
                     setFormData((prev: object) => ({
                       ...prev,
-                      [e.target.name]: e.target.value,
+                      [element.target.name]: element.target.value,
                     }))
                   }
                 />
@@ -58,10 +58,10 @@ export function OrgForm({ setFormData }) {
               >
                 <Input
                   name="address"
-                  onInput={(e: any) =>
+                  onInput={(element: any) =>
                     setFormData((prev: object) => ({
                       ...prev,
-                      [e.target.name]: e.target.value,
+                      [element.target.name]: element.target.value,
                     }))
                   }
                   style={{ width: 350 }}
