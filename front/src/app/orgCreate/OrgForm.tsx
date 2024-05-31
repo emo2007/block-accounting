@@ -69,35 +69,35 @@ export function OrgForm({ setFormData }) {
               </Form.Item>
             </Space>
           </Form.Item>
-          <Form.Item label="Phone Number">
-            <Space>
-              <Form.Item
-                noStyle
-                rules={[
-                  {
-                    required: true,
-                    message: "Please input phone number",
-                  },
-                ]}
-              >
-                <Input
-                  name="phone"
-                  addonBefore={prefixSelector}
-                  style={{ width: 350 }}
-                  onInput={(e: any) =>
-                    setFormData((prev: object) => ({
-                      ...prev,
-                      [e.target.name]: e.target.value,
-                    }))
-                  }
-                  type="number"
-                  required
-                  minLength={9}
-                  maxLength={9}
-                />
-              </Form.Item>
-            </Space>
-          </Form.Item>
+          {/*<Form.Item label="Phone Number">*/}
+          {/*  <Space>*/}
+          {/*    <Form.Item*/}
+          {/*      noStyle*/}
+          {/*      rules={[*/}
+          {/*        {*/}
+          {/*          required: true,*/}
+          {/*          message: "Please input phone number",*/}
+          {/*        },*/}
+          {/*      ]}*/}
+          {/*    >*/}
+          {/*      <Input*/}
+          {/*        name="phone"*/}
+          {/*        addonBefore={prefixSelector}*/}
+          {/*        style={{ width: 350 }}*/}
+          {/*        onInput={(e: any) =>*/}
+          {/*          setFormData((prev: object) => ({*/}
+          {/*            ...prev,*/}
+          {/*            [e.target.name]: e.target.value,*/}
+          {/*          }))*/}
+          {/*        }*/}
+          {/*        type="number"*/}
+          {/*        required*/}
+          {/*        minLength={9}*/}
+          {/*        maxLength={9}*/}
+          {/*      />*/}
+          {/*    </Form.Item>*/}
+          {/*  </Space>*/}
+          {/*</Form.Item>*/}
         </div>
       </Form>
     </div>

@@ -30,27 +30,30 @@ export function MultisigPage() {
               <Input placeholder="Name" />
             </div>
             <div className="flex flex-col gap-2 w-full">
-              <Select
-                suffixIcon={<WalletOutlined />}
-                defaultValue={""}
-                style={{ width: "full" }}
-                allowClear
-                options={[{ value: "", label: "" }]}
-              />
-              <Select
-                suffixIcon={<WalletOutlined />}
-                defaultValue={""}
-                style={{ width: "full" }}
-                allowClear
-                options={[{ value: "", label: "" }]}
-              />
-              <Select
-                suffixIcon={<WalletOutlined />}
-                defaultValue={""}
-                style={{ width: "full" }}
-                allowClear
-                options={[{ value: "", label: "" }]}
-              />
+              {/*<Select*/}
+              {/*  suffixIcon={<WalletOutlined />}*/}
+              {/*  defaultValue={""}*/}
+              {/*  style={{ width: "full" }}*/}
+              {/*  allowClear*/}
+              {/*  options={[{ value: "", label: "" }]}*/}
+              {/*/>*/}
+              {/*<Select*/}
+              {/*  suffixIcon={<WalletOutlined />}*/}
+              {/*  defaultValue={""}*/}
+              {/*  style={{ width: "full" }}*/}
+              {/*  allowClear*/}
+              {/*  options={[{ value: "", label: "" }]}*/}
+              {/*/>*/}
+              {/*<Select*/}
+              {/*  suffixIcon={<WalletOutlined />}*/}
+              {/*  defaultValue={""}*/}
+              {/*  style={{ width: "full" }}*/}
+              {/*  allowClear*/}
+              {/*  options={[{ value: "", label: "" }]}*/}
+              {/*/>*/}
+              <Input placeholder="Name" />
+              <Input placeholder="Name" />
+              <Input placeholder="Name" />
             </div>
           </div>
           <div className="flex  w-full justify-end mt-5">

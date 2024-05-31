@@ -54,7 +54,7 @@ export function OrgCreatePage() {
     loadOrganizations();
   }, []);
   const loadOrganizations = async () => {
-    const result: Organization[] = await apiService.getOrganizations();
+    const result = await apiService.getOrganizations();
     if (result) {
       setOrganizations(result.data.items);
     }
@@ -93,7 +93,7 @@ export function OrgCreatePage() {
               okText="Submit"
               onOk={onFinish}
               okButtonProps={{
-                disabled: !(Object.values(formData).length === 3),
+                disabled: !(Object.values(formData).length === 2),
               }}
               onCancel={handleCancel}
             >

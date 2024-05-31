@@ -24,12 +24,12 @@ export const OrganizationCard: FC<OrgItemProps> = ({ element }) => {
           <Link
             href={{ pathname: "/organization/overview/dashboard/", query: id }}
           >
-            More
+            Go To Overview
           </Link>
         }
       >
         <p>{element.address}</p>
-        <p>{element.name}</p>
+        {/*<p>{element.name}</p>*/}
       </Card>
     </>
   );

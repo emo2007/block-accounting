@@ -13,11 +13,27 @@ import Cookies from "js-cookie";
 export function LoginPage() {
   const { passwordVisible, setPasswordVisible } = useLoginHooks();
   const [inp, setInp] = useState("");
-  const [seed, setSeed] = useState<string>();
+  //
+  const [seed, setSeed] = useState<string[]>(["airport","donate","language","disagree","dumb","access","insect","tribe","ozone","humor","foot","jealous","much","digital",]);
+
+  // const [seed, setSeed] = useState<string[]>(["melody","correct","brain","slide","flip","polar","asset","know","pencil","major","smile","vital","nominee","merge","addict"]);
   const [disabled, setDisabled] = useState(true);
   const router = useRouter();
 
-  const onNextPageHandler = async () => {};
+  const onLogin = async () => {
+    const result = await apiService.login(seed.join(' '));
+    // if (result) {
+      Cookies.set("accessToken", result.data.token);
+      router.push("/organization");
+    // }
+  };
+  const onRegister = async () => {
+    const result = await apiService.register(inp);
+    if (result) {
+      Cookies.set("accessToken", result.data.token);
+      router.push("/organization");
+    }
+  }
   // const getSeed = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   setSeed(inp);
   // };
@@ -28,11 +44,7 @@ export function LoginPage() {
   }, [inp]);
 
   const onSubmitHandler = async () => {
-    const result = await apiService.login(inp);
-    if (result) {
-      Cookies.set("accessToken", result.data.token);
-      router.push("/organization");
-    }
+    setSeed((prevState) => prevState ? [...prevState, inp] : [inp]);
     setInp("");
   };
 
@@ -44,7 +56,7 @@ export function LoginPage() {
       <div className="flex flex-col w-6/12  gap-3 items-start mt-20">
         <div>
           <Text type="secondary">
-            Please enter by spaces 12 words always lowercase.
+            Please enter by spaces 15 words always lowercase.
           </Text>
         </div>
 
@@ -79,21 +91,29 @@ export function LoginPage() {
           </Button>
         </Space.Compact>
       </div>
-      {/* <div
+      { <div
         className="flex flex-row w-[700px] gap-3 content-box flex-wrap
       "
       >
-        {/* {seed.map((element: string, index: number) => (
-          // <SeedItem key={index} seed={element} />
-        ))} 
-      </div> */}
+        {seed && seed.map((element: string, index: number) => (
+          <SeedItem key={index} seed={element} />
+        ))}
+      </div> }
       <Button
-        onClick={onNextPageHandler}
+        onClick={onLogin}
         style={{ width: "150px" }}
         type="primary"
         size="large"
       >
         Login
+      </Button>
+      <Button
+          onClick={onRegister}
+          style={{ width: "150px" }}
+          type="primary"
+          size="large"
+      >
+        Join
       </Button>
     </div>
   );
