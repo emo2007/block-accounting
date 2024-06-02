@@ -1,6 +1,7 @@
 import { globalService } from "../axios/global-api";
 import { AxiosResponse } from "axios";
 import Cookies from "js-cookie";
+
 import {
   LoginResponse,
   OrganizationsResponse,
@@ -9,6 +10,7 @@ import {
   AddPartResponse,
   DeployResponse,
   MultiSigResponse,
+  InvitationResponse,
 } from "./api-types";
 export class AccountingService {
   async login(seedKey: string): Promise<AxiosResponse<LoginResponse>> {
@@ -44,10 +46,16 @@ export class AccountingService {
   }
 
   async getEmployees(
-    organizationId: string
+    organizationId: string,
+    ids: string[]
   ): Promise<AxiosResponse<ParticipantsResponse>> {
-    return await globalService.get(
-      `organizations/${organizationId}/participants`
+    return await globalService.post(
+      `organizations/${organizationId}/participants/fetch`,
+      {
+        data: {
+          ids: [...ids, organizationId],
+        },
+      }
     );
   }
 
@@ -69,22 +77,44 @@ export class AccountingService {
 
   // POST /organizations/{organization_id}/multisig
   async deployMultisig(
-    organization_id: string,
+    organizationId: string,
     title: string,
     owners: string[],
     confirmations: number
   ): Promise<AxiosResponse<DeployResponse>> {
-    return await globalService.post(`${organization_id}/multi-sig`, {
-      title,
-      owners,
-      confirmations,
-    });
+    return await globalService.post(
+      `organizations/${organizationId}/multisig`,
+      {
+        title,
+        owners,
+        confirmations,
+      }
+    );
   }
 
   async getAllMultisigsByOrganizationId(
     organizationId: string
   ): Promise<AxiosResponse<MultiSigResponse>> {
     return await globalService.get(`organizations/${organizationId}/multisig`);
+  }
+
+  async sentInvitation(
+    hash: string,
+    name: string,
+    credentals: {
+      email: string;
+      phone: string;
+      telegram: string;
+    },
+    mnemonic: string
+  ): Promise<AxiosResponse<InvitationResponse>> {
+    return await globalService.post(`/invite/${hash}/join`, {
+      data: {
+        name,
+        credentals,
+        mnemonic,
+      },
+    });
   }
 }
 

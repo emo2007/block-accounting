@@ -13,6 +13,7 @@ import { apiService } from "../axios/global.service";
 import { OrgForm } from "./OrgForm";
 import { OrganizationCard } from "./OrgCard";
 import { FolderOpenTwoTone } from "@ant-design/icons";
+import useOrganizationsHooks from "@/hooks/organizations";
 import {
   Organization,
   NewOrgResponse,
@@ -20,7 +21,8 @@ import {
 } from "../axios/api-types";
 import Cookies from "js-cookie";
 export function OrgCreatePage() {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  //const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const { organizations, setOrganizations } = useOrganizationsHooks();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -47,16 +49,19 @@ export function OrgCreatePage() {
     setIsModalOpen(false);
   };
 
+  console.log(organizations);
+
   const handleCancel = () => {
     setIsModalOpen(false);
   };
   useEffect(() => {
     loadOrganizations();
   }, []);
+
   const loadOrganizations = async () => {
     const result = await apiService.getOrganizations();
     if (result) {
-      setOrganizations(result.data.items);
+      setOrganizations(result.data.items || []);
     }
   };
   return (
@@ -69,7 +74,7 @@ export function OrgCreatePage() {
         </div>
         <div></div>
         <div className="flex flex-col relative  w-full h-3/4  items-center  overflow-scroll gap-10  p-10 z-0">
-          {organizations.length === 0 && (
+          {organizations.length && (
             <FolderOpenTwoTone style={{ fontSize: "400%" }} />
           )}
           {organizations.length ? (

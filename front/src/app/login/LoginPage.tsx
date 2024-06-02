@@ -14,17 +14,32 @@ export function LoginPage() {
   const { passwordVisible, setPasswordVisible } = useLoginHooks();
   const [inp, setInp] = useState("");
   //
-  const [seed, setSeed] = useState<string[]>(["airport","donate","language","disagree","dumb","access","insect","tribe","ozone","humor","foot","jealous","much","digital",]);
+  const [seed, setSeed] = useState<string[]>([
+    "airport",
+    "donate",
+    "language",
+    "disagree",
+    "dumb",
+    "access",
+    "insect",
+    "tribe",
+    "ozone",
+    "humor",
+    "foot",
+    "jealous",
+    "much",
+    "digital",
+  ]);
 
   // const [seed, setSeed] = useState<string[]>(["melody","correct","brain","slide","flip","polar","asset","know","pencil","major","smile","vital","nominee","merge","addict"]);
   const [disabled, setDisabled] = useState(true);
   const router = useRouter();
 
   const onLogin = async () => {
-    const result = await apiService.login(seed.join(' '));
+    const result = await apiService.login(seed.join(" "));
     // if (result) {
-      Cookies.set("accessToken", result.data.token);
-      router.push("/organization");
+    Cookies.set("accessToken", result.data.token);
+    router.push("/organization");
     // }
   };
   const onRegister = async () => {
@@ -33,7 +48,7 @@ export function LoginPage() {
       Cookies.set("accessToken", result.data.token);
       router.push("/organization");
     }
-  }
+  };
   // const getSeed = (event: React.ChangeEvent<HTMLInputElement>) => {
   //   setSeed(inp);
   // };
@@ -44,7 +59,7 @@ export function LoginPage() {
   }, [inp]);
 
   const onSubmitHandler = async () => {
-    setSeed((prevState) => prevState ? [...prevState, inp] : [inp]);
+    setSeed((prevState) => (prevState ? [...prevState, inp] : [inp]));
     setInp("");
   };
 
@@ -91,14 +106,17 @@ export function LoginPage() {
           </Button>
         </Space.Compact>
       </div>
-      { <div
-        className="flex flex-row w-[700px] gap-3 content-box flex-wrap
+      {
+        <div
+          className="flex   flex-row w-[700px] gap-3 content-box flex-wrap
       "
-      >
-        {seed && seed.map((element: string, index: number) => (
-          <SeedItem key={index} seed={element} />
-        ))}
-      </div> }
+        >
+          {seed &&
+            seed.map((element: string, index: number) => (
+              <SeedItem key={index} seed={element} />
+            ))}
+        </div>
+      }
       <Button
         onClick={onLogin}
         style={{ width: "150px" }}
@@ -108,10 +126,10 @@ export function LoginPage() {
         Login
       </Button>
       <Button
-          onClick={onRegister}
-          style={{ width: "150px" }}
-          type="primary"
-          size="large"
+        onClick={onRegister}
+        style={{ width: "150px" }}
+        type="primary"
+        size="large"
       >
         Join
       </Button>

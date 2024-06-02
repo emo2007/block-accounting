@@ -32,6 +32,13 @@ export type PublicKey = {
 export type DeployResponse = {
   title: string;
   owners: PublicKey[];
-  confirmations: number;
+  confirmations: string;
 };
 export type MultiSigResponse = {};
+
+export type InvitationResponse = {
+  token: string;
+  token_expired_at: number;
+  refresh_token: string;
+  refresh_token_expired_at: number;
+};

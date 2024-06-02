@@ -6,14 +6,37 @@ import { Card } from "antd";
 import { WalletOutlined } from "@ant-design/icons";
 import type { InputNumberProps } from "antd";
 import { Col, InputNumber, Row, Slider, Select, Button } from "antd";
-
+import { apiService } from "@/app/axios/global.service";
+import Cookies from "js-cookie";
+import { useRouter, useSearchParams } from "next/navigation";
 const { Title } = Typography;
 
 export function MultisigPage() {
+  const searchParams = useSearchParams();
+  const [multiSigData, setmultiSigData] = useState({
+    title: "",
+    owners: [],
+    confirmations: 0,
+    organizationId: searchParams.get("id") || "",
+  });
+  const router = useRouter();
   const [inputValue, setInputValue] = useState(1);
   const onChange: InputNumberProps["onChange"] = (newValue) => {
     setInputValue(newValue as number);
   };
+
+  const onDeployMultisig = async () => {
+    const result = await apiService.deployMultisig(
+      multiSigData.organizationId,
+      multiSigData.title,
+      multiSigData.owners,
+      multiSigData.confirmations
+    );
+    if (result) {
+      //Cookies.set("multisig", {result.data.confirmations, result.data.owners, result.data.organizationId, result.data.title});
+    }
+  };
+
   return (
     <div className="flex flex-col w-full h-full p-8 gap-10 ">
       <div className="flex flex-col w-1/3">
@@ -93,7 +116,7 @@ export function MultisigPage() {
         </Card>
       </div>
       <div className="flex  w-full justify-end pr-5">
-        <Button size={"large"} type="primary">
+        <Button onClick={onDeployMultisig} size={"large"} type="primary">
           Create Multisig
         </Button>
       </div>

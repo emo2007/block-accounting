@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import { OrgProfile } from "./id";
+import { OrgProfile } from "./[id]";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   return (

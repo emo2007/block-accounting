@@ -14,7 +14,6 @@ type OrgItemProps = {
 export const OrganizationCard: FC<OrgItemProps> = ({ element }) => {
   const router = useRouter();
   const id: any = element.id;
-
   return (
     <>
       <Card
@@ -22,7 +21,10 @@ export const OrganizationCard: FC<OrgItemProps> = ({ element }) => {
         type="inner"
         extra={
           <Link
-            href={{ pathname: "/organization/overview/dashboard/", query: id }}
+            href={{
+              pathname: "/organization/overview/dashboard/",
+              query: { id: id },
+            }}
           >
             Go To Overview
           </Link>

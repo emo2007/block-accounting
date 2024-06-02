@@ -4,6 +4,10 @@ import { Button, Menu, List, Typography, Avatar, Skeleton } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { PayOutBtn } from "@/app/ui/PayOutBtn";
+import { apiService } from "@/app/axios/global.service";
+import useOrganizationsHooks from "@/hooks/organizations";
+import { useSearchParams } from "next/navigation";
+import { Organization } from "@/app/axios/api-types";
 const count = 8;
 const fakeDataUrl = `https://randomuser.me/api/?results=${count}&inc=name,gender,email,nat,picture&noinfo`;
 interface DataType {
@@ -25,11 +29,35 @@ interface DataType {
 const { Title } = Typography;
 type MenuItem = Required<MenuProps>["items"][number];
 export function EmployeeList() {
+  const {
+    organizations,
+    filteredOrganization,
+    setOrganizations,
+    loadOrganizations,
+  } = useOrganizationsHooks();
   const [collapsed, setCollapsed] = useState(true);
   const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [dataEmployees, setData] = useState<DataType[]>([]);
   const [list, setList] = useState<DataType[]>([]);
+  const [organization, setOrganization] = useState<Organization>({
+    id: "",
+    name: "",
+    address: "",
+  });
+  const loadEmployees = async (id: string) => {
+    const data: any = await apiService.getEmployees(id, []);
+    setList(data.data.participants);
+  };
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const id = searchParams.get("id") || "";
+    if (filteredOrganization) {
+      loadEmployees(id);
+      setOrganization(filteredOrganization);
+      setInitLoading(false);
+    }
+  }, [organizations]);
   useEffect(() => {
     fetch(fakeDataUrl)
       .then((res) => res.json())
@@ -41,27 +69,7 @@ export function EmployeeList() {
   }, []);
   const onLoadMore = () => {
     setLoading(true);
-    setList(
-      dataEmployees.concat(
-        [...new Array(count)].map(() => ({
-          loading: true,
-          name: {},
-          picture: {},
-        }))
-      )
-    );
-    fetch(fakeDataUrl)
-      .then((res) => res.json())
-      .then((res) => {
-        const newData = dataEmployees.concat(res.results);
-        setData(newData);
-        setList(newData);
-        setLoading(false);
-        // Resetting window's offsetTop so as to display react-virtualized demo underfloor.
-        // In real scene, you can using public method of react-virtualized:
-        // https://stackoverflow.com/questions/46700726/how-to-use-public-method-updateposition-of-react-virtualized
-        window.dispatchEvent(new Event("resize"));
-      });
+    loadEmployees(organization.id);
   };
   const loadMore =
     !initLoading && !loading ? (
@@ -77,7 +85,7 @@ export function EmployeeList() {
       </div>
     ) : null;
   return (
-    <div className="flex flex-col w-full h-full  gap-5 pb-20 px-30 p-8">
+    <div className="flex flex-col w-full h-full  gap-5 pb-20 px-30 p-10">
       <Title style={{ color: "#302d43", textIndent: 15 }}>Employee List</Title>
       <List
         className="demo-loadmore-list"
@@ -85,18 +93,22 @@ export function EmployeeList() {
         itemLayout="horizontal"
         loadMore={loadMore}
         dataSource={list}
-        renderItem={(item) => (
-          <List.Item actions={[<PayOutBtn />]}>
-            <Skeleton avatar title={false} loading={item.loading} active>
-              <List.Item.Meta
-                avatar={<Avatar icon={<UserOutlined />} />}
-                title={<a href="https://ant.design">{item.name?.last}</a>}
-                description="1Lbcfr7sAHTD9CgdQo3HTMTkV8LK4ZnX71"
-              />
-              <div>wallet address</div>
-            </Skeleton>
-          </List.Item>
-        )}
+        renderItem={(item) => {
+          console.log(item);
+
+          return (
+            <List.Item actions={[<PayOutBtn />]}>
+              <Skeleton avatar title={false} loading={item.loading} active>
+                <List.Item.Meta
+                  avatar={<Avatar icon={<UserOutlined />} />}
+                  title={<a href="https://ant.design">{item.name}</a>}
+                  description="1Lbcfr7sAHTD9CgdQo3HTMTkV8LK4ZnX71"
+                />
+                <div>wallet address</div>
+              </Skeleton>
+            </List.Item>
+          );
+        }}
       />
     </div>
   );

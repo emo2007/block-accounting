@@ -1,10 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Card } from "antd";
+import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { UserOutlined } from "@ant-design/icons";
 import { Button, List, Divider, Typography, Avatar, Skeleton } from "antd";
+import { OrganizationCard } from "@/app/orgCreate/OrgCard";
+import { Organization } from "@/app/axios/api-types";
+import useOrganizationsHooks from "@/hooks/organizations";
+import { apiService } from "@/app/axios/global.service";
 
+type OrgItemProps = {
+  element: Organization;
+};
 interface DataType {
   gender?: string;
   name: {
@@ -35,53 +42,51 @@ const data = [
 const { Title } = Typography;
 
 export function OrgProfile() {
+  const { organizations, setOrganizations, loadOrganizations } =
+    useOrganizationsHooks();
+  const [organization, setOrganization] = useState<Organization>({
+    id: "",
+    name: "",
+    address: "",
+  });
   const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [dataEmployees, setData] = useState<DataType[]>([]);
-  const [list, setList] = useState<DataType[]>([]);
+  const [list, setList] = useState<any[]>([]);
 
   const router = useRouter();
-  const pathname = useSearchParams();
-  console.log(pathname.getAll("query"));
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const id = searchParams.get("id") || "";
+    const filteredOrganization = organizations.find(
+      (element) => element.id === id
+    );
+
+    if (filteredOrganization) {
+      loadEmployees(id);
+      setOrganization(filteredOrganization);
+      setInitLoading(false);
+    }
+  }, [organizations]);
+
+  useEffect(() => {
+    loadOrganizations();
+  }, []);
+
+  const loadEmployees = async (id: string) => {
+    const data: any = await apiService.getEmployees(id, []);
+    setList(data.data.participants);
+  };
 
   const onNextPageHandler = () => {
     router.push("/organization/overview/employees");
   };
   const onMultisigPageHandler = () => {
-    router.push("/organization/overview/multiSig");
+    router.push("/organization/overview/multiSig/?id=" + organization.id);
   };
-  useEffect(() => {
-    fetch(fakeDataUrl)
-      .then((res) => res.json())
-      .then((res) => {
-        setInitLoading(false);
-        setData(res.results);
-        setList(res.results);
-      });
-  }, []);
   const onLoadMore = () => {
-    setLoading(true);
-    setList(
-      dataEmployees.concat(
-        [...new Array(count)].map(() => ({
-          loading: true,
-          name: {},
-          picture: {},
-        }))
-      )
-    );
-    fetch(fakeDataUrl)
-      .then((res) => res.json())
-      .then((res) => {
-        const newData = dataEmployees.concat(res.results);
-        setData(newData);
-        setList(newData);
-        setLoading(false);
-        // Resetting window's offsetTop so as to display react-virtualized demo underfloor.
-        // In real scene, you can using public method of react-virtualized:
-        // https://stackoverflow.com/questions/46700726/how-to-use-public-method-updateposition-of-react-virtualized
-        window.dispatchEvent(new Event("resize"));
-      });
+    loadEmployees(organization.id);
+    setInitLoading(false);
   };
   const loadMore =
     !initLoading && !loading ? (
@@ -101,7 +106,12 @@ export function OrgProfile() {
     <div className="flex flex-row w-full h-full bg-slate-50  p-8">
       <div className="flex flex-col w-11/12 ">
         <Title style={{ color: "#302d43", textIndent: 15 }}>Dashboard</Title>
-        <Card
+
+        <div style={{ width: "60%" }} className="flex flex-col  ">
+          {organization && <OrganizationCard element={organization} />}
+        </div>
+
+        {/* <Card
           title="Organization Name"
           bordered={false}
           style={{ width: "60%" }}
@@ -109,7 +119,7 @@ export function OrgProfile() {
           <p>Address</p>
           <p>Phone</p>
           <p>Description</p>
-        </Card>
+        </Card> */}
         <div className="flex  w-full justify-end ">
           <Button
             type="primary"
@@ -161,23 +171,27 @@ export function OrgProfile() {
           itemLayout="horizontal"
           loadMore={loadMore}
           dataSource={list}
-          renderItem={(item) => (
-            <List.Item
-              actions={[
-                <a key="list-loadmore-edit">edit</a>,
-                <a key="list-loadmore-more">more</a>,
-              ]}
-            >
-              <Skeleton avatar title={false} loading={item.loading} active>
-                <List.Item.Meta
-                  avatar={<Avatar icon={<UserOutlined />} />}
-                  title={<a href="https://ant.design">{item.name?.last}</a>}
-                  description="1Lbcfr7sAHTD9CgdQo3HTMTkV8LK4ZnX71"
-                />
-                <div>wallet address</div>
-              </Skeleton>
-            </List.Item>
-          )}
+          renderItem={(item) => {
+            console.log(item);
+
+            return (
+              <List.Item
+                actions={[
+                  <a key="list-loadmore-edit">edit</a>,
+                  <a key="list-loadmore-more">more</a>,
+                ]}
+              >
+                <Skeleton avatar title={false} loading={item.loading} active>
+                  <List.Item.Meta
+                    avatar={<Avatar icon={<UserOutlined />} />}
+                    title={<a href="https://ant.design">{item.name}</a>}
+                    description="1Lbcfr7sAHTD9CgdQo3HTMTkV8LK4ZnX71"
+                  />
+                  <div>wallet address</div>
+                </Skeleton>
+              </List.Item>
+            );
+          }}
         />
       </div>
     </div>
