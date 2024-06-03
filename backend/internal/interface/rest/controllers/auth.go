@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/auth"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/domain"
 	"github.com/emochka2007/block-accounting/internal/interface/rest/presenters"
 	"github.com/emochka2007/block-accounting/internal/pkg/bip39"
@@ -19,7 +20,6 @@ import (
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -9,12 +9,12 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/cache"
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/organizations"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/cache"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 )

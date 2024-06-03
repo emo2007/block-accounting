@@ -4,9 +4,9 @@
 package factory
 
 import (
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/service"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository"
 	"github.com/google/wire"
 )
 

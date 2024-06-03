@@ -3,17 +3,17 @@ package factory
 import (
 	"log/slog"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/auth"
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/cache"
+	orepo "github.com/emochka2007/block-accounting/internal/infrastructure/repository/organizations"
+	txRepo "github.com/emochka2007/block-accounting/internal/infrastructure/repository/transactions"
+	urepo "github.com/emochka2007/block-accounting/internal/infrastructure/repository/users"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/jwt"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/transactions"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/cache"
-	orepo "github.com/emochka2007/block-accounting/internal/usecase/repository/organizations"
-	txRepo "github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
-	urepo "github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 )
 
 func provideUsersInteractor(

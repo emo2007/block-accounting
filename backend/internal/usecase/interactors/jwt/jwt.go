@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/auth"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/users"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/auth"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )

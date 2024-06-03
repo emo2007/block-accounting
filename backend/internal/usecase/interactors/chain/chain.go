@@ -10,11 +10,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/transactions"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
 	"github.com/emochka2007/block-accounting/internal/pkg/logger"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/transactions"
+	"github.com/emochka2007/block-accounting/internal/usecase/interactors/organizations"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 )
@@ -27,23 +28,27 @@ type ChainInteractor interface {
 
 	PayrollDeploy(ctx context.Context, params PayrollDeployParams) error
 	ListPayrolls(ctx context.Context, params ListPayrollsParams) ([]models.Payroll, error)
+	SetSalary(ctx context.Context, params SetSalaryParams) error
 }
 
 type chainInteractor struct {
-	log          *slog.Logger
-	config       config.Config
-	txRepository transactions.Repository
+	log                     *slog.Logger
+	config                  config.Config
+	txRepository            transactions.Repository
+	organizationsInteractor organizations.OrganizationsInteractor
 }
 
 func NewChainInteractor(
 	log *slog.Logger,
 	config config.Config,
 	txRepository transactions.Repository,
+	organizationsInteractor organizations.OrganizationsInteractor,
 ) ChainInteractor {
 	return &chainInteractor{
-		log:          log,
-		config:       config,
-		txRepository: txRepository,
+		log:                     log,
+		config:                  config,
+		txRepository:            txRepository,
+		organizationsInteractor: organizationsInteractor,
 	}
 }
 
@@ -94,7 +99,7 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		return fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
-	go func() {
+	go func() { // TODO remove this subroutine shit and replace it with worker pools
 		pid := uuid.Must(uuid.NewV7()).String()
 		startTime := time.Now()
 
@@ -103,7 +108,7 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 			slog.String("pid", pid),
 		)
 
-		doneCh := make(chan struct{})
+		doneCh := make(chan struct{}, 1)
 
 		defer func() {
 			if err := recover(); err != nil {
@@ -152,6 +157,7 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
 
+		// TODO replace http.DefaultClient with custom ChainAPi client from infrastructure/ethapi mod
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			i.log.Error(
@@ -250,6 +256,7 @@ func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte
 	req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
 	req.Header.Add("Content-Type", "application/json")
 
+	// TODO replace http.DefaultClient with custom ChainAPi client from infrastructure/ethapi mod
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error fetch pub address. %w", err)
@@ -336,7 +343,7 @@ func (i *chainInteractor) PayrollDeploy(
 		return fmt.Errorf("error marshal request body. %w", err)
 	}
 
-	go func() {
+	go func() { // TODO remove this subroutine shit and replace it with worker pools
 		pid := uuid.Must(uuid.NewV7()).String()
 		startTime := time.Now()
 
@@ -345,7 +352,7 @@ func (i *chainInteractor) PayrollDeploy(
 			slog.String("pid", pid),
 		)
 
-		doneCh := make(chan struct{})
+		doneCh := make(chan struct{}, 1)
 
 		defer func() {
 			if err := recover(); err != nil {
@@ -361,7 +368,7 @@ func (i *chainInteractor) PayrollDeploy(
 			select {
 			case <-doneCh:
 				i.log.Info(
-					"new paroll worker done",
+					"new payroll worker done",
 					slog.String("pid", pid),
 					slog.Time("started at", startTime),
 					slog.Time("done at", time.Now()),
@@ -401,6 +408,7 @@ func (i *chainInteractor) PayrollDeploy(
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
 
+		// TODO replace http.DefaultClient with custom ChainAPi client from infrastructure/ethapi mod
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			i.log.Error(
@@ -513,14 +521,15 @@ func (i *chainInteractor) ListPayrolls(
 	return payrolls, nil
 }
 
-type NewSalaryParams struct {
-	OrganizationID uuid.UUID
-	EmployeeID     uuid.UUID
+type SetSalaryParams struct {
+	PayrollID  uuid.UUID
+	EmployeeID uuid.UUID
+	Salary     float64
 }
 
-func (i *chainInteractor) NewSalary(
+func (i *chainInteractor) SetSalary(
 	ctx context.Context,
-	params NewSalaryParams,
+	params SetSalaryParams,
 ) error {
 	user, err := ctxmeta.User(ctx)
 	if err != nil {
@@ -533,10 +542,129 @@ func (i *chainInteractor) NewSalary(
 	}
 
 	i.log.Debug(
-		"not implemented",
+		"SetSalary",
 		slog.String("org id", organizationID.String()),
 		slog.Any("user", user),
 	)
+
+	payrolls, err := i.ListPayrolls(ctx, ListPayrollsParams{
+		IDs:            []uuid.UUID{params.PayrollID},
+		OrganizationID: organizationID,
+	})
+	if err != nil {
+		return fmt.Errorf("error fetch payroll. %w", err)
+	}
+
+	if len(payrolls) == 0 {
+		return fmt.Errorf("error payroll not found. %w", err)
+	}
+
+	payroll := payrolls[0]
+
+	multisigs, err := i.ListMultisigs(ctx, ListMultisigsParams{
+		IDs:            uuid.UUIDs{payroll.MultisigID},
+		OrganizationID: organizationID,
+	})
+	if err != nil {
+		return fmt.Errorf("error fetch multisig. %w", err)
+	}
+
+	if len(multisigs) == 0 {
+		return fmt.Errorf("error multisig not found. %w", err)
+	}
+
+	multisig := multisigs[0]
+
+	employee, err := i.organizationsInteractor.Participant(ctx, organizations.ParticipantParams{
+		ID:             params.EmployeeID,
+		OrganizationID: organizationID,
+		EmployeesOnly:  true,
+	})
+	if err != nil {
+		return fmt.Errorf("error fetch employee from repository. %w", err)
+	}
+
+	if employee.GetEmployee() == nil {
+		return fmt.Errorf("error employee is nil")
+	}
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				i.log.Error("worker paniced!", slog.Any("panic", err))
+			}
+
+			// doneCh <- struct{}{}
+			// close(doneCh)
+		}()
+
+		ctx, cancel := context.WithTimeout(context.TODO(), 2*time.Minute)
+		defer cancel()
+
+		maddr := common.Bytes2Hex(multisig.Address)
+		if maddr[0] != 0 && maddr[1] != 'x' {
+			maddr = "0x" + maddr
+		}
+
+		caddr := common.Bytes2Hex(payroll.Address)
+		if caddr[0] != 0 && caddr[1] != 'x' {
+			caddr = "0x" + caddr
+		}
+
+		eaddr := common.Bytes2Hex(employee.GetEmployee().WalletAddress)
+		if caddr[0] != 0 && caddr[1] != 'x' {
+			caddr = "0x" + caddr
+		}
+
+		bodyMap := map[string]any{
+			"multiSigWallet":  maddr,
+			"contractAddress": caddr,
+			"employeeAddress": eaddr,
+			"salary":          params.Salary,
+		}
+
+		bodyRaw, err := json.Marshal(&bodyMap)
+		if err != nil {
+			i.log.Error(
+				"error marshal request body",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			i.config.ChainAPI.Host+"/salaries/set-salary",
+			bytes.NewBuffer(bodyRaw),
+		)
+		if err != nil {
+			i.log.Error(
+				"error build request",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			i.log.Error(
+				"error do request",
+				logger.Err(err),
+			)
+
+			return
+		}
+
+		defer resp.Body.Close()
+
+		// todo parse body
+	}()
 
 	return nil
 }

@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/users"
 	"github.com/emochka2007/block-accounting/internal/pkg/hdwallet"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	"github.com/emochka2007/block-accounting/internal/usecase/interactors/chain"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 	"github.com/google/uuid"
 )
 

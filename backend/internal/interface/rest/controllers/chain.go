@@ -343,7 +343,18 @@ func (c *transactionsController) ListPayrolls(w http.ResponseWriter, r *http.Req
 }
 
 func (c *transactionsController) SetSalary(w http.ResponseWriter, r *http.Request) ([]byte, error) {
-	// req, err := presenters.CreateRequest[domain.]()
+	_, err := presenters.CreateRequest[domain.SetSalaryRequest](r)
+	if err != nil {
+		return nil, fmt.Errorf("error build set salary request. %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// todo fill params
+	if err := c.chainInteractor.SetSalary(ctx, chain.SetSalaryParams{}); err != nil {
+		return nil, fmt.Errorf("error create new salary. %w", err)
+	}
 
 	return presenters.ResponseOK()
 }

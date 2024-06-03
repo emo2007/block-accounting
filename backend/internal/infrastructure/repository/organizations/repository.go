@@ -8,9 +8,9 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/users"
 	"github.com/emochka2007/block-accounting/internal/pkg/models"
 	sqltools "github.com/emochka2007/block-accounting/internal/pkg/sqlutils"
-	"github.com/emochka2007/block-accounting/internal/usecase/repository/users"
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 )
