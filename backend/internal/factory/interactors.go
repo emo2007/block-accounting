@@ -58,6 +58,7 @@ func provideChainInteractor(
 	log *slog.Logger,
 	config config.Config,
 	txRepository txRepo.Repository,
+	orgInteractor organizations.OrganizationsInteractor,
 ) chain.ChainInteractor {
-	return chain.NewChainInteractor(log, config, txRepository)
+	return chain.NewChainInteractor(log, config, txRepository, orgInteractor)
 }

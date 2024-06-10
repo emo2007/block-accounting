@@ -7,9 +7,9 @@
 package factory
 
 import (
+	"github.com/emochka2007/block-accounting/internal/infrastructure/repository"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/service"
-	"github.com/emochka2007/block-accounting/internal/infrastructure/repository"
 )
 
 // Injectors from wire.go:
@@ -23,14 +23,14 @@ func ProvideService(c config.Config) (service.Service, func(), error) {
 	usersRepository := provideUsersRepository(db)
 	organizationsRepository := provideOrganizationsRepository(db, usersRepository)
 	transactionsRepository := provideTxRepository(db, organizationsRepository)
-	chainInteractor := provideChainInteractor(logger, c, transactionsRepository)
+	client, cleanup2 := provideRedisConnection(c)
+	cache := provideRedisCache(client, logger)
+	organizationsInteractor := provideOrganizationsInteractor(logger, organizationsRepository, cache)
+	chainInteractor := provideChainInteractor(logger, c, transactionsRepository, organizationsInteractor)
 	usersInteractor := provideUsersInteractor(logger, usersRepository, chainInteractor)
 	authRepository := provideAuthRepository(db)
 	jwtInteractor := provideJWTInteractor(c, usersInteractor, authRepository)
 	authPresenter := provideAuthPresenter(jwtInteractor)
-	client, cleanup2 := provideRedisConnection(c)
-	cache := provideRedisCache(client, logger)
-	organizationsInteractor := provideOrganizationsInteractor(logger, organizationsRepository, cache)
 	authController := provideAuthController(logger, usersInteractor, authPresenter, jwtInteractor, authRepository, organizationsInteractor)
 	organizationsPresenter := provideOrganizationsPresenter()
 	organizationsController := provideOrganizationsController(logger, organizationsInteractor, organizationsPresenter)
