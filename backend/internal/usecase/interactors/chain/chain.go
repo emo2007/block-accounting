@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/ethapi"
 	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/transactions"
 	"github.com/emochka2007/block-accounting/internal/pkg/config"
 	"github.com/emochka2007/block-accounting/internal/pkg/ctxmeta"
@@ -36,6 +37,7 @@ type chainInteractor struct {
 	config                  config.Config
 	txRepository            transactions.Repository
 	organizationsInteractor organizations.OrganizationsInteractor
+	client                  ethapi.EthAPIClient
 }
 
 func NewChainInteractor(
@@ -43,6 +45,7 @@ func NewChainInteractor(
 	config config.Config,
 	txRepository transactions.Repository,
 	organizationsInteractor organizations.OrganizationsInteractor,
+	client ethapi.EthAPIClient,
 ) ChainInteractor {
 	return &chainInteractor{
 		log:                     log,
@@ -56,10 +59,6 @@ type NewMultisigParams struct {
 	Title         string
 	Owners        []models.OrganizationParticipant
 	Confirmations int
-}
-
-type newMultisigChainResponse struct {
-	Address string `json:"address"`
 }
 
 func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigParams) error {
@@ -81,14 +80,6 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		pks[i] = "0x" + common.Bytes2Hex(owner.GetUser().PublicKey())
 	}
 
-	requestBody, err := json.Marshal(map[string]any{
-		"owners":        pks,
-		"confirmations": params.Confirmations,
-	})
-	if err != nil {
-		return fmt.Errorf("error marshal request body. %w", err)
-	}
-
 	user, err := ctxmeta.User(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetch user from context. %w", err)
@@ -99,7 +90,7 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		return fmt.Errorf("error fetch organization id from context. %w", err)
 	}
 
-	go func() { // TODO remove this subroutine shit and replace it with worker pools
+	go func() { // TODO remove this subroutine shit and replace it with worker queue tasks
 		pid := uuid.Must(uuid.NewV7()).String()
 		startTime := time.Now()
 
@@ -142,23 +133,9 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 		requestContext, cancel := context.WithTimeout(context.TODO(), time.Minute*15)
 		defer cancel()
 
-		body := bytes.NewBuffer(requestBody)
+		requestContext = ctxmeta.UserContext(requestContext, user)
 
-		req, err := http.NewRequestWithContext(requestContext, http.MethodPost, endpoint, body)
-		if err != nil {
-			i.log.Error(
-				"error build request",
-				logger.Err(err),
-			)
-
-			return
-		}
-
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("X-Seed", common.Bytes2Hex(user.Seed()))
-
-		// TODO replace http.DefaultClient with custom ChainAPi client from infrastructure/ethapi mod
-		resp, err := http.DefaultClient.Do(req)
+		address, err := i.client.DeployMultisig(requestContext, pks, params.Confirmations)
 		if err != nil {
 			i.log.Error(
 				"error send deploy multisig request",
@@ -169,38 +146,7 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 			return
 		}
 
-		defer resp.Body.Close()
-
-		raw, err := io.ReadAll(resp.Body)
-		if err != nil {
-			i.log.Error(
-				"error read body",
-				logger.Err(err),
-			)
-
-			return
-		}
-
-		respObject := new(newMultisigChainResponse)
-
-		if err := json.Unmarshal(raw, &respObject); err != nil {
-			i.log.Error(
-				"error parse chain-api response body",
-				logger.Err(err),
-			)
-
-			return
-		}
-
-		if respObject.Address == "" {
-			i.log.Error(
-				"error multisig address is empty",
-			)
-
-			return
-		}
-
-		multisigAddress := common.Hex2Bytes(respObject.Address[2:])
+		multisigAddress := common.Hex2Bytes(address[2:])
 
 		createdAt := time.Now()
 
@@ -214,14 +160,6 @@ func (i *chainInteractor) NewMultisig(ctx context.Context, params NewMultisigPar
 			CreatedAt:             createdAt,
 			UpdatedAt:             createdAt,
 		}
-
-		i.log.Debug(
-			"deploy multisig response",
-			slog.Int("code", resp.StatusCode),
-			slog.String("body", string(raw)),
-			slog.Any("parsed", respObject),
-			slog.Any("multisig object", msg),
-		)
 
 		if err := i.txRepository.AddMultisig(requestContext, msg); err != nil {
 			i.log.Error(
@@ -272,7 +210,7 @@ func (i *chainInteractor) PubKey(ctx context.Context, user *models.User) ([]byte
 	pubKeyStr := string(respBody)[2:]
 
 	if pubKeyStr == "" {
-		return nil, fmt.Errorf("error empty public key")
+		return nil, fmt.Errorf("error empty public key...")
 	}
 
 	return common.Hex2Bytes(pubKeyStr), nil

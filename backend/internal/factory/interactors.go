@@ -3,6 +3,7 @@ package factory
 import (
 	"log/slog"
 
+	"github.com/emochka2007/block-accounting/internal/infrastructure/ethapi"
 	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/auth"
 	"github.com/emochka2007/block-accounting/internal/infrastructure/repository/cache"
 	orepo "github.com/emochka2007/block-accounting/internal/infrastructure/repository/organizations"
@@ -60,5 +61,8 @@ func provideChainInteractor(
 	txRepository txRepo.Repository,
 	orgInteractor organizations.OrganizationsInteractor,
 ) chain.ChainInteractor {
-	return chain.NewChainInteractor(log, config, txRepository, orgInteractor)
+	return chain.NewChainInteractor(log, config, txRepository, orgInteractor, ethapi.NewEthAPIClient(
+		config.ChainAPI.Host,
+		log.WithGroup("eth-api-client"),
+	))
 }
