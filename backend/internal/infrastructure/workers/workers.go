@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 
@@ -72,3 +73,7 @@ func (w *Worker) handleJobs(ch <-chan amqp.Delivery) {
 		// TODO dispatch job
 	}
 }
+
+func (w *Worker) handleDeployMultisig(
+	ctx context.Context,
+)
