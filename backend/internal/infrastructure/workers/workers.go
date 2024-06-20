@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/emochka2007/block-accounting/internal/infrastructure/queue"
@@ -71,9 +72,33 @@ func (w *Worker) handleJobs(ch <-chan amqp.Delivery) {
 		// TODO check job.IdempotentKey for duplicate
 
 		// TODO dispatch job
+		switch job.Payload.(type) {
+		case *queue.JobDeployMultisig:
+			jdm, ok := job.Payload.(*queue.JobDeployMultisig)
+			if !ok {
+				w.log.Error(
+					"error invalid job type",
+					slog.String("job_id", job.ID),
+					slog.String("job_key", job.IdempotencyKey),
+				)
+				continue
+			}
+
+			if err := w.handleDeployMultisig(job.Context, jdm); err != nil {
+				w.log.Error(
+					"error handle deploy multisig job",
+					slog.String("job_id", job.ID),
+					slog.String("job_key", job.IdempotencyKey),
+					logger.Err(err),
+				)
+			}
+		}
 	}
 }
 
 func (w *Worker) handleDeployMultisig(
 	ctx context.Context,
-)
+	dm *queue.JobDeployMultisig,
+) error {
+	return fmt.Errorf("error unimplemented")
+}
