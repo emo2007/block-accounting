@@ -62,64 +62,68 @@ services:
       start_period: 5s
     profiles: [blockd, database, noback]
 
-  blockd-cache:
-    container_name: blockd-cache 
-    image: redis:7.2.4
+  blockd-rmq:
+    image: rabbitmq:3.13.3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    hostname: blockd-rmq
     restart: always
-    networks:
-      - blockd-net
-    ports:
-      - 6379:6379
-    profiles: [blockd, database, noback]
-
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    ports:
-      - 9091:9090
-    restart: unless-stopped
-    networks:
-      - blockd-net
-    volumes:
-      - ./prometheus:/etc/prometheus
-      - prometheus_data:/prometheus
-    profiles: [metrics]
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - 3112:3000
-    restart: unless-stopped
-    networks:
-      - blockd-net
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=grafana
+      - RABBITMQ_DEFAULT_USER=blockd
+      - RABBITMQ_DEFAULT_PASS=blockd
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
     volumes:
-      - ./grafana:/etc/grafana/provisioning/datasources
-    profiles: [metrics]
+      - ./rabbitmq:/var/lib/rabbitmq
 
-  syslog:
-    image: linuxserver/syslog-ng:3.36.1 
-    container_name: syslog-ng
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=UTC
-    volumes:
-      - /srv/syslog/config:/config
-      - /srv/syslog/logs:/var/log
-    ports:
-      - 514:5514/udp
-      - 601:6601/tcp
-      - 6514:6514/tcp
-    restart: unless-stopped
-    networks:
-      - syslog
-    logging:
-      driver: "json-file"
-    profiles: [metrics]
+  # prometheus:
+  #   image: prom/prometheus
+  #   container_name: prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #   ports:
+  #     - 9091:9090
+  #   restart: unless-stopped
+  #   networks:
+  #     - blockd-net
+  #   volumes:
+  #     - ./prometheus:/etc/prometheus
+  #     - prometheus_data:/prometheus
+  #   profiles: [metrics]
+
+  # grafana:
+  #   image: grafana/grafana
+  #   container_name: grafana
+  #   ports:
+  #     - 3112:3000
+  #   restart: unless-stopped
+  #   networks:
+  #     - blockd-net
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=grafana
+  #   volumes:
+  #     - ./grafana:/etc/grafana/provisioning/datasources
+  #   profiles: [metrics]
+
+  # syslog:
+  #   image: linuxserver/syslog-ng:3.36.1 
+  #   container_name: syslog-ng
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=UTC
+  #   volumes:
+  #     - /srv/syslog/config:/config
+  #     - /srv/syslog/logs:/var/log
+  #   ports:
+  #     - 514:5514/udp
+  #     - 601:6601/tcp
+  #     - 6514:6514/tcp
+  #   restart: unless-stopped
+  #   networks:
+  #     - syslog
+  #   logging:
+  #     driver: "json-file"
+  #   profiles: [metrics]
 

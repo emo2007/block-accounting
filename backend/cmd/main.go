@@ -41,6 +41,10 @@ func main() {
 				Name:  "chain-api-url",
 				Value: "http://localhost:3000",
 			},
+			&cli.IntFlag{
+				Name:  "num-internal-workers",
+				Value: 1,
+			},
 
 			// rest
 			&cli.StringFlag{
@@ -73,16 +77,6 @@ func main() {
 			&cli.BoolFlag{
 				Name: "db-enable-tls",
 			},
-
-			&cli.StringFlag{
-				Name: "cache-host",
-			},
-			&cli.StringFlag{
-				Name: "cache-user",
-			},
-			&cli.StringFlag{
-				Name: "cache-secret",
-			},
 		},
 		Action: func(c *cli.Context) error {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -106,10 +100,6 @@ func main() {
 					Database:  c.String("db-database"),
 					User:      c.String("db-user"),
 					Secret:    c.String("db-secret"),
-
-					CacheHost:   c.String("cache-host"),
-					CacheUser:   c.String("cache-user"),
-					CacheSecret: c.String("cache-secret"),
 				},
 				ChainAPI: config.ChainAPIConfig{
 					Host: c.String("chain-api-url"),

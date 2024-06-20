@@ -33,3 +33,7 @@ func NewWithConnection(
 		cc: cc,
 	}
 }
+
+func (r *RMQClient) Channel() (*amqp.Channel, error) {
+	return r.cc.Channel()
+}

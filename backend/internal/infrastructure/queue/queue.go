@@ -3,9 +3,6 @@ package queue
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 type QueueDriver interface {
@@ -45,8 +42,9 @@ func (q *Queue[T]) Pop(ctx context.Context) (*T, error) {
 	return nil, fmt.Errorf("queue: error unexpected job type")
 }
 
-type Job[T any] struct {
-	ID        uuid.UUID
-	Payload   *T
-	CreatedAt time.Time
+type Job struct {
+	ID             string
+	IdempotencyKey string
+	Payload        any
+	CreatedAt      int64
 }
